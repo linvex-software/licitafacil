@@ -1,0 +1,13 @@
+{
+  "name": "@licitafacil/config",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Configurações compartilhadas do monorepo",
+  "main": "index.js",
+  "files": [
+    "tsconfig.base.json",
+    "eslint",
+    "prettier"
+  ]
+}
+
