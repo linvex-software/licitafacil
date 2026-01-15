@@ -1,49 +1,28 @@
-## 📋 Descrição
+## Descricao
+<!-- Resuma as mudancas deste PR -->
 
-<!-- Descreva as mudanças realizadas neste PR -->
+## Issue Relacionada
+<!-- Closes #1 -->
 
-## 🔗 Issue Relacionada
+## Tipo de Mudanca
+- [ ] Bug fix
+- [ ] Nova feature
+- [ ] Breaking change
+- [ ] Documentacao
+- [ ] Refactor
+- [ ] Tests
+- [ ] Chore
 
-<!-- Se houver, referencie a issue: Closes #123 -->
-
-## 🎯 Tipo de Mudança
-
-- [ ] 🐛 Bug fix (mudança que corrige um issue)
-- [ ] ✨ Nova feature (mudança que adiciona funcionalidade)
-- [ ] 💥 Breaking change (fix ou feature que causaria quebra em funcionalidades existentes)
-- [ ] 📝 Documentação (mudanças apenas em documentação)
-- [ ] 🎨 Style (formatação, ponto e vírgula, etc; sem mudança de código)
-- [ ] ♻️ Refactor (refatoração sem adicionar features ou corrigir bugs)
-- [ ] ⚡ Performance (mudanças que melhoram performance)
-- [ ] ✅ Tests (adição ou correção de testes)
-- [ ] 🔧 Chore (mudanças no build, configs, etc)
-
-## 🧪 Como Testar
-
-<!-- Descreva os passos para testar as mudanças -->
-
+## Como Testar
 1.
 2.
 3.
 
-## ✅ Checklist
-
-- [ ] Meu código segue os padrões do projeto
-- [ ] Realizei self-review do código
-- [ ] Comentei partes complexas do código
-- [ ] Atualizei a documentação
-- [ ] Minhas mudanças não geram novos warnings
-- [ ] Adicionei testes que provam que meu fix/feature funciona
-- [ ] Testes novos e existentes passam localmente
-- [ ] `pnpm typecheck` passa sem erros
-- [ ] `pnpm lint` passa sem erros
-- [ ] `pnpm build` funciona corretamente
-
-## 📸 Screenshots (se aplicável)
-
-<!-- Adicione screenshots ou GIFs demonstrando as mudanças -->
-
-## 📝 Notas Adicionais
-
-<!-- Qualquer informação adicional relevante para os reviewers -->
-
+## Checklist
+- [ ] Codigo segue padroes do projeto
+- [ ] Self-review realizado
+- [ ] Documentacao atualizada (se aplicavel)
+- [ ] Sem novos warnings
+- [ ] `pnpm typecheck` ok (se existir)
+- [ ] `pnpm lint` ok (se existir)
+- [ ] `pnpm build` ok (se existir)
