@@ -1,11 +1,15 @@
 import { Injectable, ConflictException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { PrismaTenantService } from "../prisma/prisma-tenant.service";
 import { CreateUserInput, type User } from "@licitafacil/shared";
 import * as bcrypt from "bcrypt";
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly prismaTenant: PrismaTenantService,
+  ) {}
 
   /**
    * Cria um novo usuário com senha hasheada
@@ -37,7 +41,30 @@ export class UserService {
   }
 
   /**
+   * Lista todos os usuários da empresa (com filtro de tenant)
+   */
+  async findAll(empresaId: string): Promise<User[]> {
+    const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
+    const users = await prismaWithTenant.user.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        empresaId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return users.map((user) => this.mapToUser(user));
+  }
+
+  /**
    * Busca usuário por email (inclui senha para validação)
+   * Usado apenas no login, então não precisa de filtro de tenant
    */
   async findByEmail(email: string) {
     return this.prisma.user.findUnique({
@@ -46,10 +73,28 @@ export class UserService {
   }
 
   /**
-   * Busca usuário por ID
+   * Busca usuário por ID sem filtro de tenant
+   * Usado apenas para validação de token JWT
    */
-  async findOne(id: string): Promise<User> {
+  async findByIdForTokenValidation(userId: string): Promise<User | null> {
     const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    return this.mapToUser(user);
+  }
+
+  /**
+   * Busca usuário por ID (com filtro de tenant)
+   * Usuário só pode buscar usuários da própria empresa
+   */
+  async findOne(id: string, empresaId: string): Promise<User> {
+    const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
+    const user = await prismaWithTenant.user.findUnique({
       where: { id },
     });
 

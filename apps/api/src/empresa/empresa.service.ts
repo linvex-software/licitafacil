@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateEmpresaInput, type Empresa } from "@licitafacil/shared";
 
@@ -25,27 +25,36 @@ export class EmpresaService {
   }
 
   /**
-   * Lista todas as empresas
+   * Busca a empresa do usuário (isolamento por tenant)
+   * Usuário só pode ver sua própria empresa
    */
-  async findAll(): Promise<Empresa[]> {
-    const empresas = await this.prisma.empresa.findMany({
-      orderBy: {
-        createdAt: "desc",
-      },
+  async findMyEmpresa(empresaId: string): Promise<Empresa> {
+    const empresa = await this.prisma.empresa.findUnique({
+      where: { id: empresaId },
     });
 
-    return empresas.map((empresa) => ({
+    if (!empresa) {
+      throw new NotFoundException(`Empresa não encontrada`);
+    }
+
+    return {
       id: empresa.id,
       name: empresa.name,
       createdAt: empresa.createdAt.toISOString(),
       updatedAt: empresa.updatedAt.toISOString(),
-    }));
+    };
   }
 
   /**
-   * Busca uma empresa por ID
+   * Busca uma empresa por ID (com validação de tenant)
+   * Só permite buscar a própria empresa
    */
-  async findOne(id: string): Promise<Empresa> {
+  async findOne(id: string, userEmpresaId: string): Promise<Empresa> {
+    // Validar se o usuário está tentando acessar sua própria empresa
+    if (id !== userEmpresaId) {
+      throw new ForbiddenException("Acesso negado: você só pode visualizar sua própria empresa");
+    }
+
     const empresa = await this.prisma.empresa.findUnique({
       where: { id },
     });
@@ -64,6 +73,7 @@ export class EmpresaService {
 
   /**
    * Verifica se uma empresa existe
+   * Usado internamente para validações
    */
   async exists(id: string): Promise<boolean> {
     const empresa = await this.prisma.empresa.findUnique({

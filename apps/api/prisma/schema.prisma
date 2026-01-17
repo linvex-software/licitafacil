@@ -19,6 +19,8 @@ model Empresa {
 
   // Relacionamento: Uma empresa tem muitos usuários
   users User[]
+  // Relacionamento: Uma empresa tem muitas licitações
+  bids Bid[]
 
   @@map("empresas")
 }
@@ -39,4 +41,24 @@ model User {
   @@map("users")
   @@index([email])
   @@index([empresaId])
+}
+
+// Entidade Bid (Licitação)
+model Bid {
+  id              String   @id @default(uuid())
+  empresaId       String
+  title           String
+  agency          String
+  modality        String
+  legalStatus     String
+  operationalState String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relacionamento: Uma licitação pertence a uma empresa
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@map("bids")
+  @@index([empresaId])
+  @@index([createdAt])
 }

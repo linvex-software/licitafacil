@@ -76,9 +76,16 @@ export class AuthService {
 
   /**
    * Valida um token JWT e retorna o usuário
+   * Usa método específico sem filtro de tenant para validação de token
    */
   async validateUser(userId: string): Promise<User> {
-    return this.userService.findOne(userId);
+    const user = await this.userService.findByIdForTokenValidation(userId);
+    
+    if (!user) {
+      throw new UnauthorizedException("Usuário não encontrado");
+    }
+
+    return user;
   }
 
   /**
