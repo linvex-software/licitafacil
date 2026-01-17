@@ -21,6 +21,8 @@ model Empresa {
   users User[]
   // Relacionamento: Uma empresa tem muitas licitações
   bids Bid[]
+  // Relacionamento: Uma empresa tem muitos logs de auditoria
+  auditLogs AuditLog[]
 
   @@map("empresas")
 }
@@ -69,4 +71,27 @@ model Bid {
   @@map("bids")
   @@index([empresaId])
   @@index([createdAt])
+}
+
+// Entidade AuditLog (Log de Auditoria)
+// Logs são imutáveis: sem updatedAt, sem deletedAt, sem métodos de update/delete
+model AuditLog {
+  id           String   @id @default(uuid())
+  empresaId   String   // Obrigatório: isolamento multi-tenant
+  userId       String?  // Nullable: ações do sistema não têm usuário
+  action       String   // Ex: "auth.login", "licitacao.create"
+  resourceType String?  // Ex: "Licitacao", "Documento", "User"
+  resourceId   String?  // ID do recurso afetado (se aplicável)
+  metadata     Json?    // Payload sanitizado (opcional)
+  ip           String?  // IP do cliente
+  userAgent    String?  // User agent do cliente
+  createdAt    DateTime @default(now()) // Único timestamp (imutável)
+
+  // Relacionamento: Um log pertence a uma empresa
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@map("audit_logs")
+  @@index([empresaId, createdAt(sort: Desc)]) // Consultas por tenant ordenadas por data
+  @@index([empresaId, action]) // Consultas por ação
+  @@index([empresaId, resourceType, resourceId]) // Consultas por recurso
 }
