@@ -7,8 +7,12 @@ import {
   HttpCode,
   HttpStatus,
   BadRequestException,
+  UseGuards,
 } from "@nestjs/common";
 import { EmpresaService } from "./empresa.service";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { Tenant } from "../common/decorators/tenant.decorator";
+import { TenantGuard } from "../common/guards/tenant.guard";
 import { createEmpresaSchema, type Empresa } from "@licitafacil/shared";
 
 @Controller("empresas")
@@ -36,20 +40,23 @@ export class EmpresaController {
   }
 
   /**
-   * Lista todas as empresas
-   * GET /empresas
+   * Busca a empresa do usuário autenticado
+   * GET /empresas/me
    */
-  @Get()
-  async findAll(): Promise<Empresa[]> {
-    return this.empresaService.findAll();
+  @Get("me")
+  @UseGuards(JwtAuthGuard)
+  async findMyEmpresa(@Tenant() empresaId: string): Promise<Empresa> {
+    return this.empresaService.findMyEmpresa(empresaId);
   }
 
   /**
-   * Busca uma empresa por ID
+   * Busca uma empresa por ID (com validação de tenant)
    * GET /empresas/:id
+   * Só permite buscar a própria empresa
    */
   @Get(":id")
-  async findOne(@Param("id") id: string): Promise<Empresa> {
-    return this.empresaService.findOne(id);
+  @UseGuards(JwtAuthGuard, TenantGuard)
+  async findOne(@Param("id") id: string, @Tenant() empresaId: string): Promise<Empresa> {
+    return this.empresaService.findOne(id, empresaId);
   }
 }
