@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
-import { type PrismaTenantService } from "../prisma/prisma-tenant.service";
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+import { PrismaTenantService } from "../prisma/prisma-tenant.service";
 
 /**
  * DTO para criar um log de auditoria
