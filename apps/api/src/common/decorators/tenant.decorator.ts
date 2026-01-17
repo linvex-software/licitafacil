@@ -1,4 +1,4 @@
-import { createParamDecorator, ExecutionContext, ForbiddenException } from "@nestjs/common";
+import { createParamDecorator, type ExecutionContext, ForbiddenException } from "@nestjs/common";
 
 /**
  * Decorator para extrair empresaId (tenantId) do usuário autenticado

@@ -1,9 +1,9 @@
 import { Injectable } from "@nestjs/common";
-import { PrismaService } from "./prisma.service";
+import { type PrismaService } from "./prisma.service";
 
 /**
  * Prisma Client com filtro automático de tenant (empresaId)
- * 
+ *
  * Todas as queries são automaticamente filtradas pela empresaId do usuário,
  * garantindo isolamento total entre empresas.
  */
@@ -173,6 +173,66 @@ export class PrismaTenantService {
               args = { ...args, where: { empresaId } };
             }
             return query(args);
+          },
+        },
+        auditLog: {
+          async findMany({ args, query }) {
+            if (args?.where) {
+              args.where = { ...args.where, empresaId };
+            } else {
+              args = { ...args, where: { empresaId } };
+            }
+            return query(args);
+          },
+          async findFirst({ args, query }) {
+            if (args?.where) {
+              args.where = { ...args.where, empresaId };
+            } else {
+              args = { ...args, where: { empresaId } };
+            }
+            return query(args);
+          },
+          async findUnique({ args, query }) {
+            return query(args).then((result) => {
+              if (result && result.empresaId !== empresaId) {
+                return null;
+              }
+              return result;
+            });
+          },
+          async create({ args, query }) {
+            if (args?.data) {
+              const data = args.data as any;
+              if (!data.empresaId) {
+                data.empresaId = empresaId;
+              }
+              if (data.empresa) {
+                delete data.empresa;
+              }
+              args.data = data;
+            }
+            return query(args);
+          },
+          async count({ args, query }) {
+            if (args?.where) {
+              args.where = { ...args.where, empresaId };
+            } else {
+              args = { ...args, where: { empresaId } };
+            }
+            return query(args);
+          },
+          // AuditLog é imutável: não permitir update/delete
+          async update({ args: _args, query: _query }: any) {
+            throw new Error("AuditLog é imutável: operações de update não são permitidas");
+          },
+          async updateMany({ args: _args, query: _query }: any) {
+            throw new Error("AuditLog é imutável: operações de update não são permitidas");
+          },
+          async delete({ args: _args, query: _query }: any) {
+            throw new Error("AuditLog é imutável: operações de delete não são permitidas");
+          },
+          async deleteMany({ args: _args, query: _query }: any) {
+            throw new Error("AuditLog é imutável: operações de delete não são permitidas");
           },
         },
       },
