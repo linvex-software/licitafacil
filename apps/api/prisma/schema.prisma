@@ -25,12 +25,19 @@ model Empresa {
   @@map("empresas")
 }
 
+// Enum de papéis de usuário
+enum UserRole {
+  ADMIN
+  COLABORADOR
+}
+
 // Entidade User (Usuário)
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
   password  String
   name      String
+  role      UserRole @default(COLABORADOR)
   empresaId String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -41,6 +48,7 @@ model User {
   @@map("users")
   @@index([email])
   @@index([empresaId])
+  @@index([role])
 }
 
 // Entidade Bid (Licitação)

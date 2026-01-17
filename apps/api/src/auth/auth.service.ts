@@ -56,10 +56,14 @@ export class AuthService {
     }
 
     // Mapear para User (sem senha)
+    // Converter role do Prisma (string literal) para enum do shared
+    const role = (user.role as string) as import("@licitafacil/shared").UserRole;
+
     const userWithoutPassword: User = {
       id: user.id,
       email: user.email,
       name: user.name,
+      role,
       empresaId: user.empresaId,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
@@ -96,6 +100,7 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       empresaId: user.empresaId,
+      role: user.role,
     };
 
     return this.jwtService.sign(payload);
