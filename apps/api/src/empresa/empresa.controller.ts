@@ -11,9 +11,11 @@ import {
 } from "@nestjs/common";
 import { EmpresaService } from "./empresa.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { RolesGuard } from "../common/guards/roles.guard";
+import { Roles } from "../common/decorators/roles.decorator";
 import { Tenant } from "../common/decorators/tenant.decorator";
 import { TenantGuard } from "../common/guards/tenant.guard";
-import { createEmpresaSchema, type Empresa } from "@licitafacil/shared";
+import { createEmpresaSchema, type Empresa, UserRole } from "@licitafacil/shared";
 
 @Controller("empresas")
 export class EmpresaController {
@@ -42,9 +44,12 @@ export class EmpresaController {
   /**
    * Busca a empresa do usuário autenticado
    * GET /empresas/me
+   * 
+   * Permissão: ADMIN e COLABORADOR podem ver
    */
   @Get("me")
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
   async findMyEmpresa(@Tenant() empresaId: string): Promise<Empresa> {
     return this.empresaService.findMyEmpresa(empresaId);
   }
@@ -53,9 +58,12 @@ export class EmpresaController {
    * Busca uma empresa por ID (com validação de tenant)
    * GET /empresas/:id
    * Só permite buscar a própria empresa
+   * 
+   * Permissão: ADMIN e COLABORADOR podem ver
    */
   @Get(":id")
-  @UseGuards(JwtAuthGuard, TenantGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, TenantGuard)
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
   async findOne(@Param("id") id: string, @Tenant() empresaId: string): Promise<Empresa> {
     return this.empresaService.findOne(id, empresaId);
   }

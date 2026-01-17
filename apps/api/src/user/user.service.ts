@@ -1,7 +1,7 @@
 import { Injectable, ConflictException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { PrismaTenantService } from "../prisma/prisma-tenant.service";
-import { CreateUserInput, type User } from "@licitafacil/shared";
+import { CreateUserInput, type User, UserRole } from "@licitafacil/shared";
 import * as bcrypt from "bcrypt";
 
 @Injectable()
@@ -27,13 +27,14 @@ export class UserService {
     // Hash da senha
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    // Criar usuário
+    // Criar usuário com role (default COLABORADOR se não especificado)
     const user = await this.prisma.user.create({
       data: {
         email: data.email,
         password: hashedPassword,
         name: data.name,
         empresaId: data.empresaId,
+        role: data.role || UserRole.COLABORADOR,
       },
     });
 
@@ -53,6 +54,7 @@ export class UserService {
         id: true,
         email: true,
         name: true,
+        role: true,
         empresaId: true,
         createdAt: true,
         updatedAt: true,
@@ -114,19 +116,26 @@ export class UserService {
 
   /**
    * Mapeia entidade Prisma para User (sem senha)
+   * Converte role do Prisma enum para shared enum
    */
   private mapToUser(user: {
     id: string;
     email: string;
     name: string;
+    role: any; // Prisma UserRole enum (string literal)
     empresaId: string;
     createdAt: Date;
     updatedAt: Date;
   }): User {
+    // Converter role do Prisma (string literal) para enum do shared
+    // Prisma retorna "ADMIN" | "COLABORADOR" como string
+    const role = (user.role as string) as UserRole;
+
     return {
       id: user.id,
       email: user.email,
       name: user.name,
+      role,
       empresaId: user.empresaId,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),

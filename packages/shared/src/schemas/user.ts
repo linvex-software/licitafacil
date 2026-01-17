@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { UserRole } from "../enums/user-role.enum";
 
 /**
  * Schema para criação de usuário (dados de entrada - sem senha hasheada)
@@ -8,6 +9,7 @@ export const createUserSchema = z.object({
   password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
   name: z.string().min(1, "Nome é obrigatório").max(255, "Nome muito longo"),
   empresaId: z.string().uuid("ID da empresa inválido"),
+  role: z.nativeEnum(UserRole).optional().default(UserRole.COLABORADOR),
 });
 
 /**
@@ -25,6 +27,7 @@ export const userSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
   name: z.string(),
+  role: z.nativeEnum(UserRole),
   empresaId: z.string().uuid(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
