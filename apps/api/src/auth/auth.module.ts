@@ -7,11 +7,13 @@ import { AuthService } from "./auth.service";
 import { JwtStrategy } from "./strategies/jwt.strategy";
 import { UserModule } from "../user/user.module";
 import { EmpresaModule } from "../empresa/empresa.module";
+import { AuditLogModule } from "../audit-log/audit-log.module";
 
 @Module({
   imports: [
     UserModule,
     EmpresaModule,
+    AuditLogModule,
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || "your-secret-key-change-in-production",

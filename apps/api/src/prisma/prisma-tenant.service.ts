@@ -1,9 +1,9 @@
 import { Injectable } from "@nestjs/common";
-import { PrismaService } from "./prisma.service";
+import { type PrismaService } from "./prisma.service";
 
 /**
  * Prisma Client com filtro automático de tenant (empresaId)
- * 
+ *
  * Todas as queries são automaticamente filtradas pela empresaId do usuário,
  * garantindo isolamento total entre empresas.
  */
@@ -222,16 +222,16 @@ export class PrismaTenantService {
             return query(args);
           },
           // AuditLog é imutável: não permitir update/delete
-          async update(_args: any, _query: any) {
+          async update({ args: _args, query: _query }: any) {
             throw new Error("AuditLog é imutável: operações de update não são permitidas");
           },
-          async updateMany(_args: any, _query: any) {
+          async updateMany({ args: _args, query: _query }: any) {
             throw new Error("AuditLog é imutável: operações de update não são permitidas");
           },
-          async delete(_args: any, _query: any) {
+          async delete({ args: _args, query: _query }: any) {
             throw new Error("AuditLog é imutável: operações de delete não são permitidas");
           },
-          async deleteMany(_args: any, _query: any) {
+          async deleteMany({ args: _args, query: _query }: any) {
             throw new Error("AuditLog é imutável: operações de delete não são permitidas");
           },
         },

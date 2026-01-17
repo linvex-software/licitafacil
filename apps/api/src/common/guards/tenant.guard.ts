@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from "@nestjs/common";
+import { Injectable, type CanActivate, type ExecutionContext, ForbiddenException } from "@nestjs/common";
 
 /**
  * Guard para validar se um recurso pertence à empresa do usuário

@@ -1,12 +1,12 @@
-import { Test, TestingModule } from "@nestjs/testing";
+import { Test, type TestingModule } from "@nestjs/testing";
 import { AuditLogService } from "../audit-log.service";
 import { PrismaService } from "../../prisma/prisma.service";
 import { PrismaTenantService } from "../../prisma/prisma-tenant.service";
 
 describe("AuditLogService", () => {
   let service: AuditLogService;
-  let prismaService: PrismaService;
-  let prismaTenantService: PrismaTenantService;
+  let _prismaService: PrismaService;
+  let _prismaTenantService: PrismaTenantService;
 
   // Mock do Prisma Client
   const mockPrismaClient = {
@@ -29,9 +29,7 @@ describe("AuditLogService", () => {
         AuditLogService,
         {
           provide: PrismaService,
-          useValue: {
-            auditLog: mockPrismaClient.auditLog,
-          },
+          useValue: {},
         },
         {
           provide: PrismaTenantService,
@@ -41,8 +39,6 @@ describe("AuditLogService", () => {
     }).compile();
 
     service = module.get<AuditLogService>(AuditLogService);
-    prismaService = module.get<PrismaService>(PrismaService);
-    prismaTenantService = module.get<PrismaTenantService>(PrismaTenantService);
 
     // Limpar mocks
     jest.clearAllMocks();

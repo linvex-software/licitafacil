@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { PrismaTenantService } from "../prisma/prisma-tenant.service";
+import { type PrismaTenantService } from "../prisma/prisma-tenant.service";
 
 /**
  * DTO para criar um log de auditoria
@@ -32,7 +32,7 @@ export interface ListAuditLogsFilters {
 
 /**
  * Serviço de auditoria
- * 
+ *
  * IMPORTANTE: Logs são imutáveis. Este serviço NÃO possui métodos de update ou delete.
  * Apenas inserção (record) e leitura (list) são permitidas.
  */
@@ -44,11 +44,17 @@ export class AuditLogService {
 
   /**
    * Registra um novo log de auditoria
-   * 
+   *
    * @param input Dados do log de auditoria
    * @returns ID do log criado
    */
   async record(input: CreateAuditLogInput): Promise<string> {
+    // Flag opcional para testes: simular falha de auditoria (apenas em desenvolvimento)
+    // Não afeta produção, apenas útil para validar que falhas não quebram requests
+    if (process.env.AUDIT_FORCE_FAIL === "1" && process.env.NODE_ENV === "development") {
+      throw new Error("Simulated audit failure for testing");
+    }
+
     const prismaWithTenant = this.prismaTenant.forTenant(input.empresaId);
 
     const auditLog = await prismaWithTenant.auditLog.create({
@@ -69,9 +75,9 @@ export class AuditLogService {
 
   /**
    * Lista logs de auditoria com filtros e paginação
-   * 
+   *
    * IMPORTANTE: Apenas leitura. Sem métodos de update/delete.
-   * 
+   *
    * @param filters Filtros de busca
    * @returns Lista de logs e metadados de paginação
    */
@@ -139,7 +145,7 @@ export class AuditLogService {
 
   /**
    * Busca um log específico por ID (com validação de tenant)
-   * 
+   *
    * @param id ID do log
    * @param empresaId ID da empresa (para validação de tenant)
    * @returns Log encontrado ou null

@@ -6,8 +6,10 @@ import {
   HttpStatus,
   BadRequestException,
   UseGuards,
+  Req,
 } from "@nestjs/common";
-import { AuthService } from "./auth.service";
+import { type Request } from "express";
+import { type AuthService } from "./auth.service";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { CurrentUser } from "./decorators/current-user.decorator";
 import {
@@ -47,7 +49,7 @@ export class AuthController {
    */
   @Post("login")
   @HttpCode(HttpStatus.OK)
-  async login(@Body() body: unknown): Promise<AuthResponse> {
+  async login(@Body() body: unknown, @Req() request: Request): Promise<AuthResponse> {
     // Validar dados com Zod
     const result = loginSchema.safeParse(body);
 
@@ -58,13 +60,13 @@ export class AuthController {
       });
     }
 
-    return this.authService.login(result.data);
+    return this.authService.login(result.data, request);
   }
 
   /**
    * Realiza logout (simbólico)
    * POST /auth/logout
-   * 
+   *
    * Nota: Com JWT stateless, o logout real é feito no frontend
    * removendo o token. Este endpoint serve apenas para logs/auditoria.
    */

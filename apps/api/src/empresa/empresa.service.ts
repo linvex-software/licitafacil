@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
-import { PrismaService } from "../prisma/prisma.service";
-import { CreateEmpresaInput, type Empresa } from "@licitafacil/shared";
+import { type PrismaService } from "../prisma/prisma.service";
+import { type CreateEmpresaInput, type Empresa } from "@licitafacil/shared";
 
 @Injectable()
 export class EmpresaService {

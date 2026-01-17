@@ -1,24 +1,26 @@
 import {
   Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
+  type NestInterceptor,
+  type ExecutionContext,
+  type CallHandler,
 } from "@nestjs/common";
-import { Observable } from "rxjs";
+import { type Observable } from "rxjs";
 import { tap } from "rxjs/operators";
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import { Reflector } from "@nestjs/core";
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import { AuditLogService } from "../audit-log.service";
-import { AUDIT_KEY, AuditOptions } from "../decorators/audit.decorator";
+import { AUDIT_KEY, type AuditOptions } from "../decorators/audit.decorator";
 
 /**
  * Interceptor para capturar e registrar logs de auditoria automaticamente
- * 
+ *
  * Funciona em conjunto com o decorator @Audit() para marcar rotas que devem ser auditadas.
- * 
+ *
  * Uso:
  * - Adicionar @UseInterceptors(AuditInterceptor) no controller ou método
  * - Adicionar @Audit({ action: "..." }) no método
- * 
+ *
  * Requer que a rota esteja protegida com @UseGuards(JwtAuthGuard) para capturar userId/empresaId
  */
 @Injectable()
@@ -28,12 +30,12 @@ export class AuditInterceptor implements NestInterceptor {
     private readonly reflector: Reflector,
   ) {}
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest();
     const handler = context.getHandler();
 
     // Obter opções do decorator @Audit
-    const auditOptions = this.reflector.get<AuditOptions>(AUDIT_KEY, handler);
+    const auditOptions = this.reflector.get(AUDIT_KEY, handler) as AuditOptions | undefined;
 
     // Se não há decorator @Audit, não auditar
     if (!auditOptions) {
@@ -103,26 +105,57 @@ export class AuditInterceptor implements NestInterceptor {
 
     const metadata: Record<string, any> = {};
 
-    // Campos sensíveis a remover
-    const sensitiveFields = ["password", "token", "accessToken", "refreshToken", "secret"];
+    // Campos sensíveis a remover (case-insensitive)
+    const sensitiveFields = [
+      "password",
+      "senha",
+      "token",
+      "accesstoken",
+      "refreshtoken",
+      "authorization",
+      "cookie",
+      "set-cookie",
+      "secret",
+      "apikey",
+      "privatekey",
+      "private_key",
+    ];
 
-    // Adicionar body sanitizado
+    // Adicionar body sanitizado (allowlist approach - apenas campos seguros conhecidos)
     if (body && typeof body === "object") {
       for (const [key, value] of Object.entries(body)) {
-        if (!sensitiveFields.includes(key.toLowerCase())) {
-          // Limitar tamanho de strings para evitar logs muito grandes
-          if (typeof value === "string" && value.length > 500) {
-            metadata[key] = value.substring(0, 500) + "... (truncated)";
-          } else {
-            metadata[key] = value;
-          }
+        const keyLower = key.toLowerCase();
+
+        // Pular campos sensíveis
+        if (sensitiveFields.includes(keyLower)) {
+          continue;
+        }
+
+        // Limitar tamanho de strings para evitar logs muito grandes
+        if (typeof value === "string" && value.length > 500) {
+          metadata[key] = value.substring(0, 500) + "... (truncated)";
+        } else if (typeof value === "object" && value !== null) {
+          // Para objetos aninhados, não incluir (pode conter dados sensíveis)
+          // Apenas incluir tipos primitivos seguros
+          continue;
+        } else {
+          metadata[key] = value;
         }
       }
     }
 
-    // Adicionar params (geralmente seguros)
+    // Adicionar params (geralmente seguros, mas sanitizar também)
     if (params && typeof params === "object") {
-      metadata.params = params;
+      const safeParams: Record<string, any> = {};
+      for (const [key, value] of Object.entries(params)) {
+        const keyLower = key.toLowerCase();
+        if (!sensitiveFields.includes(keyLower)) {
+          safeParams[key] = value;
+        }
+      }
+      if (Object.keys(safeParams).length > 0) {
+        metadata.params = safeParams;
+      }
     }
 
     return Object.keys(metadata).length > 0 ? metadata : null;
