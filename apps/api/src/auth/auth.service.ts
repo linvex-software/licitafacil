@@ -1,8 +1,8 @@
 import { Injectable, UnauthorizedException, BadRequestException } from "@nestjs/common";
-import { type JwtService } from "@nestjs/jwt";
-import { type UserService } from "../user/user.service";
-import { type EmpresaService } from "../empresa/empresa.service";
-import { type AuditLogService } from "../audit-log/audit-log.service";
+import { JwtService } from "@nestjs/jwt";
+import { UserService } from "../user/user.service";
+import { EmpresaService } from "../empresa/empresa.service";
+import { AuditLogService } from "../audit-log/audit-log.service";
 import { type CreateUserInput, type LoginInput, type AuthResponse, type User } from "@licitafacil/shared";
 
 @Injectable()

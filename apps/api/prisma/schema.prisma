@@ -16,6 +16,7 @@ model Empresa {
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime? // Soft delete: quando não null, registro está deletado
 
   // Relacionamento: Uma empresa tem muitos usuários
   users     User[]
@@ -24,6 +25,7 @@ model Empresa {
   // Relacionamento: Uma empresa tem muitos logs de auditoria
   auditLogs AuditLog[]
 
+  @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("empresas")
 }
 
@@ -43,6 +45,7 @@ model User {
   empresaId String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime? // Soft delete: quando não null, registro está deletado
 
   // Relacionamento: Um usuário pertence a uma empresa
   empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
@@ -50,6 +53,8 @@ model User {
   @@index([email])
   @@index([empresaId])
   @@index([role])
+  @@index([deletedAt]) // Otimizar queries que filtram deletados
+  @@index([empresaId, deletedAt]) // Índice composto para queries de tenant + soft delete
   @@map("users")
 }
 
@@ -64,12 +69,15 @@ model Bid {
   operationalState String
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+  deletedAt        DateTime? // Soft delete: quando não null, registro está deletado
 
   // Relacionamento: Uma licitação pertence a uma empresa
   empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
 
   @@index([empresaId])
   @@index([createdAt])
+  @@index([deletedAt]) // Otimizar queries que filtram deletados
+  @@index([empresaId, deletedAt]) // Índice composto para queries de tenant + soft delete
   @@map("bids")
 }
 

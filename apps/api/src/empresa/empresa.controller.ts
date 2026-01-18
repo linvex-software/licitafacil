@@ -9,7 +9,7 @@ import {
   BadRequestException,
   UseGuards,
 } from "@nestjs/common";
-import { type EmpresaService } from "./empresa.service";
+import { EmpresaService } from "./empresa.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../common/guards/roles.guard";
 import { Roles } from "../common/decorators/roles.decorator";
