@@ -8,9 +8,18 @@ import { UserModule } from "./user/user.module";
 import { AuthModule } from "./auth/auth.module";
 import { AuditLogModule } from "./audit-log/audit-log.module";
 import { CommonModule } from "./common/common.module";
+import { BidModule } from "./bid/bid.module";
 
 @Module({
-  imports: [PrismaModule, EmpresaModule, UserModule, AuthModule, AuditLogModule, CommonModule],
+  imports: [
+    PrismaModule,
+    EmpresaModule,
+    UserModule,
+    AuthModule,
+    AuditLogModule,
+    CommonModule,
+    BidModule,
+  ],
   controllers: [AppController, HealthController],
   providers: [AppService],
 })
