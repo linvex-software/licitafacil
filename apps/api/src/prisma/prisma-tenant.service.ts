@@ -77,8 +77,13 @@ export class PrismaTenantService {
             return query(args);
           },
           async update({ args, query }) {
-            args.where = addTenantAndSoftDeleteFilter(args?.where);
-            return query(args);
+            // Para update, não podemos modificar o where (precisa ser unique)
+            // Então fazemos a query e validamos o resultado
+            const result = await query(args);
+            if (!result || result.empresaId !== empresaId || result.deletedAt !== null) {
+              return null;
+            }
+            return result;
           },
           async updateMany({ args, query }) {
             args.where = addTenantAndSoftDeleteFilter(args?.where);
@@ -138,8 +143,13 @@ export class PrismaTenantService {
             return query(args);
           },
           async update({ args, query }) {
-            args.where = addTenantAndSoftDeleteFilter(args?.where);
-            return query(args);
+            // Para update, não podemos modificar o where (precisa ser unique)
+            // Então fazemos a query e validamos o resultado
+            const result = await query(args);
+            if (!result || result.empresaId !== empresaId || result.deletedAt !== null) {
+              return null;
+            }
+            return result;
           },
           async updateMany({ args, query }) {
             args.where = addTenantAndSoftDeleteFilter(args?.where);
@@ -189,8 +199,13 @@ export class PrismaTenantService {
             return query(args);
           },
           async update({ args, query }) {
-            args.where = addTenantAndSoftDeleteFilter(args?.where);
-            return query(args);
+            // Para update, não podemos modificar o where (precisa ser unique)
+            // Então fazemos a query e validamos o resultado
+            const result = await query(args);
+            if (!result || result.id !== empresaId || result.deletedAt !== null) {
+              return null;
+            }
+            return result;
           },
           async updateMany({ args, query }) {
             args.where = addTenantAndSoftDeleteFilter(args?.where);

@@ -31,13 +31,11 @@ export const OperationalState = {
 } as const;
 
 /**
- * Schema de validação para Licitação (Bid)
+ * Schema de validação para criar uma licitação
  */
-export const bidSchema = z.object({
-  id: z.string().uuid(),
-  tenantId: z.string().uuid(),
-  title: z.string().min(1, "Título é obrigatório"),
-  agency: z.string().min(1, "Órgão é obrigatório"),
+export const createBidSchema = z.object({
+  title: z.string().min(1, "Título é obrigatório").max(500, "Título muito longo"),
+  agency: z.string().min(1, "Órgão é obrigatório").max(200, "Nome do órgão muito longo"),
   modality: z.enum([
     BidModality.PREGAO_ELETRONICO,
     BidModality.CONCORRENCIA,
@@ -53,10 +51,53 @@ export const bidSchema = z.object({
     LegalStatus.CANCELADA,
   ]),
   operationalState: z.enum([OperationalState.OK, OperationalState.EM_RISCO]),
+});
+
+/**
+ * Schema de validação para atualizar uma licitação
+ */
+export const updateBidSchema = z.object({
+  title: z.string().min(1, "Título é obrigatório").max(500, "Título muito longo").optional(),
+  agency: z.string().min(1, "Órgão é obrigatório").max(200, "Nome do órgão muito longo").optional(),
+  modality: z
+    .enum([
+      BidModality.PREGAO_ELETRONICO,
+      BidModality.CONCORRENCIA,
+      BidModality.DISPENSA,
+      BidModality.OUTRA,
+    ])
+    .optional(),
+  legalStatus: z
+    .enum([
+      LegalStatus.ANALISANDO,
+      LegalStatus.PARTICIPANDO,
+      LegalStatus.DESCARTADA,
+      LegalStatus.VENCIDA,
+      LegalStatus.PERDIDA,
+      LegalStatus.CANCELADA,
+    ])
+    .optional(),
+  operationalState: z.enum([OperationalState.OK, OperationalState.EM_RISCO]).optional(),
+});
+
+/**
+ * Schema de validação para Licitação (Bid) completa
+ */
+export const bidSchema = z.object({
+  id: z.string().uuid(),
+  empresaId: z.string().uuid(),
+  title: z.string(),
+  agency: z.string(),
+  modality: z.string(),
+  legalStatus: z.string(),
+  operationalState: z.string(),
   createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
 });
 
 export type Bid = z.infer<typeof bidSchema>;
+export type CreateBidInput = z.infer<typeof createBidSchema>;
+export type UpdateBidInput = z.infer<typeof updateBidSchema>;
 export type BidModalityType = keyof typeof BidModality;
 export type LegalStatusType = keyof typeof LegalStatus;
 export type OperationalStateType = keyof typeof OperationalState;
