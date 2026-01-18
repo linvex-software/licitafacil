@@ -1,6 +1,6 @@
 import { Injectable, ConflictException, NotFoundException } from "@nestjs/common";
-import { type PrismaService } from "../prisma/prisma.service";
-import { type PrismaTenantService } from "../prisma/prisma-tenant.service";
+import { PrismaService } from "../prisma/prisma.service";
+import { PrismaTenantService } from "../prisma/prisma-tenant.service";
 import { type CreateUserInput, type User, UserRole } from "@licitafacil/shared";
 import * as bcrypt from "bcrypt";
 
@@ -67,20 +67,28 @@ export class UserService {
   /**
    * Busca usuário por email (inclui senha para validação)
    * Usado apenas no login, então não precisa de filtro de tenant
+   * IMPORTANTE: Filtra usuários deletados (soft delete)
    */
   async findByEmail(email: string) {
-    return this.prisma.user.findUnique({
-      where: { email },
+    return this.prisma.user.findFirst({
+      where: {
+        email,
+        deletedAt: null, // Soft delete: não permitir login de usuário deletado
+      },
     });
   }
 
   /**
    * Busca usuário por ID sem filtro de tenant
    * Usado apenas para validação de token JWT
+   * IMPORTANTE: Filtra usuários deletados (soft delete)
    */
   async findByIdForTokenValidation(userId: string): Promise<User | null> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
+    const user = await this.prisma.user.findFirst({
+      where: {
+        id: userId,
+        deletedAt: null, // Soft delete: não permitir token de usuário deletado
+      },
     });
 
     if (!user) {
