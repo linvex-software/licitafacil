@@ -69,7 +69,13 @@ export class AuditInterceptor implements NestInterceptor {
     // Registrar log após sucesso da operação
     return next.handle().pipe(
       tap({
-        next: async () => {
+        next: async (response) => {
+          // Se resourceId ainda não foi capturado, tentar pegar da resposta (para operações CREATE)
+          let finalResourceId = resourceId;
+          if (!finalResourceId && response && typeof response === "object" && "id" in response) {
+            finalResourceId = (response as { id: string }).id;
+          }
+
           // Registrar apenas se empresaId estiver disponível
           if (empresaId) {
             try {
@@ -78,7 +84,7 @@ export class AuditInterceptor implements NestInterceptor {
                 userId: userId || null,
                 action: auditOptions.action,
                 resourceType: resourceType || null,
-                resourceId: resourceId || null,
+                resourceId: finalResourceId || null,
                 metadata: metadata || null,
                 ip: ip || null,
                 userAgent: userAgent || null,

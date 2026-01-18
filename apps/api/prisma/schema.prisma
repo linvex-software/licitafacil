@@ -48,7 +48,9 @@ model User {
   deletedAt DateTime? // Soft delete: quando não null, registro está deletado
 
   // Relacionamento: Um usuário pertence a uma empresa
-  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  empresa   Empresa    @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  // Relacionamento: Um usuário pode ter vários logs de auditoria
+  auditLogs AuditLog[]
 
   @@index([email])
   @@index([empresaId])
@@ -97,9 +99,12 @@ model AuditLog {
 
   // Relacionamento: Um log pertence a uma empresa
   empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  // Relacionamento: Um log pode ter um usuário (nullable)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([empresaId, createdAt(sort: Desc)]) // Consultas por tenant ordenadas por data
   @@index([empresaId, action]) // Consultas por ação
   @@index([empresaId, resourceType, resourceId]) // Consultas por recurso
+  @@index([userId]) // Consultas por usuário
   @@map("audit_logs")
 }

@@ -157,4 +157,79 @@ export class AuditLogService {
       where: { id },
     });
   }
+
+  /**
+   * Busca histórico de alterações de um recurso específico
+   * 
+   * Inclui informações do usuário que realizou cada alteração
+   * 
+   * @param resourceId ID do recurso (ex: ID da licitação)
+   * @param resourceType Tipo do recurso (ex: "Bid")
+   * @param empresaId ID da empresa (para validação de tenant)
+   * @param page Página (default: 1)
+   * @param limit Limite por página (default: 20, max: 100)
+   * @returns Histórico de alterações com informações do usuário
+   */
+  async getResourceHistory(
+    resourceId: string,
+    resourceType: string,
+    empresaId: string,
+    page = 1,
+    limit = 20,
+  ) {
+    const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
+    const safeLimit = Math.min(limit, 100);
+    const skip = (page - 1) * safeLimit;
+
+    const where = {
+      empresaId,
+      resourceId,
+      resourceType,
+    };
+
+    // Buscar logs e total em paralelo
+    const [logs, total] = await Promise.all([
+      prismaWithTenant.auditLog.findMany({
+        where,
+        orderBy: {
+          createdAt: "desc",
+        },
+        skip,
+        take: safeLimit,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      }),
+      prismaWithTenant.auditLog.count({ where }),
+    ]);
+
+    // Mapear para formato de resposta mais amigável
+    const data = logs.map((log) => ({
+      id: log.id,
+      action: log.action,
+      userId: log.userId,
+      userName: log.user?.name || "Sistema",
+      userEmail: log.user?.email || null,
+      changes: log.metadata,
+      createdAt: log.createdAt.toISOString(),
+      ipAddress: log.ip,
+      userAgent: log.userAgent,
+    }));
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit: safeLimit,
+        total,
+        totalPages: Math.ceil(total / safeLimit),
+      },
+    };
+  }
 }

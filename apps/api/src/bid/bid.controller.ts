@@ -11,15 +11,19 @@ import {
   HttpStatus,
   BadRequestException,
   UseGuards,
+  UseInterceptors,
   Req,
 } from "@nestjs/common";
 import { BidService } from "./bid.service";
 import { SoftDeleteService } from "../common/services/soft-delete.service";
+import { AuditLogService } from "../audit-log/audit-log.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../common/guards/roles.guard";
 import { Roles } from "../common/decorators/roles.decorator";
 import { Tenant } from "../common/decorators/tenant.decorator";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import { Audit } from "../audit-log/decorators/audit.decorator";
+import { AuditInterceptor } from "../audit-log/interceptors/audit.interceptor";
 import {
   createBidSchema,
   updateBidSchema,
@@ -36,10 +40,12 @@ import type { Request } from "express";
  */
 @Controller("bids")
 @UseGuards(JwtAuthGuard, RolesGuard)
+@UseInterceptors(AuditInterceptor)
 export class BidController {
   constructor(
     private readonly bidService: BidService,
     private readonly softDeleteService: SoftDeleteService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   /**
@@ -51,9 +57,12 @@ export class BidController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  @Audit({ action: "bid.create", resourceType: "Bid" })
   async create(
     @Body() body: unknown,
     @Tenant() empresaId: string,
+    @CurrentUser() _user: User,
+    @Req() _request: Request,
   ): Promise<Bid> {
     // Validar dados de entrada com Zod
     const result = createBidSchema.safeParse(body);
@@ -105,6 +114,40 @@ export class BidController {
   }
 
   /**
+   * Busca histórico de alterações de uma licitação
+   * GET /bids/:id/history
+   * 
+   * Retorna todas as alterações (criação, edições, exclusões) feitas na licitação,
+   * incluindo informações do usuário que realizou cada alteração.
+   * 
+   * Query params:
+   * - page: número da página (default: 1)
+   * - limit: itens por página (default: 20, max: 100)
+   * 
+   * Permissão: ADMIN e COLABORADOR
+   */
+  @Get(":id/history")
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  async getHistory(
+    @Param("id") id: string,
+    @Tenant() empresaId: string,
+    @Query("page") page?: string,
+    @Query("limit") limit?: string,
+  ) {
+    // Validar que a licitação existe e pertence ao tenant
+    await this.bidService.findOne(id, empresaId);
+
+    // Buscar histórico de alterações
+    return this.auditLogService.getResourceHistory(
+      id,
+      "Bid",
+      empresaId,
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+    );
+  }
+
+  /**
    * Busca uma licitação específica por ID
    * GET /bids/:id
    * 
@@ -127,10 +170,13 @@ export class BidController {
    */
   @Patch(":id")
   @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  @Audit({ action: "bid.update", resourceType: "Bid", captureResourceId: true })
   async update(
     @Param("id") id: string,
     @Body() body: unknown,
     @Tenant() empresaId: string,
+    @CurrentUser() _user: User,
+    @Req() _request: Request,
   ): Promise<Bid> {
     // Validar dados de entrada com Zod
     const result = updateBidSchema.safeParse(body);
