@@ -49,3 +49,6 @@ next-env.d.ts
 # Turbo
 .turbo/
 
+# Uploads
+uploads/
+apps/api/uploads/

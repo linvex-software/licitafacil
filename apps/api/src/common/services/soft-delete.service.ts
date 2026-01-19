@@ -5,7 +5,7 @@ import { AuditLogService } from "../../audit-log/audit-log.service";
 /**
  * Tipos de recursos que podem ser deletados via soft delete
  */
-export type SoftDeletableResource = "user" | "empresa" | "bid";
+export type SoftDeletableResource = "user" | "empresa" | "bid" | "document";
 
 /**
  * Interface para metadata sanitizada do recurso deletado
@@ -39,6 +39,7 @@ export class SoftDeleteService {
       user: "User",
       empresa: "Empresa",
       bid: "Bid",
+      document: "Document",
     };
     return mapping[resource];
   }

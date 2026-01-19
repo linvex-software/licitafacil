@@ -24,6 +24,8 @@ model Empresa {
   bids      Bid[]
   // Relacionamento: Uma empresa tem muitos logs de auditoria
   auditLogs AuditLog[]
+  // Relacionamento: Uma empresa tem muitos documentos
+  documents Document[]
 
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("empresas")
@@ -51,6 +53,8 @@ model User {
   empresa   Empresa    @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   // Relacionamento: Um usuário pode ter vários logs de auditoria
   auditLogs AuditLog[]
+  // Relacionamento: Um usuário pode fazer upload de vários documentos
+  uploadedDocuments Document[]
 
   @@index([email])
   @@index([empresaId])
@@ -107,4 +111,33 @@ model AuditLog {
   @@index([empresaId, resourceType, resourceId]) // Consultas por recurso
   @@index([userId]) // Consultas por usuário
   @@map("audit_logs")
+}
+
+// Entidade Document (Documento)
+model Document {
+  id         String   @id @default(uuid())
+  empresaId  String   // Multi-tenancy: isolamento por empresa
+  name       String   // Nome original do arquivo
+  filename   String   // Nome do arquivo no servidor (com extensão)
+  mimeType   String   // Tipo MIME (ex: application/pdf)
+  size       Int      // Tamanho em bytes
+  category   String   // Categoria do documento
+  url        String   // Caminho relativo do arquivo armazenado
+  uploadedBy String   // ID do usuário que fez upload
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime? // Soft delete: quando não null, registro está deletado
+
+  // Relacionamento: Um documento pertence a uma empresa
+  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  // Relacionamento: Um documento foi enviado por um usuário
+  uploader  User    @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+
+  @@index([empresaId])
+  @@index([empresaId, category]) // Consultas por empresa e categoria
+  @@index([empresaId, deletedAt]) // Índice composto para queries de tenant + soft delete
+  @@index([uploadedBy])
+  @@index([createdAt])
+  @@index([deletedAt]) // Otimizar queries que filtram deletados
+  @@map("documents")
 }
