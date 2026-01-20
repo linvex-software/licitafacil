@@ -32,6 +32,7 @@ import {
   createDocumentSchema,
   updateDocumentSchema,
   type Document,
+  type UpdateDocumentInput,
   type User,
   UserRole,
   ALLOWED_MIME_TYPES,
@@ -117,7 +118,14 @@ export class DocumentController {
   @Audit({ action: "document.create", resourceType: "Document" })
   async create(
     @UploadedFile() file: any,
-    @Body() body: { name?: string; category?: string; documentId?: string },
+    @Body() body: {
+      name?: string;
+      category?: string;
+      documentId?: string;
+      doesExpire?: string | boolean; // string (form-data) ou boolean
+      issuedAt?: string;
+      expiresAt?: string;
+    },
     @Tenant() empresaId: string,
     @CurrentUser() user: User,
     @Req() _request: Request,
@@ -149,10 +157,36 @@ export class DocumentController {
       return document;
     }
 
+    // Preparar dados de validade (converter string para boolean se necessário)
+    const validityData: {
+      doesExpire?: boolean;
+      issuedAt?: string | null;
+      expiresAt?: string | null;
+    } = {};
+
+    if (body.doesExpire !== undefined) {
+      // body.doesExpire pode ser string (form-data) ou boolean
+      const doesExpireValue = body.doesExpire;
+      validityData.doesExpire =
+        doesExpireValue === "true" ||
+        doesExpireValue === true ||
+        doesExpireValue === "1" ||
+        (typeof doesExpireValue === "string" && doesExpireValue.toLowerCase() === "true");
+    }
+
+    if (body.issuedAt !== undefined) {
+      validityData.issuedAt = body.issuedAt || null;
+    }
+
+    if (body.expiresAt !== undefined) {
+      validityData.expiresAt = body.expiresAt || null;
+    }
+
     // Validar dados de entrada com Zod (apenas para novo documento)
     const result = createDocumentSchema.safeParse({
       name: body.name,
       category: body.category,
+      ...validityData,
     });
 
     if (!result.success) {
@@ -192,6 +226,10 @@ export class DocumentController {
    * - limit: itens por página (default: 20, max: 100)
    * - category: filtrar por categoria
    * - search: buscar por nome
+   * - status: filtrar por status de validade (VALID, EXPIRING_SOON, EXPIRED, NO_EXPIRATION)
+   * - expiresBefore: filtrar documentos que expiram antes desta data (ISO datetime)
+   * - expiresAfter: filtrar documentos que expiram depois desta data (ISO datetime)
+   * - expiringDays: filtrar documentos expirando em até N dias
    *
    * Permissão: ADMIN e COLABORADOR
    */
@@ -202,6 +240,10 @@ export class DocumentController {
     @Query("limit") limit?: string,
     @Query("category") category?: string,
     @Query("search") search?: string,
+    @Query("status") status?: "VALID" | "EXPIRING_SOON" | "EXPIRED" | "NO_EXPIRATION",
+    @Query("expiresBefore") expiresBefore?: string,
+    @Query("expiresAfter") expiresAfter?: string,
+    @Query("expiringDays") expiringDays?: string,
     @Tenant() empresaId?: string,
   ) {
     if (!empresaId) {
@@ -212,9 +254,40 @@ export class DocumentController {
       empresaId,
       category,
       search,
+      status,
+      expiresBefore,
+      expiresAfter,
+      expiringDays: expiringDays ? parseInt(expiringDays, 10) : undefined,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     });
+  }
+
+  /**
+   * Lista documentos expirando em até N dias
+   * GET /documents/expiring?days=30
+   *
+   * Query params:
+   * - days: número de dias (default: 30)
+   *
+   * Permissão: ADMIN e COLABORADOR
+   */
+  @Get("expiring")
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  async findExpiring(
+    @Query("days") days?: string,
+    @Tenant() empresaId?: string,
+  ) {
+    if (!empresaId) {
+      throw new BadRequestException("Empresa não encontrada");
+    }
+
+    const daysNum = days ? parseInt(days, 10) : 30;
+    if (isNaN(daysNum) || daysNum < 1) {
+      throw new BadRequestException("days deve ser um número positivo");
+    }
+
+    return this.documentService.findExpiring(empresaId, daysNum);
   }
 
   /**
@@ -275,8 +348,11 @@ export class DocumentController {
   }
 
   /**
-   * Atualiza um documento (apenas metadados)
+   * Atualiza um documento (apenas metadados, incluindo campos de validade)
    * PATCH /documents/:id
+   *
+   * Campos de validade (doesExpire, issuedAt, expiresAt) são auditados automaticamente
+   * quando alterados.
    *
    * Permissão: ADMIN e COLABORADOR
    */
@@ -287,8 +363,8 @@ export class DocumentController {
     @Param("id") id: string,
     @Body() body: unknown,
     @Tenant() empresaId: string,
-    @CurrentUser() _user: User,
-    @Req() _request: Request,
+    @CurrentUser() user: User,
+    @Req() request: Request,
   ): Promise<Document> {
     // Validar dados de entrada com Zod
     const result = updateDocumentSchema.safeParse(body);
@@ -300,7 +376,50 @@ export class DocumentController {
       });
     }
 
-    return this.documentService.update(id, result.data, empresaId);
+    // Buscar documento existente para comparar mudanças em validade
+    const existingDocument = await this.documentService.findOne(id, empresaId);
+
+    // Atualizar documento
+    const updatedDocument = await this.documentService.update(id, result.data, empresaId);
+
+    // Registrar audit log específico para mudanças em campos de validade
+    // Acessar campos de validade do patch (podem estar undefined)
+    const patchData = result.data as UpdateDocumentInput & {
+      doesExpire?: boolean;
+      issuedAt?: string | null;
+      expiresAt?: string | null;
+    };
+
+    const validityFieldsChanged =
+      (patchData.doesExpire !== undefined && patchData.doesExpire !== existingDocument.doesExpire) ||
+      (patchData.issuedAt !== undefined && patchData.issuedAt !== existingDocument.issuedAt) ||
+      (patchData.expiresAt !== undefined && patchData.expiresAt !== existingDocument.expiresAt);
+
+    if (validityFieldsChanged) {
+      await this.auditLogService.record({
+        empresaId,
+        userId: user.id,
+        action: "document.validity.update",
+        resourceType: "Document",
+        resourceId: id,
+        metadata: {
+          previous: {
+            doesExpire: existingDocument.doesExpire,
+            issuedAt: existingDocument.issuedAt,
+            expiresAt: existingDocument.expiresAt,
+          },
+          current: {
+            doesExpire: updatedDocument.doesExpire,
+            issuedAt: updatedDocument.issuedAt,
+            expiresAt: updatedDocument.expiresAt,
+          },
+        },
+        ip: (request as any).ip || (request as any).connection?.remoteAddress || null,
+        userAgent: (request as any).headers?.["user-agent"] || null,
+      });
+    }
+
+    return updatedDocument;
   }
 
   /**
