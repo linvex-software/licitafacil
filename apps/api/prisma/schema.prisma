@@ -28,6 +28,8 @@ model Empresa {
   documents        Document[]
   // Relacionamento: Uma empresa tem muitas versões de documentos
   documentVersions DocumentVersion[]
+  // Relacionamento: Uma empresa tem muitos templates de checklist
+  checklistTemplates ChecklistTemplate[]
 
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("empresas")
@@ -59,6 +61,8 @@ model User {
   uploadedDocuments        Document[]
   // Relacionamento: Um usuário pode fazer upload de várias versões de documentos
   uploadedDocumentVersions DocumentVersion[]
+  // Relacionamento: Um usuário pode criar vários templates de checklist
+  createdChecklistTemplates ChecklistTemplate[]
 
   @@index([email])
   @@index([empresaId])
@@ -194,4 +198,34 @@ model DocumentVersion {
   @@index([uploadedBy]) // Consultas por usuário que fez upload
   @@index([createdAt]) // Consultas ordenadas por data
   @@map("document_versions")
+}
+
+// Entidade ChecklistTemplate (Template de Checklist)
+model ChecklistTemplate {
+  id          String   @id @default(uuid())
+  empresaId   String // Multi-tenancy: isolamento por empresa
+  modality    String // Modalidade da licitação (PREGAO_ELETRONICO, CONCORRENCIA, DISPENSA, OUTRA)
+  name        String // Nome do template (ex: "Template Padrão - Pregão Eletrônico")
+  description String? // Descrição opcional do template
+  items       Json // Array de itens do checklist em JSON
+  isActive    Boolean  @default(true) // Se o template está ativo
+  isDefault   Boolean  @default(false) // Se é o template padrão para a modalidade
+  createdBy   String // ID do usuário que criou o template
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime? // Soft delete: quando não null, registro está deletado
+
+  // Relacionamento: Um template pertence a uma empresa
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  // Relacionamento: Um template foi criado por um usuário
+  creator User @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@index([empresaId])
+  @@index([empresaId, modality]) // Consultas por empresa e modalidade
+  @@index([empresaId, deletedAt]) // Índice composto para queries de tenant + soft delete
+  @@index([empresaId, modality, isActive]) // Consultas por empresa, modalidade e status ativo
+  @@index([empresaId, modality, isDefault]) // Consultas por empresa, modalidade e padrão
+  @@index([createdBy])
+  @@index([deletedAt]) // Otimizar queries que filtram deletados
+  @@map("checklist_templates")
 }

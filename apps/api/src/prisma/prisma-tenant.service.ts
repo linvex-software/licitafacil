@@ -434,6 +434,75 @@ export class PrismaTenantService {
             );
           },
         },
+        checklistTemplate: {
+          async findMany({ args, query }) {
+            args.where = addTenantAndSoftDeleteFilter(args?.where);
+            return query(args);
+          },
+          async findFirst({ args, query }) {
+            args.where = addTenantAndSoftDeleteFilter(args?.where);
+            return query(args);
+          },
+          async findUnique({ args, query }) {
+            // findUnique usa where ou id direto
+            const result = await query(args);
+            // Verificar se o resultado pertence ao tenant e não está deletado
+            if (!result || result.empresaId !== empresaId || result.deletedAt !== null) {
+              return null;
+            }
+            return result;
+          },
+          async create({ args, query }) {
+            if (args?.data) {
+              // Garantir empresaId sem conflitar com relacionamento 'empresa'
+              const data = args.data as any;
+              if (!data.empresaId) {
+                data.empresaId = empresaId;
+              }
+              // Garantir que deletedAt seja null ao criar
+              data.deletedAt = null;
+              // Remover relacionamentos se existirem (usar IDs diretos)
+              if (data.empresa) {
+                delete data.empresa;
+              }
+              if (data.creator) {
+                delete data.creator;
+              }
+              args.data = data;
+            }
+            return query(args);
+          },
+          async update({ args, query }) {
+            // Para update, não podemos modificar o where (precisa ser unique)
+            // Então fazemos a query e validamos o resultado
+            const result = await query(args);
+            if (!result || result.empresaId !== empresaId || result.deletedAt !== null) {
+              return null;
+            }
+            return result;
+          },
+          async updateMany({ args, query }) {
+            args.where = addTenantAndSoftDeleteFilter(args?.where);
+            return query(args);
+          },
+          async delete({ args: _args, query: _query }) {
+            // Hard delete não permitido via tenant service
+            // Usar SoftDeleteService para soft delete
+            throw new Error(
+              "Hard delete não é permitido. Use SoftDeleteService para realizar soft delete.",
+            );
+          },
+          async deleteMany({ args: _args, query: _query }) {
+            // Hard delete não permitido via tenant service
+            throw new Error(
+              "Hard delete não é permitido. Use SoftDeleteService para realizar soft delete.",
+            );
+          },
+          async count({ args, query }) {
+            args.where = addTenantAndSoftDeleteFilter(args?.where);
+            return query(args);
+          },
+        },
       },
     });
   }
