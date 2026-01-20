@@ -36,6 +36,7 @@ import {
   UserRole,
   ALLOWED_MIME_TYPES,
   MAX_FILE_SIZE,
+  DocumentCategory,
 } from "@licitafacil/shared";
 import * as fs from "fs/promises";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -84,7 +85,7 @@ const multerOptions = {
 
 /**
  * Controller para gerenciar documentos
- * 
+ *
  * Todos os endpoints requerem autenticação e isolamento por tenant
  */
 @Controller("documents")
@@ -98,14 +99,15 @@ export class DocumentController {
   ) {}
 
   /**
-   * Faz upload de um novo documento
+   * Faz upload de um novo documento ou cria nova versão
    * POST /documents
-   * 
+   *
    * Body: multipart/form-data
    * - file: arquivo (obrigatório)
-   * - name: nome do documento (obrigatório)
-   * - category: categoria do documento (obrigatório)
-   * 
+   * - name: nome do documento (obrigatório, apenas para novo documento)
+   * - category: categoria do documento (obrigatório, apenas para novo documento)
+   * - documentId: ID do documento existente (opcional, se fornecido cria nova versão)
+   *
    * Permissão: ADMIN e COLABORADOR
    */
   @Post()
@@ -115,7 +117,7 @@ export class DocumentController {
   @Audit({ action: "document.create", resourceType: "Document" })
   async create(
     @UploadedFile() file: any,
-    @Body() body: { name?: string; category?: string },
+    @Body() body: { name?: string; category?: string; documentId?: string },
     @Tenant() empresaId: string,
     @CurrentUser() user: User,
     @Req() _request: Request,
@@ -124,7 +126,30 @@ export class DocumentController {
       throw new BadRequestException("Arquivo é obrigatório");
     }
 
-    // Validar dados de entrada com Zod
+    // Se documentId foi fornecido, criar nova versão (não precisa validar name/category)
+    if (body.documentId) {
+      // Converter arquivo do Multer para interface do serviço
+      const uploadedFile = {
+        fieldname: file.fieldname,
+        originalname: file.originalname,
+        encoding: file.encoding,
+        mimetype: file.mimetype,
+        size: file.size,
+        buffer: file.buffer,
+      };
+
+      const document = await this.documentService.create(
+        uploadedFile,
+        { name: "temp", category: DocumentCategory.OUTROS }, // Não usado quando documentId é fornecido
+        empresaId,
+        user.id,
+        body.documentId,
+      );
+
+      return document;
+    }
+
+    // Validar dados de entrada com Zod (apenas para novo documento)
     const result = createDocumentSchema.safeParse({
       name: body.name,
       category: body.category,
@@ -161,13 +186,13 @@ export class DocumentController {
   /**
    * Lista documentos com filtros e paginação
    * GET /documents
-   * 
+   *
    * Query params:
    * - page: número da página (default: 1)
    * - limit: itens por página (default: 20, max: 100)
    * - category: filtrar por categoria
    * - search: buscar por nome
-   * 
+   *
    * Permissão: ADMIN e COLABORADOR
    */
   @Get()
@@ -195,7 +220,7 @@ export class DocumentController {
   /**
    * Busca um documento por ID
    * GET /documents/:id
-   * 
+   *
    * Permissão: ADMIN e COLABORADOR
    */
   @Get(":id")
@@ -207,7 +232,7 @@ export class DocumentController {
   /**
    * Faz download de um documento
    * GET /documents/:id/download
-   * 
+   *
    * Permissão: ADMIN e COLABORADOR
    */
   @Get(":id/download")
@@ -252,7 +277,7 @@ export class DocumentController {
   /**
    * Atualiza um documento (apenas metadados)
    * PATCH /documents/:id
-   * 
+   *
    * Permissão: ADMIN e COLABORADOR
    */
   @Patch(":id")
@@ -281,7 +306,7 @@ export class DocumentController {
   /**
    * Remove um documento (soft delete)
    * DELETE /documents/:id
-   * 
+   *
    * Permissão: Apenas ADMIN
    */
   @Delete(":id")
@@ -303,7 +328,7 @@ export class DocumentController {
   /**
    * Restaura um documento deletado (soft delete)
    * POST /documents/:id/restore
-   * 
+   *
    * Permissão: Apenas ADMIN
    */
   @Post(":id/restore")
@@ -322,5 +347,64 @@ export class DocumentController {
       message: "Documento restaurado com sucesso",
       id,
     };
+  }
+
+  /**
+   * Lista todas as versões de um documento
+   * GET /documents/:id/versions
+   *
+   * Permissão: ADMIN e COLABORADOR
+   */
+  @Get(":id/versions")
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  async getVersions(@Param("id") id: string, @Tenant() empresaId: string) {
+    return this.documentService.getVersions(id, empresaId);
+  }
+
+  /**
+   * Busca uma versão específica de um documento
+   * GET /documents/:id/versions/:versionNumber
+   *
+   * Permissão: ADMIN e COLABORADOR
+   */
+  @Get(":id/versions/:versionNumber")
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  async getVersion(
+    @Param("id") id: string,
+    @Param("versionNumber") versionNumber: string,
+    @Tenant() empresaId: string,
+  ) {
+    const versionNum = parseInt(versionNumber, 10);
+    if (isNaN(versionNum) || versionNum < 1) {
+      throw new BadRequestException("Número de versão inválido");
+    }
+    return this.documentService.getVersion(id, versionNum, empresaId);
+  }
+
+  /**
+   * Restaura uma versão anterior de um documento
+   * POST /documents/:id/versions/:versionNumber/restore
+   *
+   * Permissão: Apenas ADMIN
+   */
+  @Post(":id/versions/:versionNumber/restore")
+  @HttpCode(HttpStatus.OK)
+  @Roles(UserRole.ADMIN)
+  @Audit({
+    action: "document.version.restore",
+    captureResourceId: true,
+    resourceType: "DocumentVersion",
+  })
+  async restoreVersion(
+    @Param("id") id: string,
+    @Param("versionNumber") versionNumber: string,
+    @Tenant() empresaId: string,
+    @CurrentUser() user: User,
+  ): Promise<Document> {
+    const versionNum = parseInt(versionNumber, 10);
+    if (isNaN(versionNum) || versionNum < 1) {
+      throw new BadRequestException("Número de versão inválido");
+    }
+    return this.documentService.restoreVersion(id, versionNum, empresaId, user.id);
   }
 }

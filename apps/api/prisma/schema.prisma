@@ -12,20 +12,22 @@ datasource db {
 
 // Entidade Empresa (Tenant)
 model Empresa {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime? // Soft delete: quando não null, registro está deletado
 
   // Relacionamento: Uma empresa tem muitos usuários
-  users     User[]
+  users            User[]
   // Relacionamento: Uma empresa tem muitas licitações
-  bids      Bid[]
+  bids             Bid[]
   // Relacionamento: Uma empresa tem muitos logs de auditoria
-  auditLogs AuditLog[]
+  auditLogs        AuditLog[]
   // Relacionamento: Uma empresa tem muitos documentos
-  documents Document[]
+  documents        Document[]
+  // Relacionamento: Uma empresa tem muitas versões de documentos
+  documentVersions DocumentVersion[]
 
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("empresas")
@@ -39,22 +41,24 @@ enum UserRole {
 
 // Entidade User (Usuário)
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
+  id        String    @id @default(uuid())
+  email     String    @unique
   password  String
   name      String
-  role      UserRole @default(COLABORADOR)
+  role      UserRole  @default(COLABORADOR)
   empresaId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime? // Soft delete: quando não null, registro está deletado
 
   // Relacionamento: Um usuário pertence a uma empresa
-  empresa   Empresa    @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  empresa                  Empresa           @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   // Relacionamento: Um usuário pode ter vários logs de auditoria
-  auditLogs AuditLog[]
+  auditLogs                AuditLog[]
   // Relacionamento: Um usuário pode fazer upload de vários documentos
-  uploadedDocuments Document[]
+  uploadedDocuments        Document[]
+  // Relacionamento: Um usuário pode fazer upload de várias versões de documentos
+  uploadedDocumentVersions DocumentVersion[]
 
   @@index([email])
   @@index([empresaId])
@@ -66,15 +70,15 @@ model User {
 
 // Entidade Bid (Licitação)
 model Bid {
-  id               String   @id @default(uuid())
+  id               String    @id @default(uuid())
   empresaId        String
   title            String
   agency           String
   modality         String
   legalStatus      String
   operationalState String
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
   deletedAt        DateTime? // Soft delete: quando não null, registro está deletado
 
   // Relacionamento: Uma licitação pertence a uma empresa
@@ -115,23 +119,25 @@ model AuditLog {
 
 // Entidade Document (Documento)
 model Document {
-  id         String   @id @default(uuid())
-  empresaId  String   // Multi-tenancy: isolamento por empresa
-  name       String   // Nome original do arquivo
-  filename   String   // Nome do arquivo no servidor (com extensão)
-  mimeType   String   // Tipo MIME (ex: application/pdf)
-  size       Int      // Tamanho em bytes
-  category   String   // Categoria do documento
-  url        String   // Caminho relativo do arquivo armazenado
-  uploadedBy String   // ID do usuário que fez upload
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id         String    @id @default(uuid())
+  empresaId  String // Multi-tenancy: isolamento por empresa
+  name       String // Nome original do arquivo
+  filename   String // Nome do arquivo no servidor (com extensão)
+  mimeType   String // Tipo MIME (ex: application/pdf)
+  size       Int // Tamanho em bytes
+  category   String // Categoria do documento
+  url        String // Caminho relativo do arquivo armazenado
+  uploadedBy String // ID do usuário que fez upload
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
   deletedAt  DateTime? // Soft delete: quando não null, registro está deletado
 
   // Relacionamento: Um documento pertence a uma empresa
-  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  empresa  Empresa           @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   // Relacionamento: Um documento foi enviado por um usuário
-  uploader  User    @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  uploader User              @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  // Relacionamento: Um documento pode ter várias versões
+  versions DocumentVersion[]
 
   @@index([empresaId])
   @@index([empresaId, category]) // Consultas por empresa e categoria
@@ -140,4 +146,37 @@ model Document {
   @@index([createdAt])
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("documents")
+}
+
+// Entidade DocumentVersion (Versão de Documento)
+// Mantém histórico de todas as versões de um documento
+model DocumentVersion {
+  id            String   @id @default(uuid())
+  documentId    String // FK para Document
+  empresaId     String // Multi-tenancy: isolamento por empresa
+  versionNumber Int // Número da versão (1, 2, 3, ...)
+  filename      String // Nome do arquivo no servidor (com extensão)
+  mimeType      String // Tipo MIME (ex: application/pdf)
+  size          Int // Tamanho em bytes
+  url           String // Caminho relativo do arquivo armazenado
+  uploadedBy    String // ID do usuário que fez upload desta versão
+  isCurrent     Boolean  @default(false) // Indica se é a versão atual
+  createdAt     DateTime @default(now()) // Data de criação da versão
+
+  // Relacionamento: Uma versão pertence a um documento
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  // Relacionamento: Uma versão pertence a uma empresa
+  empresa  Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  // Relacionamento: Uma versão foi enviada por um usuário
+  uploader User     @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, versionNumber]) // Garantir que não há versões duplicadas
+  @@index([documentId]) // Consultas por documento
+  @@index([empresaId]) // Consultas por empresa (multi-tenant)
+  @@index([documentId, isCurrent]) // Consultas para encontrar versão atual
+  @@index([documentId, versionNumber(sort: Desc)]) // Consultas ordenadas por versão
+  @@index([empresaId, documentId]) // Consultas por empresa e documento
+  @@index([uploadedBy]) // Consultas por usuário que fez upload
+  @@index([createdAt]) // Consultas ordenadas por data
+  @@map("document_versions")
 }

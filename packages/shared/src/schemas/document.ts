@@ -85,7 +85,31 @@ export const documentSchema = z.object({
   updatedAt: z.string().datetime(),
 });
 
+/**
+ * Schema de validação para DocumentVersion (Versão de Documento)
+ */
+export const documentVersionSchema = z.object({
+  id: z.string().uuid(),
+  documentId: z.string().uuid(),
+  versionNumber: z.number().int().positive(),
+  filename: z.string(),
+  mimeType: z.string(),
+  size: z.number().int().positive(),
+  url: z.string(),
+  uploadedBy: z.string().uuid(),
+  isCurrent: z.boolean(),
+  createdAt: z.string().datetime(),
+  uploader: z
+    .object({
+      id: z.string().uuid(),
+      name: z.string(),
+      email: z.string(),
+    })
+    .optional(),
+});
+
 export type Document = z.infer<typeof documentSchema>;
 export type CreateDocumentInput = z.infer<typeof createDocumentSchema>;
 export type UpdateDocumentInput = z.infer<typeof updateDocumentSchema>;
+export type DocumentVersion = z.infer<typeof documentVersionSchema>;
 export type DocumentCategoryType = keyof typeof DocumentCategory;

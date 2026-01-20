@@ -5,6 +5,7 @@ import { type Document, DocumentCategory } from "@licitafacil/shared";
 import { fetchDocuments, downloadDocument, deleteDocument } from "@/lib/api";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent } from "@/components/ui/Card";
+import { DocumentVersions } from "./DocumentVersions";
 
 interface DocumentsListProps {
   bidId?: string; // Mantido para compatibilidade futura, pode ser usado para filtrar por licitação
@@ -55,6 +56,7 @@ export function DocumentsList({ bidId: _bidId, onError }: DocumentsListProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [expandedDocument, setExpandedDocument] = useState<string | null>(null);
 
   const loadDocuments = async () => {
     setIsLoading(true);
@@ -204,6 +206,15 @@ export function DocumentsList({ bidId: _bidId, onError }: DocumentsListProps) {
                         📥 Download
                       </button>
                       <button
+                        onClick={() =>
+                          setExpandedDocument(expandedDocument === doc.id ? null : doc.id)
+                        }
+                        className="px-3 py-1.5 text-sm bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700
+                          text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors"
+                      >
+                        {expandedDocument === doc.id ? "🔼 Ocultar" : "📋 Versões"}
+                      </button>
+                      <button
                         onClick={() => handleDelete(doc.id)}
                         disabled={isDeleting === doc.id}
                         className="px-3 py-1.5 text-sm bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30
@@ -214,6 +225,18 @@ export function DocumentsList({ bidId: _bidId, onError }: DocumentsListProps) {
                       </button>
                     </div>
                   </div>
+                  {expandedDocument === doc.id && (
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <DocumentVersions
+                        documentId={doc.id}
+                        onError={onError}
+                        onVersionRestored={() => {
+                          loadDocuments();
+                          setExpandedDocument(null);
+                        }}
+                      />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
