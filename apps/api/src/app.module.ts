@@ -11,6 +11,7 @@ import { CommonModule } from "./common/common.module";
 import { BidModule } from "./bid/bid.module";
 import { DocumentModule } from "./document/document.module";
 import { ChecklistTemplateModule } from "./checklist-template/checklist-template.module";
+import { ChecklistItemModule } from "./checklist-item/checklist-item.module";
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { ChecklistTemplateModule } from "./checklist-template/checklist-template
     BidModule,
     DocumentModule,
     ChecklistTemplateModule,
+    ChecklistItemModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],
