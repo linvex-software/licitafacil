@@ -113,6 +113,7 @@ export const createDocumentSchema = z
       DocumentCategory.ADMINISTRATIVO,
       DocumentCategory.OUTROS,
     ]),
+    bidId: z.string().uuid().optional().nullable(), // Opcional: vincular a uma licitação
   })
   .merge(documentValidityBaseSchema.partial())
   .superRefine((data, ctx) => {
@@ -186,6 +187,7 @@ export const updateDocumentSchema = z
         DocumentCategory.OUTROS,
       ])
       .optional(),
+    bidId: z.string().uuid().optional().nullable(), // Opcional: vincular/desvincular de licitação
   })
   .merge(documentValidityPatchSchema);
 
@@ -215,6 +217,8 @@ export const documentSchema = z.object({
   uploadedBy: z.string().uuid(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
+  // Associação com licitação (opcional)
+  bidId: z.string().uuid().nullable(),
   // Campos de validade
   doesExpire: z.boolean(),
   issuedAt: z.string().datetime().nullable(),

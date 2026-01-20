@@ -255,9 +255,15 @@ export class PrismaTenantService {
               }
               // Garantir que deletedAt seja null ao criar
               data.deletedAt = null;
-              // Remover relacionamento se existir (usar empresaId direto)
+              // Remover relacionamentos se existirem (usar IDs diretos)
               if (data.empresa) {
                 delete data.empresa;
+              }
+              if (data.uploader) {
+                delete data.uploader;
+              }
+              if (data.bid) {
+                delete data.bid;
               }
               args.data = data;
             }

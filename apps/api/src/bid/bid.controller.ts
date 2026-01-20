@@ -15,6 +15,7 @@ import {
   Req,
 } from "@nestjs/common";
 import { BidService } from "./bid.service";
+import { DocumentService } from "../document/document.service";
 import { SoftDeleteService } from "../common/services/soft-delete.service";
 import { AuditLogService } from "../audit-log/audit-log.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
@@ -44,6 +45,7 @@ import type { Request } from "express";
 export class BidController {
   constructor(
     private readonly bidService: BidService,
+    private readonly documentService: DocumentService,
     private readonly softDeleteService: SoftDeleteService,
     private readonly auditLogService: AuditLogService,
   ) {}
@@ -109,6 +111,44 @@ export class BidController {
       modality,
       legalStatus,
       operationalState,
+      search,
+    });
+  }
+
+  /**
+   * Lista documentos vinculados a uma licitação
+   * GET /bids/:id/documents
+   * 
+   * Retorna todos os documentos associados à licitação.
+   * 
+   * Query params:
+   * - page: número da página (default: 1)
+   * - limit: itens por página (default: 20, max: 100)
+   * - category: filtrar por categoria
+   * - search: buscar por nome
+   * 
+   * Permissão: ADMIN e COLABORADOR
+   */
+  @Get(":id/documents")
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  async getDocuments(
+    @Param("id") id: string,
+    @Tenant() empresaId: string,
+    @Query("page") page?: string,
+    @Query("limit") limit?: string,
+    @Query("category") category?: string,
+    @Query("search") search?: string,
+  ) {
+    // Validar que a licitação existe e pertence ao tenant
+    await this.bidService.findOne(id, empresaId);
+
+    // Buscar documentos da licitação
+    return this.documentService.findAll({
+      empresaId,
+      bidId: id,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+      category,
       search,
     });
   }

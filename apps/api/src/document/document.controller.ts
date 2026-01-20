@@ -122,6 +122,7 @@ export class DocumentController {
       name?: string;
       category?: string;
       documentId?: string;
+      bidId?: string; // Opcional: vincular a uma licitação
       doesExpire?: string | boolean; // string (form-data) ou boolean
       issuedAt?: string;
       expiresAt?: string;
@@ -186,6 +187,7 @@ export class DocumentController {
     const result = createDocumentSchema.safeParse({
       name: body.name,
       category: body.category,
+      bidId: body.bidId || undefined, // Incluir bidId se fornecido
       ...validityData,
     });
 
@@ -224,6 +226,7 @@ export class DocumentController {
    * Query params:
    * - page: número da página (default: 1)
    * - limit: itens por página (default: 20, max: 100)
+   * - bidId: filtrar por licitação específica
    * - category: filtrar por categoria
    * - search: buscar por nome
    * - status: filtrar por status de validade (VALID, EXPIRING_SOON, EXPIRED, NO_EXPIRATION)
@@ -238,6 +241,7 @@ export class DocumentController {
   async findAll(
     @Query("page") page?: string,
     @Query("limit") limit?: string,
+    @Query("bidId") bidId?: string,
     @Query("category") category?: string,
     @Query("search") search?: string,
     @Query("status") status?: "VALID" | "EXPIRING_SOON" | "EXPIRED" | "NO_EXPIRATION",
@@ -252,6 +256,7 @@ export class DocumentController {
 
     return this.documentService.findAll({
       empresaId,
+      bidId,
       category,
       search,
       status,
@@ -525,5 +530,88 @@ export class DocumentController {
       throw new BadRequestException("Número de versão inválido");
     }
     return this.documentService.restoreVersion(id, versionNum, empresaId, user.id);
+  }
+
+  /**
+   * Vincula um documento a uma licitação
+   * POST /documents/:id/attach
+   *
+   * Body:
+   * - bidId: ID da licitação para vincular
+   *
+   * Permissão: ADMIN e COLABORADOR
+   */
+  @Post(":id/attach")
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  @Audit({ action: "document.attach", captureResourceId: true, resourceType: "Document" })
+  async attach(
+    @Param("id") id: string,
+    @Body() body: { bidId: string },
+    @Tenant() empresaId: string,
+    @CurrentUser() user: User,
+    @Req() request: Request,
+  ): Promise<Document> {
+    if (!body.bidId) {
+      throw new BadRequestException("bidId é obrigatório");
+    }
+
+    const document = await this.documentService.attachToBid(id, body.bidId, empresaId);
+
+    // Registrar auditoria específica
+    await this.auditLogService.record({
+      empresaId,
+      userId: user.id,
+      action: "document.attach",
+      resourceType: "Document",
+      resourceId: document.id,
+      metadata: {
+        bidId: body.bidId,
+        documentId: document.id,
+        documentName: document.name,
+      },
+      ip: (request as any).ip || (request as any).connection?.remoteAddress || null,
+      userAgent: (request as any).headers?.["user-agent"] || null,
+    });
+
+    return document;
+  }
+
+  /**
+   * Desvincula um documento de uma licitação
+   * POST /documents/:id/detach
+   *
+   * Permissão: ADMIN e COLABORADOR
+   */
+  @Post(":id/detach")
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  @Audit({ action: "document.detach", captureResourceId: true, resourceType: "Document" })
+  async detach(
+    @Param("id") id: string,
+    @Tenant() empresaId: string,
+    @CurrentUser() user: User,
+    @Req() request: Request,
+  ): Promise<Document> {
+    // Buscar documento antes de desvincular para registrar bidId anterior no audit
+    const documentBefore = await this.documentService.findOne(id, empresaId);
+
+    const document = await this.documentService.detachFromBid(id, empresaId);
+
+    // Registrar auditoria específica
+    await this.auditLogService.record({
+      empresaId,
+      userId: user.id,
+      action: "document.detach",
+      resourceType: "Document",
+      resourceId: document.id,
+      metadata: {
+        previousBidId: documentBefore.bidId || null,
+        documentId: document.id,
+        documentName: document.name,
+      },
+      ip: (request as any).ip || (request as any).connection?.remoteAddress || null,
+      userAgent: (request as any).headers?.["user-agent"] || null,
+    });
+
+    return document;
   }
 }

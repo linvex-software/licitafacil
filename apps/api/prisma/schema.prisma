@@ -83,6 +83,8 @@ model Bid {
 
   // Relacionamento: Uma licitação pertence a uma empresa
   empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  // Relacionamento: Uma licitação pode ter vários documentos
+  documents Document[]
 
   @@index([empresaId])
   @@index([createdAt])
@@ -137,10 +139,15 @@ model Document {
   issuedAt   DateTime? // Data de emissão do documento (opcional)
   expiresAt  DateTime? // Data de vencimento do documento (opcional, obrigatório se doesExpire=true)
 
+  // Associação opcional com licitação
+  bidId String? // Opcional: associação com licitação específica
+
   // Relacionamento: Um documento pertence a uma empresa
-  empresa  Empresa           @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   // Relacionamento: Um documento foi enviado por um usuário
-  uploader User              @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  uploader User @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  // Relacionamento: Um documento pode estar associado a uma licitação (opcional)
+  bid Bid? @relation(fields: [bidId], references: [id], onDelete: SetNull)
   // Relacionamento: Um documento pode ter várias versões
   versions DocumentVersion[]
 
@@ -148,7 +155,9 @@ model Document {
   @@index([empresaId, category]) // Consultas por empresa e categoria
   @@index([empresaId, deletedAt]) // Índice composto para queries de tenant + soft delete
   @@index([empresaId, expiresAt]) // Índice composto para consultas de vencimento e dashboard
+  @@index([empresaId, bidId]) // Consultas por empresa e licitação
   @@index([uploadedBy])
+  @@index([bidId]) // Consultas por licitação
   @@index([createdAt])
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("documents")
