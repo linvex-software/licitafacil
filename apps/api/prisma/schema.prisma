@@ -30,6 +30,8 @@ model Empresa {
   documentVersions DocumentVersion[]
   // Relacionamento: Uma empresa tem muitos templates de checklist
   checklistTemplates ChecklistTemplate[]
+  // Relacionamento: Uma empresa tem muitos itens de checklist
+  checklistItems ChecklistItem[]
 
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("empresas")
@@ -63,6 +65,8 @@ model User {
   uploadedDocumentVersions DocumentVersion[]
   // Relacionamento: Um usuário pode criar vários templates de checklist
   createdChecklistTemplates ChecklistTemplate[]
+  // Relacionamento: Um usuário pode concluir vários itens de checklist
+  checklistItemsConcluidos ChecklistItem[]
 
   @@index([email])
   @@index([empresaId])
@@ -89,6 +93,8 @@ model Bid {
   empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   // Relacionamento: Uma licitação pode ter vários documentos
   documents Document[]
+  // Relacionamento: Uma licitação pode ter vários itens de checklist
+  checklistItems ChecklistItem[]
 
   @@index([empresaId])
   @@index([createdAt])
@@ -154,6 +160,8 @@ model Document {
   bid Bid? @relation(fields: [bidId], references: [id], onDelete: SetNull)
   // Relacionamento: Um documento pode ter várias versões
   versions DocumentVersion[]
+  // Relacionamento: Um documento pode ser evidência de um item de checklist
+  checklistItemEvidencia ChecklistItem?
 
   @@index([empresaId])
   @@index([empresaId, category]) // Consultas por empresa e categoria
@@ -228,4 +236,40 @@ model ChecklistTemplate {
   @@index([createdBy])
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("checklist_templates")
+}
+
+// Entidade ChecklistItem (Item de Checklist de Licitação)
+// Representa uma tarefa específica do checklist de uma licitação
+model ChecklistItem {
+  id              String    @id @default(uuid())
+  empresaId       String // Multi-tenancy: isolamento por empresa
+  licitacaoId     String // ID da licitação
+  titulo          String // Título do item
+  descricao       String? // Descrição opcional
+  exigeEvidencia  Boolean   @default(false) // Se requer evidência (documento)
+  concluido       Boolean   @default(false) // Se foi concluído
+  concluidoPor    String? // ID do usuário que concluiu
+  concluidoEm     DateTime? // Data/hora da conclusão
+  evidenciaId     String?   @unique // ID do documento usado como evidência (exclusivo)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime? // Soft delete: quando não null, registro está deletado
+
+  // Relacionamento: Um item pertence a uma empresa
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  // Relacionamento: Um item pertence a uma licitação
+  licitacao Bid @relation(fields: [licitacaoId], references: [id], onDelete: Cascade)
+  // Relacionamento: Um item pode ter sido concluído por um usuário
+  concluidoPorUser User? @relation(fields: [concluidoPor], references: [id], onDelete: SetNull)
+  // Relacionamento: Um item pode ter um documento como evidência
+  evidencia Document? @relation(fields: [evidenciaId], references: [id], onDelete: SetNull)
+
+  @@index([empresaId])
+  @@index([empresaId, licitacaoId]) // Consultas por empresa e licitação
+  @@index([empresaId, deletedAt]) // Índice composto para queries de tenant + soft delete
+  @@index([licitacaoId]) // Consultas por licitação
+  @@index([concluidoPor]) // Consultas por usuário que concluiu
+  @@index([evidenciaId]) // Consultas por evidência
+  @@index([deletedAt]) // Otimizar queries que filtram deletados
+  @@map("checklist_items")
 }
