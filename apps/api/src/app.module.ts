@@ -10,6 +10,7 @@ import { AuditLogModule } from "./audit-log/audit-log.module";
 import { CommonModule } from "./common/common.module";
 import { BidModule } from "./bid/bid.module";
 import { DocumentModule } from "./document/document.module";
+import { ChecklistTemplateModule } from "./checklist-template/checklist-template.module";
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { DocumentModule } from "./document/document.module";
     CommonModule,
     BidModule,
     DocumentModule,
+    ChecklistTemplateModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],
