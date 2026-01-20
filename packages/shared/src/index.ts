@@ -5,6 +5,7 @@ export * from "./schemas/empresa";
 export * from "./schemas/user";
 export * from "./schemas/document";
 export * from "./schemas/checklist-template";
+export * from "./schemas/checklist-item";
 
 // Enums
 export * from "./enums/user-role.enum";
