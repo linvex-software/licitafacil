@@ -28,12 +28,12 @@ export const EXPIRING_SOON_DAYS = parseInt(
 
 /**
  * Obtém a data/hora atual em UTC
- * 
+ *
  * DECISÃO TÉCNICA: Backend opera exclusivamente em UTC
  * - Todas as comparações de validade usam UTC
  * - expiresAt armazenado no banco em UTC (PostgreSQL TIMESTAMP)
  * - Documento é considerado vencido quando: expiresAt <= getNowUTC()
- * 
+ *
  * Garante consistência de timezone em todas as comparações
  */
 export function getNowUTC(): Date {

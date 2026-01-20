@@ -1,6 +1,6 @@
 /**
  * Testes obrigatórios para validação de validade de documentos no DocumentService
- * 
+ *
  * Cobre casos críticos de produção:
  * - PATCH parcial não deixa documento em estado inválido
  * - Coerência doesExpire/expiresAt
