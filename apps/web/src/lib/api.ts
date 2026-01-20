@@ -4,6 +4,9 @@ import type {
   DocumentVersion,
   CreateDocumentInput,
   UpdateDocumentInput,
+  LicitacaoChecklistItem,
+  CreateLicitacaoChecklistItemInput,
+  UpdateLicitacaoChecklistItemInput,
 } from "@licitafacil/shared";
 import { getAuthHeaders, getToken } from "./auth";
 
@@ -310,6 +313,104 @@ export async function restoreDocumentVersion(
       headers: getAuthHeaders(),
     },
   );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: response.statusText }));
+    throw new Error(error.message || `API retornou ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Busca todos os itens de checklist de uma licitação
+ */
+export async function fetchChecklistItems(licitacaoId: string): Promise<LicitacaoChecklistItem[]> {
+  const response = await fetch(`${API_BASE_URL}/checklist-items/licitacao/${licitacaoId}`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`API retornou ${response.status}: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Cria um novo item de checklist
+ */
+export async function createChecklistItem(
+  data: CreateLicitacaoChecklistItemInput,
+): Promise<LicitacaoChecklistItem> {
+  const response = await fetch(`${API_BASE_URL}/checklist-items`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: response.statusText }));
+    throw new Error(error.message || `API retornou ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Marca um item de checklist como concluído
+ */
+export async function markChecklistItemCompleted(
+  id: string,
+  evidenciaId?: string | null,
+): Promise<LicitacaoChecklistItem> {
+  const response = await fetch(`${API_BASE_URL}/checklist-items/${id}/complete`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ evidenciaId: evidenciaId || null }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: response.statusText }));
+    throw new Error(error.message || `API retornou ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Desmarca um item de checklist (marca como não concluído)
+ */
+export async function markChecklistItemIncomplete(
+  id: string,
+): Promise<LicitacaoChecklistItem> {
+  const response = await fetch(`${API_BASE_URL}/checklist-items/${id}/incomplete`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: response.statusText }));
+    throw new Error(error.message || `API retornou ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Atualiza um item de checklist
+ */
+export async function updateChecklistItem(
+  id: string,
+  data: UpdateLicitacaoChecklistItemInput,
+): Promise<LicitacaoChecklistItem> {
+  const response = await fetch(`${API_BASE_URL}/checklist-items/${id}`, {
+    method: "PATCH",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: response.statusText }));
