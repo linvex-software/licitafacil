@@ -354,6 +354,80 @@ export class PrismaTenantService {
             throw new Error("AuditLog é imutável: operações de delete não são permitidas");
           },
         },
+        documentVersion: {
+          // DocumentVersion não tem soft delete, apenas filtro de tenant
+          async findMany({ args, query }) {
+            if (args?.where) {
+              args.where = { ...args.where, empresaId };
+            } else {
+              args = { ...args, where: { empresaId } };
+            }
+            return query(args);
+          },
+          async findFirst({ args, query }) {
+            if (args?.where) {
+              args.where = { ...args.where, empresaId };
+            } else {
+              args = { ...args, where: { empresaId } };
+            }
+            return query(args);
+          },
+          async findUnique({ args, query }) {
+            const result = await query(args);
+            if (result && result.empresaId !== empresaId) {
+              return null;
+            }
+            return result;
+          },
+          async create({ args, query }) {
+            if (args?.data) {
+              const data = args.data as any;
+              if (!data.empresaId) {
+                data.empresaId = empresaId;
+              }
+              if (data.empresa) {
+                delete data.empresa;
+              }
+              args.data = data;
+            }
+            return query(args);
+          },
+          async update({ args, query }) {
+            // Para update, validar após a query
+            const result = await query(args);
+            if (!result || result.empresaId !== empresaId) {
+              return null;
+            }
+            return result;
+          },
+          async updateMany({ args, query }) {
+            if (args?.where) {
+              args.where = { ...args.where, empresaId };
+            } else {
+              args = { ...args, where: { empresaId } };
+            }
+            return query(args);
+          },
+          async count({ args, query }) {
+            if (args?.where) {
+              args.where = { ...args.where, empresaId };
+            } else {
+              args = { ...args, where: { empresaId } };
+            }
+            return query(args);
+          },
+          // DocumentVersion não deve ser deletado diretamente (cascade via Document)
+          async delete({ args: _args, query: _query }: any) {
+            throw new Error(
+              "Delete direto de DocumentVersion não é permitido. Use cascade via Document.",
+            );
+          },
+          async deleteMany({ args: _args, query: _query }: any) {
+            throw new Error(
+              "Delete direto de DocumentVersion não é permitido. Use cascade via Document.",
+            );
+          },
+        },
       },
     });
   }

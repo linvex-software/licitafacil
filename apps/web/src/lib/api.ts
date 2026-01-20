@@ -1,4 +1,10 @@
-import type { Bid, Document, CreateDocumentInput, UpdateDocumentInput } from "@licitafacil/shared";
+import type {
+  Bid,
+  Document,
+  DocumentVersion,
+  CreateDocumentInput,
+  UpdateDocumentInput,
+} from "@licitafacil/shared";
 import { getAuthHeaders, getToken } from "./auth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -130,16 +136,23 @@ export async function fetchDocument(id: string): Promise<Document> {
 }
 
 /**
- * Faz upload de um documento
+ * Faz upload de um documento ou cria nova versão
  */
 export async function uploadDocument(
   file: File,
   data: CreateDocumentInput,
+  documentId?: string,
 ): Promise<Document> {
   const formData = new FormData();
   formData.append("file", file);
-  formData.append("name", data.name);
-  formData.append("category", data.category);
+  if (documentId) {
+    // Se documentId foi fornecido, criar nova versão (não precisa de name/category)
+    formData.append("documentId", documentId);
+  } else {
+    // Se não, criar novo documento (precisa de name/category)
+    formData.append("name", data.name);
+    formData.append("category", data.category);
+  }
 
   const token = getToken();
   const headers: Record<string, string> = {};
@@ -241,4 +254,67 @@ export async function downloadDocument(id: string, filename: string): Promise<vo
   a.click();
   window.URL.revokeObjectURL(url);
   document.body.removeChild(a);
+}
+
+/**
+ * Busca todas as versões de um documento
+ */
+export async function fetchDocumentVersions(documentId: string): Promise<DocumentVersion[]> {
+  const response = await fetch(`${API_BASE_URL}/documents/${documentId}/versions`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`API retornou ${response.status}: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Busca uma versão específica de um documento
+ */
+export async function fetchDocumentVersion(
+  documentId: string,
+  versionNumber: number,
+): Promise<DocumentVersion> {
+  const response = await fetch(
+    `${API_BASE_URL}/documents/${documentId}/versions/${versionNumber}`,
+    {
+      method: "GET",
+      headers: getAuthHeaders(),
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`API retornou ${response.status}: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Restaura uma versão anterior de um documento
+ */
+export async function restoreDocumentVersion(
+  documentId: string,
+  versionNumber: number,
+): Promise<Document> {
+  const response = await fetch(
+    `${API_BASE_URL}/documents/${documentId}/versions/${versionNumber}/restore`,
+    {
+      method: "POST",
+      headers: getAuthHeaders(),
+    },
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: response.statusText }));
+    throw new Error(error.message || `API retornou ${response.status}`);
+  }
+
+  return response.json();
 }

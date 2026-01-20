@@ -1,0 +1,3 @@
+-- This migration was already applied to the database
+-- It's kept here only to resolve migration history drift
+-- The actual migration content is in 20260118185740_add_soft_delete

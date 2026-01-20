@@ -5,6 +5,7 @@ import {
   InternalServerErrorException,
 } from "@nestjs/common";
 import { PrismaTenantService } from "../prisma/prisma-tenant.service";
+import { PrismaService } from "../prisma/prisma.service";
 import {
   type CreateDocumentInput,
   type UpdateDocumentInput,
@@ -43,7 +44,10 @@ export interface UploadedFile {
 export class DocumentService {
   private readonly uploadsDir: string;
 
-  constructor(private readonly prismaTenant: PrismaTenantService) {
+  constructor(
+    private readonly prismaTenant: PrismaTenantService,
+    private readonly prisma: PrismaService,
+  ) {
     // Diretório de uploads: raiz do projeto/apps/api/uploads
     this.uploadsDir = path.join(process.cwd(), "uploads");
 
@@ -123,12 +127,14 @@ export class DocumentService {
 
   /**
    * Cria um novo documento via upload
+   * Se documentId for fornecido, cria uma nova versão do documento existente
    */
   async create(
     file: UploadedFile,
     data: CreateDocumentInput,
     empresaId: string,
     userId: string,
+    documentId?: string,
   ): Promise<Document> {
     // Validar arquivo
     this.validateFile(file);
@@ -154,8 +160,14 @@ export class DocumentService {
       throw new InternalServerErrorException("Erro ao salvar arquivo no servidor");
     }
 
-    // Salvar metadados no banco de dados
     const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
+
+    // Se documentId foi fornecido, criar nova versão
+    if (documentId) {
+      return this.createNewVersion(documentId, file, sanitizedFilename, fileUrl, empresaId, userId);
+    }
+
+    // Caso contrário, criar novo documento com versão 1
     const document = await prismaWithTenant.document.create({
       data: {
         name: data.name,
@@ -166,10 +178,108 @@ export class DocumentService {
         url: fileUrl,
         uploadedBy: userId,
         empresaId,
+        versions: {
+          create: {
+            versionNumber: 1,
+            filename: sanitizedFilename,
+            mimeType: file.mimetype,
+            size: file.size,
+            url: fileUrl,
+            uploadedBy: userId,
+            empresaId,
+            isCurrent: true,
+          },
+        },
       },
     });
 
     return this.mapToDocument(document);
+  }
+
+  /**
+   * Cria uma nova versão de um documento existente
+   * Usa transação para garantir integridade e evitar race conditions
+   */
+  private async createNewVersion(
+    documentId: string,
+    file: UploadedFile,
+    sanitizedFilename: string,
+    fileUrl: string,
+    empresaId: string,
+    userId: string,
+  ): Promise<Document> {
+    // Executar tudo em transação para evitar race conditions
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Buscar documento existente (com lock implícito via transação)
+      const existingDocument = await tx.document.findUnique({
+        where: { id: documentId },
+        include: {
+          versions: {
+            where: { empresaId },
+            orderBy: { versionNumber: "desc" },
+            take: 1,
+          },
+        },
+      });
+
+      // Validar tenant e soft delete
+      if (!existingDocument || existingDocument.empresaId !== empresaId || existingDocument.deletedAt !== null) {
+        throw new NotFoundException(`Documento com ID ${documentId} não encontrado`);
+      }
+
+      // Calcular próximo número de versão
+      const nextVersionNumber =
+        existingDocument.versions.length > 0
+          ? existingDocument.versions[0].versionNumber + 1
+          : 1;
+
+      // Marcar versão atual como não atual (com filtro de tenant)
+      await tx.documentVersion.updateMany({
+        where: {
+          documentId,
+          empresaId,
+          isCurrent: true,
+        },
+        data: {
+          isCurrent: false,
+        },
+      });
+
+      // Criar nova versão (com empresaId explícito)
+      await tx.documentVersion.create({
+        data: {
+          documentId,
+          empresaId,
+          versionNumber: nextVersionNumber,
+          filename: sanitizedFilename,
+          mimeType: file.mimetype,
+          size: file.size,
+          url: fileUrl,
+          uploadedBy: userId,
+          isCurrent: true,
+        },
+      });
+
+      // Atualizar documento com dados da nova versão (validado tenant acima)
+      const updatedDocument = await tx.document.update({
+        where: { id: documentId },
+        data: {
+          filename: sanitizedFilename,
+          mimeType: file.mimetype,
+          size: file.size,
+          url: fileUrl,
+        },
+      });
+
+      // Validar novamente após update (segurança extra)
+      if (updatedDocument.empresaId !== empresaId || updatedDocument.deletedAt !== null) {
+        throw new NotFoundException(`Documento com ID ${documentId} não encontrado`);
+      }
+
+      return updatedDocument;
+    });
+
+    return this.mapToDocument(result);
   }
 
   /**
@@ -247,6 +357,7 @@ export class DocumentService {
 
   /**
    * Retorna o caminho físico do arquivo para download
+   * Protegido contra path traversal
    */
   async getFilePathForDownload(id: string, empresaId: string): Promise<string> {
     const document = await this.findOne(id, empresaId);
@@ -254,14 +365,21 @@ export class DocumentService {
     // Construir caminho completo do arquivo
     const fullPath = path.join(this.uploadsDir, document.url);
 
+    // Proteção contra path traversal: garantir que o caminho resolvido está dentro de uploadsDir
+    const resolvedPath = path.resolve(fullPath);
+    const resolvedUploadsDir = path.resolve(this.uploadsDir);
+    if (!resolvedPath.startsWith(resolvedUploadsDir)) {
+      throw new BadRequestException("Caminho de arquivo inválido");
+    }
+
     // Verificar se arquivo existe
     try {
-      await fs.access(fullPath);
+      await fs.access(resolvedPath);
     } catch {
       throw new NotFoundException("Arquivo não encontrado no servidor");
     }
 
-    return fullPath;
+    return resolvedPath;
   }
 
   /**
@@ -323,6 +441,211 @@ export class DocumentService {
   async count(empresaId: string): Promise<number> {
     const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
     return prismaWithTenant.document.count();
+  }
+
+  /**
+   * Lista todas as versões de um documento
+   */
+  async getVersions(documentId: string, empresaId: string) {
+    const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
+
+    // Verificar se o documento existe e pertence ao tenant
+    const document = await prismaWithTenant.document.findUnique({
+      where: { id: documentId },
+    });
+
+    if (!document) {
+      throw new NotFoundException(`Documento com ID ${documentId} não encontrado`);
+    }
+
+    // Buscar versões (usando tenant scoping)
+    const versions = await prismaWithTenant.documentVersion.findMany({
+      where: { documentId },
+      orderBy: { versionNumber: "desc" },
+      include: {
+        uploader: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    return versions.map((v: any) => ({
+      id: v.id,
+      documentId: v.documentId,
+      versionNumber: v.versionNumber,
+      filename: v.filename,
+      mimeType: v.mimeType,
+      size: v.size,
+      url: v.url,
+      uploadedBy: v.uploadedBy,
+      isCurrent: v.isCurrent,
+      createdAt: v.createdAt.toISOString(),
+      uploader: v.uploader,
+    }));
+  }
+
+  /**
+   * Busca uma versão específica de um documento
+   */
+  async getVersion(documentId: string, versionNumber: number, empresaId: string) {
+    const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
+
+    // Verificar se o documento existe e pertence ao tenant
+    const document = await prismaWithTenant.document.findUnique({
+      where: { id: documentId },
+    });
+
+    if (!document) {
+      throw new NotFoundException(`Documento com ID ${documentId} não encontrado`);
+    }
+
+    // Buscar versão específica (usando tenant scoping)
+    const version = await prismaWithTenant.documentVersion.findUnique({
+      where: {
+        documentId_versionNumber: {
+          documentId,
+          versionNumber,
+        },
+      },
+      include: {
+        uploader: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    if (!version) {
+      throw new NotFoundException(
+        `Versão ${versionNumber} do documento ${documentId} não encontrada`,
+      );
+    }
+
+    return {
+      id: version.id,
+      documentId: version.documentId,
+      versionNumber: version.versionNumber,
+      filename: version.filename,
+      mimeType: version.mimeType,
+      size: version.size,
+      url: version.url,
+      uploadedBy: version.uploadedBy,
+      isCurrent: version.isCurrent,
+      createdAt: version.createdAt.toISOString(),
+      uploader: version.uploader,
+    };
+  }
+
+  /**
+   * Restaura uma versão anterior de um documento
+   * Usa transação para garantir integridade e evitar race conditions
+   */
+  async restoreVersion(
+    documentId: string,
+    versionNumber: number,
+    empresaId: string,
+    _userId: string,
+  ): Promise<Document> {
+    // Verificar se o arquivo existe antes da transação (não precisa estar em transação)
+    // Mas validar documento e versão dentro da transação
+
+    // Executar tudo em transação para evitar race conditions
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Verificar se o documento existe
+      const document = await tx.document.findUnique({
+        where: { id: documentId },
+      });
+
+      // Validar tenant e soft delete
+      if (!document || document.empresaId !== empresaId || document.deletedAt !== null) {
+        throw new NotFoundException(`Documento com ID ${documentId} não encontrado`);
+      }
+
+      // Buscar versão a ser restaurada
+      const versionToRestore = await tx.documentVersion.findUnique({
+        where: {
+          documentId_versionNumber: {
+            documentId,
+            versionNumber,
+          },
+        },
+      });
+
+      if (!versionToRestore) {
+        throw new NotFoundException(
+          `Versão ${versionNumber} do documento ${documentId} não encontrada`,
+        );
+      }
+
+      // Validar que a versão pertence ao tenant
+      if (versionToRestore.empresaId !== empresaId) {
+        throw new NotFoundException(
+          `Versão ${versionNumber} do documento ${documentId} não encontrada`,
+        );
+      }
+
+      // Verificar se o arquivo da versão ainda existe
+      const versionFilePath = path.join(this.uploadsDir, versionToRestore.url);
+      try {
+        await fs.access(versionFilePath);
+      } catch {
+        throw new NotFoundException(
+          `Arquivo da versão ${versionNumber} não encontrado no servidor`,
+        );
+      }
+
+      // Marcar versão atual como não atual (com filtro de tenant)
+      await tx.documentVersion.updateMany({
+        where: {
+          documentId,
+          empresaId,
+          isCurrent: true,
+        },
+        data: {
+          isCurrent: false,
+        },
+      });
+
+      // Marcar versão restaurada como atual (validado empresaId acima)
+      await tx.documentVersion.update({
+        where: {
+          documentId_versionNumber: {
+            documentId,
+            versionNumber,
+          },
+        },
+        data: {
+          isCurrent: true,
+        },
+      });
+
+      // Atualizar documento com dados da versão restaurada (validado tenant acima)
+      const updatedDocument = await tx.document.update({
+        where: { id: documentId },
+        data: {
+          filename: versionToRestore.filename,
+          mimeType: versionToRestore.mimeType,
+          size: versionToRestore.size,
+          url: versionToRestore.url,
+        },
+      });
+
+      // Validar novamente após update (segurança extra)
+      if (updatedDocument.empresaId !== empresaId || updatedDocument.deletedAt !== null) {
+        throw new NotFoundException(`Documento com ID ${documentId} não encontrado`);
+      }
+
+      return updatedDocument;
+    });
+
+    return this.mapToDocument(result);
   }
 
   /**
