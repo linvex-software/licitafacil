@@ -12,10 +12,17 @@ import {
   type Document,
   ALLOWED_MIME_TYPES,
   MAX_FILE_SIZE,
+  documentValiditySchema,
 } from "@licitafacil/shared";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { v4 as uuidv4 } from "uuid";
+import {
+  computeDocumentValidityStatus,
+  daysToExpire,
+  getNowUTC,
+  type DocumentValidityData,
+} from "./document-validity.utils";
 
 /**
  * Interface para filtros de listagem de documentos
@@ -26,6 +33,11 @@ export interface ListDocumentsFilters {
   search?: string; // Busca por nome
   page?: number;
   limit?: number;
+  // Filtros de validade
+  status?: "VALID" | "EXPIRING_SOON" | "EXPIRED" | "NO_EXPIRATION";
+  expiresBefore?: string; // ISO datetime string
+  expiresAfter?: string; // ISO datetime string
+  expiringDays?: number; // Documentos expirando em até N dias
 }
 
 /**
@@ -94,7 +106,7 @@ export class DocumentService {
    * Gera caminho do arquivo baseado na empresa e data
    */
   private getFilePath(empresaId: string, filename: string): string {
-    const now = new Date();
+    const now = getNowUTC();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
 
@@ -108,7 +120,7 @@ export class DocumentService {
    * Gera URL relativa do arquivo
    */
   private getFileUrl(empresaId: string, filename: string): string {
-    const now = new Date();
+    const now = getNowUTC();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
 
@@ -167,6 +179,39 @@ export class DocumentService {
       return this.createNewVersion(documentId, file, sanitizedFilename, fileUrl, empresaId, userId);
     }
 
+    // Preparar dados de validade (com valores padrão seguros)
+    // Acessar campos de validade do input (podem estar undefined)
+    const inputData = data as CreateDocumentInput & {
+      doesExpire?: boolean;
+      issuedAt?: string | null;
+      expiresAt?: string | null;
+    };
+
+    const validityData: {
+      doesExpire: boolean;
+      issuedAt?: Date | null;
+      expiresAt?: Date | null;
+    } = {
+      doesExpire: inputData.doesExpire ?? false,
+    };
+
+    // Se doesExpire=true, validar e converter expiresAt
+    if (validityData.doesExpire) {
+      if (!inputData.expiresAt) {
+        throw new BadRequestException("expiresAt é obrigatório quando doesExpire=true");
+      }
+      validityData.expiresAt = new Date(inputData.expiresAt);
+
+      // Se issuedAt foi fornecido, converter também
+      if (inputData.issuedAt) {
+        validityData.issuedAt = new Date(inputData.issuedAt);
+      }
+    } else {
+      // Se doesExpire=false, garantir que expiresAt seja null
+      validityData.expiresAt = null;
+      validityData.issuedAt = inputData.issuedAt ? new Date(inputData.issuedAt) : null;
+    }
+
     // Caso contrário, criar novo documento com versão 1
     const document = await prismaWithTenant.document.create({
       data: {
@@ -178,6 +223,9 @@ export class DocumentService {
         url: fileUrl,
         uploadedBy: userId,
         empresaId,
+        doesExpire: validityData.doesExpire,
+        issuedAt: validityData.issuedAt,
+        expiresAt: validityData.expiresAt,
         versions: {
           create: {
             versionNumber: 1,
@@ -295,6 +343,7 @@ export class DocumentService {
     // Construir filtros do Prisma
     const where: any = {
       empresaId: filters.empresaId,
+      deletedAt: null, // Sempre filtrar soft delete
     };
 
     if (filters.category) {
@@ -304,6 +353,63 @@ export class DocumentService {
     // Busca por nome (case insensitive)
     if (filters.search) {
       where.name = { contains: filters.search, mode: "insensitive" };
+    }
+
+    // Filtros de validade
+    const now = getNowUTC();
+
+    if (filters.status) {
+      switch (filters.status) {
+        case "NO_EXPIRATION":
+          where.doesExpire = false;
+          break;
+        case "EXPIRED":
+          where.doesExpire = true;
+          where.expiresAt = { lte: now };
+          break;
+        case "EXPIRING_SOON":
+          where.doesExpire = true;
+          const expiringSoonDate = new Date(now);
+          expiringSoonDate.setDate(expiringSoonDate.getDate() + (filters.expiringDays || 30));
+          where.expiresAt = {
+            gte: now,
+            lte: expiringSoonDate,
+          };
+          break;
+        case "VALID":
+          where.doesExpire = true;
+          const validDate = new Date(now);
+          validDate.setDate(validDate.getDate() + (filters.expiringDays || 30));
+          where.expiresAt = { gt: validDate };
+          break;
+      }
+    }
+
+    // Filtro por data de vencimento (antes de)
+    if (filters.expiresBefore) {
+      where.expiresAt = {
+        ...(where.expiresAt || {}),
+        lte: new Date(filters.expiresBefore),
+      };
+    }
+
+    // Filtro por data de vencimento (depois de)
+    if (filters.expiresAfter) {
+      where.expiresAt = {
+        ...(where.expiresAt || {}),
+        gte: new Date(filters.expiresAfter),
+      };
+    }
+
+    // Filtro por documentos expirando em até N dias
+    if (filters.expiringDays !== undefined) {
+      const expiringDate = new Date(now);
+      expiringDate.setDate(expiringDate.getDate() + filters.expiringDays);
+      where.doesExpire = true;
+      where.expiresAt = {
+        gte: now,
+        lte: expiringDate,
+      };
     }
 
     // Buscar documentos e total
@@ -384,11 +490,14 @@ export class DocumentService {
 
   /**
    * Atualiza um documento (apenas metadados, não o arquivo)
+   * Inclui campos de validade com validação e auditoria
+   *
+   * IMPORTANTE: Valida o estado final após merge do patch com estado atual
    */
   async update(id: string, data: UpdateDocumentInput, empresaId: string): Promise<Document> {
     const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
 
-    // Verificar se o documento existe
+    // Verificar se o documento existe e carregar estado atual
     const existingDocument = await prismaWithTenant.document.findUnique({
       where: { id },
     });
@@ -397,13 +506,78 @@ export class DocumentService {
       throw new NotFoundException(`Documento com ID ${id} não encontrado`);
     }
 
-    // Atualizar apenas campos fornecidos
-    const updatedDocument = await prismaWithTenant.document.update({
-      where: { id },
-      data: {
-        ...(data.name && { name: data.name }),
-        ...(data.category && { category: data.category }),
-      },
+    // Preparar dados de atualização
+    const updateData: any = {};
+
+    if (data.name !== undefined) {
+      updateData.name = data.name;
+    }
+
+    if (data.category !== undefined) {
+      updateData.category = data.category;
+    }
+
+    // Fazer merge do patch com estado atual para campos de validade
+    // REGRA DE OURO: PATCH parcial nunca deixa documento em estado inválido
+    const mergedValidity = {
+      doesExpire: data.doesExpire ?? existingDocument.doesExpire ?? false,
+      issuedAt: data.issuedAt !== undefined
+        ? (data.issuedAt ? new Date(data.issuedAt) : null)
+        : existingDocument.issuedAt ?? null,
+      expiresAt: data.expiresAt !== undefined
+        ? (data.expiresAt ? new Date(data.expiresAt) : null)
+        : existingDocument.expiresAt ?? null,
+    };
+
+    // REGRA CRÍTICA: Se doesExpire=false, expiresAt DEVE ser null no estado final
+    // Não confiar no client - garantir coerência no backend
+    if (mergedValidity.doesExpire === false) {
+      mergedValidity.expiresAt = null;
+    }
+
+    // Validar estado final com documentValiditySchema (garante coerência)
+    // Isso rejeita estados inválidos antes de persistir
+    try {
+      // Converter para formato do schema (ISO strings)
+      const validityForValidation = {
+        doesExpire: mergedValidity.doesExpire,
+        issuedAt: mergedValidity.issuedAt?.toISOString() ?? null,
+        expiresAt: mergedValidity.expiresAt?.toISOString() ?? null,
+      };
+      documentValiditySchema.parse(validityForValidation);
+    } catch (error) {
+      if (error instanceof Error && "errors" in error) {
+        throw new BadRequestException({
+          message: "Dados de validade inválidos",
+          errors: (error as any).errors,
+        });
+      }
+      throw new BadRequestException("Dados de validade inválidos");
+    }
+
+    // Se passou na validação, aplicar ao updateData
+    // Aplicar sempre que houver campos de validade no patch ou quando doesExpire mudou
+    if (
+      data.doesExpire !== undefined ||
+      data.expiresAt !== undefined ||
+      data.issuedAt !== undefined ||
+      mergedValidity.doesExpire !== (existingDocument.doesExpire ?? false)
+    ) {
+      updateData.doesExpire = mergedValidity.doesExpire;
+      updateData.issuedAt = mergedValidity.issuedAt;
+      updateData.expiresAt = mergedValidity.expiresAt; // Já garantido como null se doesExpire=false
+    }
+
+    // Atualizar documento (usar transação para garantir consistência)
+    const updatedDocument = await this.prisma.$transaction(async (tx) => {
+      // Usar o Prisma direto na transação, mas garantir tenant isolation manualmente
+      return tx.document.update({
+        where: {
+          id,
+          empresaId, // Garantir tenant isolation na transação
+        },
+        data: updateData,
+      });
     });
 
     return this.mapToDocument(updatedDocument);
@@ -650,6 +824,8 @@ export class DocumentService {
 
   /**
    * Mapeia entidade Prisma para Document
+   * Calcula status de validade derivado e daysToExpire
+   * Retrocompatibilidade: aceita documentos sem campos de validade (defaults seguros)
    */
   private mapToDocument(doc: {
     id: string;
@@ -663,7 +839,25 @@ export class DocumentService {
     uploadedBy: string;
     createdAt: Date;
     updatedAt: Date;
+    doesExpire?: boolean;
+    issuedAt?: Date | null;
+    expiresAt?: Date | null;
   }): Document {
+    const now = getNowUTC();
+
+    // Preparar dados de validade (com defaults seguros para retrocompatibilidade)
+    const validityData: DocumentValidityData = {
+      doesExpire: doc.doesExpire ?? false,
+      issuedAt: doc.issuedAt ?? null,
+      expiresAt: doc.expiresAt ?? null,
+    };
+
+    // Calcular status derivado
+    const validityStatus = computeDocumentValidityStatus(now, validityData);
+
+    // Calcular dias até vencimento
+    const daysToExpireValue = daysToExpire(now, doc.expiresAt ?? null);
+
     return {
       id: doc.id,
       empresaId: doc.empresaId,
@@ -676,6 +870,28 @@ export class DocumentService {
       uploadedBy: doc.uploadedBy,
       createdAt: doc.createdAt.toISOString(),
       updatedAt: doc.updatedAt.toISOString(),
+      // Campos de validade
+      doesExpire: doc.doesExpire ?? false,
+      issuedAt: doc.issuedAt?.toISOString() ?? null,
+      expiresAt: doc.expiresAt?.toISOString() ?? null,
+      // Status derivado (calculado)
+      validityStatus,
+      daysToExpire: daysToExpireValue,
     };
+  }
+
+  /**
+   * Busca documentos expirando em até N dias
+   * Útil para dashboards e alertas
+   */
+  async findExpiring(empresaId: string, days: number = 30): Promise<Document[]> {
+    return (
+      await this.findAll({
+        empresaId,
+        expiringDays: days,
+        page: 1,
+        limit: 1000, // Limite alto para dashboard
+      })
+    ).data;
   }
 }
