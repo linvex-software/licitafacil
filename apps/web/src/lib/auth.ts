@@ -55,6 +55,11 @@ export function isAuthenticated(): boolean {
 
 /**
  * Obtém headers com autenticação para requisições
+ * 
+ * Em desenvolvimento, se não houver token, usa headers DEV para bypass
+ * (requer AUTH_DEV_BYPASS=true na API e variáveis NEXT_PUBLIC_DEV_USER_ID e NEXT_PUBLIC_DEV_EMPRESA_ID)
+ * 
+ * IMPORTANTE: Esta função só deve ser chamada no cliente (em componentes client-side ou funções de fetch)
  */
 export function getAuthHeaders(): Record<string, string> {
   const token = getToken();
@@ -64,6 +69,20 @@ export function getAuthHeaders(): Record<string, string> {
 
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
+  } else if (typeof window !== "undefined") {
+    // Em DEV, se não houver token, usar bypass DEV
+    // Usar apenas NEXT_PUBLIC_USE_DEV_BYPASS para evitar problemas de hidratação
+    const useDevBypass = process.env.NEXT_PUBLIC_USE_DEV_BYPASS === "true";
+    
+    if (useDevBypass) {
+      const devUserId = process.env.NEXT_PUBLIC_DEV_USER_ID;
+      const devEmpresaId = process.env.NEXT_PUBLIC_DEV_EMPRESA_ID;
+
+      if (devUserId && devEmpresaId) {
+        headers["x-dev-user-id"] = devUserId;
+        headers["x-dev-empresa-id"] = devEmpresaId;
+      }
+    }
   }
 
   return headers;

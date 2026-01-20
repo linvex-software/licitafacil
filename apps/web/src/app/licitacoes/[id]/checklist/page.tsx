@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/Card";
+import { ChecklistPageClient } from "./ChecklistPageClient";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -19,22 +19,14 @@ export default async function ChecklistPage({ params }: PageProps) {
             ← Voltar para licitação
           </Link>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Checklist
+            Checklist da Licitação
           </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Gerencie os itens obrigatórios desta licitação
+          </p>
         </div>
 
-        <Card>
-          <CardContent className="py-12">
-            <div className="text-center">
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                TODO: Implementar página de checklist quando F1-07 estiver concluída.
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-500">
-                Licitação ID: {id}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <ChecklistPageClient licitacaoId={id} />
       </div>
     </div>
   );
