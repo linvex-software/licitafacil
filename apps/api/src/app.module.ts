@@ -9,6 +9,7 @@ import { AuthModule } from "./auth/auth.module";
 import { AuditLogModule } from "./audit-log/audit-log.module";
 import { CommonModule } from "./common/common.module";
 import { BidModule } from "./bid/bid.module";
+import { DocumentModule } from "./document/document.module";
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { BidModule } from "./bid/bid.module";
     AuditLogModule,
     CommonModule,
     BidModule,
+    DocumentModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

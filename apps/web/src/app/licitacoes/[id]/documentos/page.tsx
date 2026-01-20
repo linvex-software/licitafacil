@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/Card";
+import { DocumentsPageClient } from "./DocumentsPageClient";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -18,23 +18,12 @@ export default async function DocumentosPage({ params }: PageProps) {
           >
             ← Voltar para licitação
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Documentos
           </h1>
         </div>
 
-        <Card>
-          <CardContent className="py-12">
-            <div className="text-center">
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                TODO: Implementar página de documentos quando F1-05 estiver concluída.
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-500">
-                Licitação ID: {id}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <DocumentsPageClient bidId={id} />
       </div>
     </div>
   );
