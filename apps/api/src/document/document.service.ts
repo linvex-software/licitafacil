@@ -29,6 +29,7 @@ import {
  */
 export interface ListDocumentsFilters {
   empresaId: string;
+  bidId?: string; // Opcional: filtrar por licitação específica
   category?: string;
   search?: string; // Busca por nome
   page?: number;
@@ -213,6 +214,10 @@ export class DocumentService {
     }
 
     // Caso contrário, criar novo documento com versão 1
+    const inputDataWithBid = data as CreateDocumentInput & {
+      bidId?: string | null;
+    };
+
     const document = await prismaWithTenant.document.create({
       data: {
         name: data.name,
@@ -223,6 +228,7 @@ export class DocumentService {
         url: fileUrl,
         uploadedBy: userId,
         empresaId,
+        bidId: inputDataWithBid.bidId || null, // Associar com licitação se fornecido
         doesExpire: validityData.doesExpire,
         issuedAt: validityData.issuedAt,
         expiresAt: validityData.expiresAt,
@@ -345,6 +351,11 @@ export class DocumentService {
       empresaId: filters.empresaId,
       deletedAt: null, // Sempre filtrar soft delete
     };
+
+    // Filtrar por licitação específica se fornecido
+    if (filters.bidId) {
+      where.bidId = filters.bidId;
+    }
 
     if (filters.category) {
       where.category = filters.category;
@@ -498,13 +509,16 @@ export class DocumentService {
     const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
 
     // Verificar se o documento existe e carregar estado atual
-    const existingDocument = await prismaWithTenant.document.findUnique({
+    const existingDocumentRaw = await prismaWithTenant.document.findUnique({
       where: { id },
     });
 
-    if (!existingDocument) {
+    if (!existingDocumentRaw) {
       throw new NotFoundException(`Documento com ID ${id} não encontrado`);
     }
+
+    // Mapear para Document para ter acesso a todos os campos tipados
+    const existingDocument = this.mapToDocument(existingDocumentRaw);
 
     // Preparar dados de atualização
     const updateData: any = {};
@@ -517,16 +531,21 @@ export class DocumentService {
       updateData.category = data.category;
     }
 
+    // Atualizar bidId se fornecido
+    if (data.bidId !== undefined) {
+      updateData.bidId = data.bidId;
+    }
+
     // Fazer merge do patch com estado atual para campos de validade
     // REGRA DE OURO: PATCH parcial nunca deixa documento em estado inválido
     const mergedValidity = {
       doesExpire: data.doesExpire ?? existingDocument.doesExpire ?? false,
       issuedAt: data.issuedAt !== undefined
         ? (data.issuedAt ? new Date(data.issuedAt) : null)
-        : existingDocument.issuedAt ?? null,
+        : (existingDocument.issuedAt ? new Date(existingDocument.issuedAt) : null),
       expiresAt: data.expiresAt !== undefined
         ? (data.expiresAt ? new Date(data.expiresAt) : null)
-        : existingDocument.expiresAt ?? null,
+        : (existingDocument.expiresAt ? new Date(existingDocument.expiresAt) : null),
     };
 
     // REGRA CRÍTICA: Se doesExpire=false, expiresAt DEVE ser null no estado final
@@ -557,12 +576,13 @@ export class DocumentService {
 
     // Se passou na validação, aplicar ao updateData
     // Aplicar sempre que houver campos de validade no patch ou quando doesExpire mudou
-    if (
+    const updateValidityFields =
       data.doesExpire !== undefined ||
       data.expiresAt !== undefined ||
       data.issuedAt !== undefined ||
-      mergedValidity.doesExpire !== (existingDocument.doesExpire ?? false)
-    ) {
+      mergedValidity.doesExpire !== (existingDocument.doesExpire ?? false);
+
+    if (updateValidityFields) {
       updateData.doesExpire = mergedValidity.doesExpire;
       updateData.issuedAt = mergedValidity.issuedAt;
       updateData.expiresAt = mergedValidity.expiresAt; // Já garantido como null se doesExpire=false
@@ -830,6 +850,7 @@ export class DocumentService {
   private mapToDocument(doc: {
     id: string;
     empresaId: string;
+    bidId?: string | null;
     name: string;
     filename: string;
     mimeType: string;
@@ -861,6 +882,7 @@ export class DocumentService {
     return {
       id: doc.id,
       empresaId: doc.empresaId,
+      bidId: doc.bidId || null,
       name: doc.name,
       filename: doc.filename,
       mimeType: doc.mimeType,
@@ -893,5 +915,68 @@ export class DocumentService {
         limit: 1000, // Limite alto para dashboard
       })
     ).data;
+  }
+
+  /**
+   * Vincula um documento a uma licitação
+   * Valida que ambos pertencem à mesma empresa
+   */
+  async attachToBid(documentId: string, bidId: string, empresaId: string): Promise<Document> {
+    const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
+
+    // Verificar se a licitação existe e pertence ao tenant
+    const bid = await prismaWithTenant.bid.findUnique({
+      where: { id: bidId },
+    });
+
+    if (!bid || bid.empresaId !== empresaId) {
+      throw new NotFoundException(`Licitação com ID ${bidId} não encontrada`);
+    }
+
+    // Verificar se o documento existe e pertence ao tenant
+    const document = await prismaWithTenant.document.findUnique({
+      where: { id: documentId },
+    });
+
+    if (!document || document.empresaId !== empresaId) {
+      throw new NotFoundException(`Documento com ID ${documentId} não encontrado`);
+    }
+
+    // Atualizar documento vinculando à licitação
+    const updatedDocument = await prismaWithTenant.document.update({
+      where: { id: documentId },
+      data: { bidId },
+    });
+
+    return this.mapToDocument(updatedDocument);
+  }
+
+  /**
+   * Desvincula um documento de uma licitação
+   */
+  async detachFromBid(documentId: string, empresaId: string): Promise<Document> {
+    const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
+
+    // Verificar se o documento existe e pertence ao tenant
+    const document = await prismaWithTenant.document.findUnique({
+      where: { id: documentId },
+    });
+
+    if (!document || document.empresaId !== empresaId) {
+      throw new NotFoundException(`Documento com ID ${documentId} não encontrado`);
+    }
+
+    // Se já não está vinculado, não faz nada
+    if (!document.bidId) {
+      return this.mapToDocument(document);
+    }
+
+    // Atualizar documento removendo vínculo com licitação
+    const updatedDocument = await prismaWithTenant.document.update({
+      where: { id: documentId },
+      data: { bidId: null },
+    });
+
+    return this.mapToDocument(updatedDocument);
   }
 }
