@@ -6,7 +6,9 @@ import {
   type LicitacaoChecklistItem,
 } from "@licitafacil/shared";
 import { BidService } from "../bid/bid.service";
+import { BidRiskService } from "../bid/bid-risk.service";
 import { DocumentService } from "../document/document.service";
+import type { Request } from "express";
 
 /**
  * Interface para filtros de listagem de itens de checklist
@@ -21,6 +23,7 @@ export class ChecklistItemService {
   constructor(
     private readonly prismaTenant: PrismaTenantService,
     private readonly bidService: BidService,
+    private readonly bidRiskService: BidRiskService,
     private readonly documentService: DocumentService,
   ) {}
 
@@ -31,8 +34,14 @@ export class ChecklistItemService {
    * - Item começa sempre como não concluído
    * - Se exigeEvidencia=true, evidenciaId pode ser fornecido opcionalmente
    * - Valida que a licitação existe e pertence ao tenant
+   * - Executa análise automática de risco após criação (se item for crítico)
    */
-  async create(data: CreateLicitacaoChecklistItemInput, empresaId: string): Promise<LicitacaoChecklistItem> {
+  async create(
+    data: CreateLicitacaoChecklistItemInput,
+    empresaId: string,
+    userId: string,
+    request: Request,
+  ): Promise<LicitacaoChecklistItem> {
     const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
 
     // Validar que a licitação existe e pertence ao tenant
@@ -49,11 +58,23 @@ export class ChecklistItemService {
         licitacaoId: data.licitacaoId,
         titulo: data.titulo,
         descricao: data.descricao ?? null,
+        category: data.category ?? null,
         exigeEvidencia: data.exigeEvidencia ?? false,
+        isCritical: data.isCritical ?? false,
         concluido: false, // Sempre começa como não concluído
         evidenciaId: data.evidenciaId ?? null,
       },
     });
+
+    // Executar análise automática de risco se o item for crítico ou exigir evidência
+    if (item.isCritical || item.exigeEvidencia) {
+      // Executar em background (não bloqueia resposta)
+      this.bidRiskService
+        .autoUpdateRiskState(data.licitacaoId, empresaId, userId, request)
+        .catch((error) => {
+          console.error("Erro ao atualizar análise de risco automaticamente:", error);
+        });
+    }
 
     return this.mapToChecklistItem(item);
   }
@@ -107,11 +128,13 @@ export class ChecklistItemService {
    * - Ao marcar como concluído:
    *   - registrar usuário responsável
    *   - registrar data/hora em UTC
+   * - Executa análise automática de risco após conclusão
    */
   async markAsCompleted(
     id: string,
     empresaId: string,
     userId: string,
+    request: Request,
     evidenciaId?: string | null,
   ): Promise<LicitacaoChecklistItem> {
     const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
@@ -163,6 +186,13 @@ export class ChecklistItemService {
       },
     });
 
+    // Executar análise automática de risco após conclusão
+    this.bidRiskService
+      .autoUpdateRiskState(item.licitacaoId, empresaId, userId, request)
+      .catch((error) => {
+        console.error("Erro ao atualizar análise de risco automaticamente:", error);
+      });
+
     return this.mapToChecklistItem(updatedItem);
   }
 
@@ -173,8 +203,14 @@ export class ChecklistItemService {
    * - Ao desmarcar:
    *   - limpar concluidoPor e concluidoEm
    *   - manter evidenciaId (não limpar)
+   * - Executa análise automática de risco após mudança
    */
-  async markAsIncomplete(id: string, empresaId: string): Promise<LicitacaoChecklistItem> {
+  async markAsIncomplete(
+    id: string,
+    empresaId: string,
+    userId: string,
+    request: Request,
+  ): Promise<LicitacaoChecklistItem> {
     const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
 
     const item = await prismaWithTenant.checklistItem.findUnique({
@@ -199,6 +235,13 @@ export class ChecklistItemService {
       },
     });
 
+    // Executar análise automática de risco após desmarcar
+    this.bidRiskService
+      .autoUpdateRiskState(item.licitacaoId, empresaId, userId, request)
+      .catch((error) => {
+        console.error("Erro ao atualizar análise de risco automaticamente:", error);
+      });
+
     return this.mapToChecklistItem(updatedItem);
   }
 
@@ -208,11 +251,14 @@ export class ChecklistItemService {
    * Regras de domínio:
    * - Se item está concluído e exigeEvidencia mudou para true sem evidência, não permitir
    * - Se item está concluído e exigeEvidencia=true, não permitir remover evidência
+   * - Executa análise automática de risco se campos críticos foram alterados
    */
   async update(
     id: string,
     data: UpdateLicitacaoChecklistItemInput,
     empresaId: string,
+    userId: string,
+    request: Request,
   ): Promise<LicitacaoChecklistItem> {
     const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
 
@@ -251,10 +297,25 @@ export class ChecklistItemService {
       data: {
         ...(data.titulo && { titulo: data.titulo }),
         ...(data.descricao !== undefined && { descricao: data.descricao }),
+        ...(data.category !== undefined && { category: data.category }),
         ...(data.exigeEvidencia !== undefined && { exigeEvidencia: data.exigeEvidencia }),
+        ...(data.isCritical !== undefined && { isCritical: data.isCritical }),
         ...(data.evidenciaId !== undefined && { evidenciaId: data.evidenciaId }),
       },
     });
+
+    // Se alterou campos que afetam risco (isCritical ou exigeEvidencia), executar análise
+    if (
+      data.isCritical !== undefined ||
+      data.exigeEvidencia !== undefined ||
+      data.evidenciaId !== undefined
+    ) {
+      this.bidRiskService
+        .autoUpdateRiskState(item.licitacaoId, empresaId, userId, request)
+        .catch((error) => {
+          console.error("Erro ao atualizar análise de risco automaticamente:", error);
+        });
+    }
 
     return this.mapToChecklistItem(updatedItem);
   }
@@ -268,7 +329,9 @@ export class ChecklistItemService {
     licitacaoId: string;
     titulo: string;
     descricao: string | null;
+    category: string | null;
     exigeEvidencia: boolean;
+    isCritical: boolean;
     concluido: boolean;
     concluidoPor: string | null;
     concluidoEm: Date | null;
@@ -282,7 +345,9 @@ export class ChecklistItemService {
       licitacaoId: item.licitacaoId,
       titulo: item.titulo,
       descricao: item.descricao,
+      category: item.category,
       exigeEvidencia: item.exigeEvidencia,
+      isCritical: item.isCritical,
       concluido: item.concluido,
       concluidoPor: item.concluidoPor,
       concluidoEm: item.concluidoEm?.toISOString() ?? null,

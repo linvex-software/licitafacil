@@ -55,8 +55,8 @@ export class ChecklistItemController {
   async create(
     @Body() body: unknown,
     @Tenant() empresaId: string,
-    @CurrentUser() _user: User,
-    @Req() _request: Request,
+    @CurrentUser() user: User,
+    @Req() request: Request,
   ): Promise<LicitacaoChecklistItem> {
     // Validar dados de entrada com Zod
     const result = createChecklistItemSchema.safeParse(body);
@@ -68,7 +68,7 @@ export class ChecklistItemController {
       });
     }
 
-    return this.checklistItemService.create(result.data, empresaId);
+    return this.checklistItemService.create(result.data, empresaId, user.id, request);
   }
 
   /**
@@ -119,7 +119,7 @@ export class ChecklistItemController {
     @Body() body: unknown,
     @Tenant() empresaId: string,
     @CurrentUser() user: User,
-    @Req() _request: Request,
+    @Req() request: Request,
   ): Promise<LicitacaoChecklistItem> {
     // Validar dados de entrada com Zod
     const result = markChecklistItemCompletedSchema.safeParse(body);
@@ -135,6 +135,7 @@ export class ChecklistItemController {
       id,
       empresaId,
       user.id,
+      request,
       result.data.evidenciaId,
     );
   }
@@ -152,10 +153,10 @@ export class ChecklistItemController {
   async markAsIncomplete(
     @Param("id") id: string,
     @Tenant() empresaId: string,
-    @CurrentUser() _user: User,
-    @Req() _request: Request,
+    @CurrentUser() user: User,
+    @Req() request: Request,
   ): Promise<LicitacaoChecklistItem> {
-    return this.checklistItemService.markAsIncomplete(id, empresaId);
+    return this.checklistItemService.markAsIncomplete(id, empresaId, user.id, request);
   }
 
   /**
@@ -171,8 +172,8 @@ export class ChecklistItemController {
     @Param("id") id: string,
     @Body() body: unknown,
     @Tenant() empresaId: string,
-    @CurrentUser() _user: User,
-    @Req() _request: Request,
+    @CurrentUser() user: User,
+    @Req() request: Request,
   ): Promise<LicitacaoChecklistItem> {
     // Validar dados de entrada com Zod
     const result = updateChecklistItemSchema.safeParse(body);
@@ -184,6 +185,6 @@ export class ChecklistItemController {
       });
     }
 
-    return this.checklistItemService.update(id, result.data, empresaId);
+    return this.checklistItemService.update(id, result.data, empresaId, user.id, request);
   }
 }

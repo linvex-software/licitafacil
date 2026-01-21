@@ -1,17 +1,6 @@
 import { z } from "zod";
 import { BidModality } from "./bid";
-
-/**
- * Categorias de itens do checklist
- */
-export const ChecklistItemCategory = {
-  DOCUMENTACAO: "DOCUMENTACAO",
-  FINANCEIRO: "FINANCEIRO",
-  TECNICO: "TECNICO",
-  JURIDICO: "JURIDICO",
-  ADMINISTRATIVO: "ADMINISTRATIVO",
-  OUTROS: "OUTROS",
-} as const;
+import { ChecklistItemCategory } from "./checklist-item";
 
 /**
  * Schema para um item do checklist (input - ID opcional)
@@ -25,11 +14,11 @@ export const checklistItemInputSchema = z.object({
   category: z
     .enum([
       ChecklistItemCategory.DOCUMENTACAO,
-      ChecklistItemCategory.FINANCEIRO,
-      ChecklistItemCategory.TECNICO,
-      ChecklistItemCategory.JURIDICO,
-      ChecklistItemCategory.ADMINISTRATIVO,
-      ChecklistItemCategory.OUTROS,
+      ChecklistItemCategory.PRAZO,
+      ChecklistItemCategory.TECNICA,
+      ChecklistItemCategory.FINANCEIRA,
+      ChecklistItemCategory.JURIDICA,
+      ChecklistItemCategory.OUTRA,
     ])
     .optional()
     .nullable(),
@@ -47,11 +36,11 @@ export const checklistItemSchema = z.object({
   category: z
     .enum([
       ChecklistItemCategory.DOCUMENTACAO,
-      ChecklistItemCategory.FINANCEIRO,
-      ChecklistItemCategory.TECNICO,
-      ChecklistItemCategory.JURIDICO,
-      ChecklistItemCategory.ADMINISTRATIVO,
-      ChecklistItemCategory.OUTROS,
+      ChecklistItemCategory.PRAZO,
+      ChecklistItemCategory.TECNICA,
+      ChecklistItemCategory.FINANCEIRA,
+      ChecklistItemCategory.JURIDICA,
+      ChecklistItemCategory.OUTRA,
     ])
     .optional()
     .nullable(),
@@ -120,4 +109,3 @@ export type ChecklistTemplate = z.infer<typeof checklistTemplateSchema>;
 export type ChecklistItem = z.infer<typeof checklistItemSchema>;
 export type CreateChecklistTemplateInput = z.infer<typeof createChecklistTemplateSchema>;
 export type UpdateChecklistTemplateInput = z.infer<typeof updateChecklistTemplateSchema>;
-export type ChecklistItemCategoryType = keyof typeof ChecklistItemCategory;
