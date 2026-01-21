@@ -15,6 +15,7 @@ import {
   Req,
 } from "@nestjs/common";
 import { BidService } from "./bid.service";
+import { BidRiskService } from "./bid-risk.service";
 import { DocumentService } from "../document/document.service";
 import { SoftDeleteService } from "../common/services/soft-delete.service";
 import { AuditLogService } from "../audit-log/audit-log.service";
@@ -28,6 +29,8 @@ import { AuditInterceptor } from "../audit-log/interceptors/audit.interceptor";
 import {
   createBidSchema,
   updateBidSchema,
+  markBidAtRiskSchema,
+  clearBidRiskSchema,
   type Bid,
   type User,
   UserRole,
@@ -45,6 +48,7 @@ import type { Request } from "express";
 export class BidController {
   constructor(
     private readonly bidService: BidService,
+    private readonly bidRiskService: BidRiskService,
     private readonly documentService: DocumentService,
     private readonly softDeleteService: SoftDeleteService,
     private readonly auditLogService: AuditLogService,
@@ -339,6 +343,153 @@ export class BidController {
     return {
       total,
       empresaId,
+    };
+  }
+
+  /**
+   * Analisa o risco de uma licitação
+   * GET /bids/:id/risk-analysis
+   * 
+   * Retorna análise detalhada de risco com base nos itens do checklist.
+   * Identifica pendências críticas e sugere estado operacional.
+   * 
+   * Permissão: ADMIN e COLABORADOR
+   */
+  @Get(":id/risk-analysis")
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  async getRiskAnalysis(
+    @Param("id") id: string,
+    @Tenant() empresaId: string,
+  ) {
+    // Validar que a licitação existe
+    await this.bidService.findOne(id, empresaId);
+
+    // Executar análise de risco
+    return this.bidRiskService.analyzeRisk(id, empresaId);
+  }
+
+  /**
+   * Marca licitação como EM_RISCO manualmente (com confirmação consciente)
+   * POST /bids/:id/mark-at-risk
+   * 
+   * Requer confirmação explícita do usuário.
+   * Cria um override manual, impedindo atualizações automáticas até ser removido.
+   * 
+   * Body: {
+   *   "confirmacao": "CONFIRMO_MARCAR_EM_RISCO",
+   *   "motivo": "Justificativa do usuário..."
+   * }
+   * 
+   * Permissão: ADMIN e COLABORADOR
+   */
+  @Post(":id/mark-at-risk")
+  @HttpCode(HttpStatus.OK)
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  @Audit({ action: "bid.manual_mark_at_risk", resourceType: "Bid", captureResourceId: true })
+  async markAtRisk(
+    @Param("id") id: string,
+    @Body() body: unknown,
+    @Tenant() empresaId: string,
+    @CurrentUser() user: User,
+    @Req() request: Request,
+  ) {
+    // Validar confirmação consciente
+    const result = markBidAtRiskSchema.safeParse(body);
+
+    if (!result.success) {
+      throw new BadRequestException({
+        message: "Dados inválidos",
+        errors: result.error.errors,
+      });
+    }
+
+    const analysis = await this.bidRiskService.markAtRisk(
+      id,
+      empresaId,
+      user.id,
+      result.data.motivo,
+      request,
+    );
+
+    return {
+      message: "Licitação marcada como EM_RISCO com sucesso",
+      analysis,
+    };
+  }
+
+  /**
+   * Remove estado EM_RISCO manualmente (com confirmação consciente)
+   * POST /bids/:id/clear-risk
+   * 
+   * Requer confirmação explícita do usuário.
+   * Cria um override manual, impedindo atualizações automáticas até ser removido.
+   * 
+   * Body: {
+   *   "confirmacao": "CONFIRMO_REMOVER_RISCO"
+   * }
+   * 
+   * Permissão: ADMIN e COLABORADOR
+   */
+  @Post(":id/clear-risk")
+  @HttpCode(HttpStatus.OK)
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  @Audit({ action: "bid.manual_clear_risk", resourceType: "Bid", captureResourceId: true })
+  async clearRisk(
+    @Param("id") id: string,
+    @Body() body: unknown,
+    @Tenant() empresaId: string,
+    @CurrentUser() user: User,
+    @Req() request: Request,
+  ) {
+    // Validar confirmação consciente
+    const result = clearBidRiskSchema.safeParse(body);
+
+    if (!result.success) {
+      throw new BadRequestException({
+        message: "Dados inválidos",
+        errors: result.error.errors,
+      });
+    }
+
+    const analysis = await this.bidRiskService.clearRisk(id, empresaId, user.id, request);
+
+    return {
+      message: "Risco removido com sucesso",
+      analysis,
+    };
+  }
+
+  /**
+   * Remove override manual e permite atualizações automáticas
+   * POST /bids/:id/remove-manual-override
+   * 
+   * Remove o flag de override manual, permitindo que o sistema
+   * volte a atualizar automaticamente o estado operacional.
+   * Executa análise de risco imediatamente após remover o override.
+   * 
+   * Permissão: ADMIN e COLABORADOR
+   */
+  @Post(":id/remove-manual-override")
+  @HttpCode(HttpStatus.OK)
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  @Audit({ action: "bid.remove_manual_override", resourceType: "Bid", captureResourceId: true })
+  async removeManualOverride(
+    @Param("id") id: string,
+    @Tenant() empresaId: string,
+    @CurrentUser() user: User,
+    @Req() request: Request,
+  ) {
+    const result = await this.bidRiskService.removeManualOverride(
+      id,
+      empresaId,
+      user.id,
+      request,
+    );
+
+    return {
+      message: "Override manual removido com sucesso",
+      updated: result.updated,
+      analysis: result.analysis,
     };
   }
 }

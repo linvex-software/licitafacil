@@ -81,6 +81,21 @@ export const updateBidSchema = z.object({
 });
 
 /**
+ * Schema de validação para marcar licitação como em risco (confirmação consciente)
+ */
+export const markBidAtRiskSchema = z.object({
+  confirmacao: z.literal("CONFIRMO_MARCAR_EM_RISCO"),
+  motivo: z.string().min(10, "Motivo deve ter pelo menos 10 caracteres").max(500, "Motivo muito longo"),
+});
+
+/**
+ * Schema de validação para remover risco de licitação (confirmação consciente)
+ */
+export const clearBidRiskSchema = z.object({
+  confirmacao: z.literal("CONFIRMO_REMOVER_RISCO"),
+});
+
+/**
  * Schema de validação para Licitação (Bid) completa
  */
 export const bidSchema = z.object({
@@ -91,6 +106,11 @@ export const bidSchema = z.object({
   modality: z.string(),
   legalStatus: z.string(),
   operationalState: z.string(),
+  riskReason: z.string().nullable(),
+  lastRiskAnalysisAt: z.string().datetime().nullable(),
+  manualRiskOverride: z.boolean(),
+  manualRiskOverrideBy: z.string().uuid().nullable(),
+  manualRiskOverrideAt: z.string().datetime().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -98,6 +118,8 @@ export const bidSchema = z.object({
 export type Bid = z.infer<typeof bidSchema>;
 export type CreateBidInput = z.infer<typeof createBidSchema>;
 export type UpdateBidInput = z.infer<typeof updateBidSchema>;
+export type MarkBidAtRiskInput = z.infer<typeof markBidAtRiskSchema>;
+export type ClearBidRiskInput = z.infer<typeof clearBidRiskSchema>;
 export type BidModalityType = keyof typeof BidModality;
 export type LegalStatusType = keyof typeof LegalStatus;
 export type OperationalStateType = keyof typeof OperationalState;

@@ -175,6 +175,11 @@ export class BidService {
     modality: string;
     legalStatus: string;
     operationalState: string;
+    riskReason: string | null;
+    lastRiskAnalysisAt: Date | null;
+    manualRiskOverride: boolean;
+    manualRiskOverrideBy: string | null;
+    manualRiskOverrideAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
   }): Bid {
@@ -186,6 +191,11 @@ export class BidService {
       modality: bid.modality,
       legalStatus: bid.legalStatus,
       operationalState: bid.operationalState,
+      riskReason: bid.riskReason,
+      lastRiskAnalysisAt: bid.lastRiskAnalysisAt?.toISOString() ?? null,
+      manualRiskOverride: bid.manualRiskOverride,
+      manualRiskOverrideBy: bid.manualRiskOverrideBy,
+      manualRiskOverrideAt: bid.manualRiskOverrideAt?.toISOString() ?? null,
       createdAt: bid.createdAt.toISOString(),
       updatedAt: bid.updatedAt.toISOString(),
     };

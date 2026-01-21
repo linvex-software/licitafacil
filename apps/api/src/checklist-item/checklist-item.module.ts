@@ -7,9 +7,18 @@ import { AuditLogModule } from "../audit-log/audit-log.module";
 import { BidModule } from "../bid/bid.module";
 import { DocumentModule } from "../document/document.module";
 import { AuthModule } from "../auth/auth.module";
+import { UserModule } from "../user/user.module";
 
 @Module({
-  imports: [PrismaModule, CommonModule, AuditLogModule, BidModule, DocumentModule, AuthModule],
+  imports: [
+    PrismaModule,
+    CommonModule,
+    AuditLogModule,
+    BidModule,
+    DocumentModule,
+    AuthModule,
+    UserModule,
+  ],
   controllers: [ChecklistItemController],
   providers: [ChecklistItemService],
   exports: [ChecklistItemService],
