@@ -10,7 +10,14 @@
     "lint": "turbo lint",
     "test": "turbo test",
     "typecheck": "turbo typecheck",
-    "clean": "turbo clean && rm -rf node_modules"
+    "clean": "turbo clean && rm -rf node_modules",
+    "prisma:generate": "pnpm --filter @licitafacil/api prisma:generate",
+    "prisma:migrate": "pnpm --filter @licitafacil/api prisma:migrate",
+    "prisma:studio": "pnpm --filter @licitafacil/api prisma:studio",
+    "prisma:seed": "pnpm --filter @licitafacil/api prisma:seed"
+  },
+  "prisma": {
+    "schema": "apps/api/prisma/schema.prisma"
   },
   "devDependencies": {
     "turbo": "^2.3.3"
@@ -20,4 +27,3 @@
     "pnpm": ">=9.0.0"
   }
 }
-

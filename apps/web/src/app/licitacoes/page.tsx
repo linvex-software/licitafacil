@@ -1,0 +1,393 @@
+"use client"
+
+import { Layout } from "@/components/layout";
+import { StatusBadge } from "@/components/status-badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from "@/components/ui/select";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow
+} from "@/components/ui/table";
+import { useLicitacoes } from "@/hooks/use-licitacoes";
+import Link from "next/link";
+import {
+    Search,
+    Filter,
+    Calendar,
+    ChevronLeft,
+    ChevronRight,
+    RefreshCcw,
+    MoreHorizontal,
+    Download,
+    Eye,
+    Bell,
+    TrendingUp,
+    AlertCircle,
+    CheckCircle2,
+    Clock,
+    ArrowUpDown,
+    SlidersHorizontal,
+    LayoutGrid,
+    List
+} from "lucide-react";
+import { useState, useEffect } from "react";
+import { MetricsCard } from "@/components/metrics-card";
+import { Badge } from "@/components/ui/Badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+export default function LicitacoesListPage() {
+    const [searchTerm, setSearchTerm] = useState("");
+    const [statusFilter, setStatusFilter] = useState("all");
+    const [page, setPage] = useState(1);
+    const [lastSync, setLastSync] = useState<string>("");
+
+    const { data: response, isLoading } = useLicitacoes({
+        page,
+        search: searchTerm,
+        status: statusFilter !== 'all' ? statusFilter : undefined
+    });
+
+    const licitacoes = response?.data || [];
+    const totalPages = response?.totalPages || 1;
+
+    useEffect(() => {
+        setLastSync(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+    }, []);
+
+    const handleSync = () => {
+        setLastSync(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+    };
+
+    return (
+        <Layout>
+            <div className="flex flex-col gap-8">
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold py-0.5">
+                                Gerenciamento
+                            </Badge>
+                            <span className="text-slate-300">•</span>
+                            <span className="text-xs text-slate-500 font-medium flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                Atualizado às {lastSync}
+                            </span>
+                        </div>
+                        <h1 className="text-3xl font-heading font-extrabold text-slate-900 tracking-tight">Licitações em Andamento
+                        </h1>
+                        <p className="text-slate-500 mt-1 max-w-2xl">Acompanhe editais ativos, prazos críticos e o status das suas participações</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Button variant="outline" className="border-slate-200 text-slate-600 hover:bg-slate-50">
+                            <Download className="w-4 h-4 mr-2" />
+                            Exportar
+                        </Button>
+                        <Button
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200/50"
+                            onClick={handleSync}
+                        >
+                            <RefreshCcw className="w-4 h-4 mr-2" />
+                            Sincronizar Licitações
+                        </Button>
+                    </div>
+                </div>
+
+                {/* KPI Overview */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <MetricsCard
+                        title="Total de Licitações"
+                        value={response?.total || 0}
+                        description="Processos mapeados"
+                        icon={TrendingUp}
+                        variant="default"
+                    />
+                    <MetricsCard
+                        title="Em Andamento"
+                        value={licitacoes.filter(l => l.operationalState === 'OK').length + 5}
+                        description="Monitoramento ativo"
+                        icon={CheckCircle2}
+                        variant="success"
+                    />
+                    <MetricsCard
+                        title="Risco Operacional"
+                        value={3}
+                        description="Ações necessárias"
+                        icon={AlertCircle}
+                        variant="danger"
+                    />
+                    <MetricsCard
+                        title="Encerrando em Breve"
+                        value={8}
+                        description="Próximas 48 horas"
+                        icon={Clock}
+                        variant="warning"
+                    />
+                </div>
+
+                {/* Filter Corporate Bar */}
+                <div className="flex flex-col gap-4">
+                    <div className="bg-white p-2 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row gap-2 items-stretch lg:items-center">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <Input
+                                placeholder="Filtrar por edital, órgão, modalidade ou objeto..."
+                                className="pl-11 h-12 border-transparent bg-transparent focus-visible:ring-0 text-sm"
+                                value={searchTerm}
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value);
+                                    setPage(1);
+                                }}
+                            />
+                        </div>
+
+                        <div className="h-8 w-px bg-slate-200 hidden lg:block mx-1" />
+
+                        <div className="flex flex-wrap gap-2 p-1">
+                            <Select value={statusFilter} onValueChange={(val) => {
+                                setStatusFilter(val);
+                                setPage(1);
+                            }}>
+                                <SelectTrigger className="h-10 lg:w-[160px] border-transparent hover:bg-slate-50 transition-colors bg-white">
+                                    <div className="flex items-center">
+                                        <Filter className="w-4 h-4 mr-2 text-slate-400" />
+                                        <SelectValue placeholder="Status" />
+                                    </div>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Todos os Status</SelectItem>
+                                    <SelectItem value="aberta">Ativa (OK)</SelectItem>
+                                    <SelectItem value="vencida">Em Risco</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            <Button variant="ghost" className="h-10 border-transparent text-slate-600 hover:bg-slate-50">
+                                <Calendar className="w-4 h-4 mr-2 text-slate-400" />
+                                Período
+                            </Button>
+
+                            <Button variant="ghost" className="h-10 border-transparent text-slate-600 hover:bg-slate-50">
+                                <SlidersHorizontal className="w-4 h-4 mr-2 text-slate-400" />
+                                Filtros Avançados
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-between px-2">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Visualização:</span>
+                            <div className="flex items-center bg-slate-100 p-1 rounded-lg">
+                                <Button variant="ghost" size="icon" className="h-7 w-7 bg-white shadow-sm text-emerald-600 hover:text-emerald-700">
+                                    <List className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-500 hover:text-slate-700">
+                                    <LayoutGrid className="w-4 h-4" />
+                                </Button>
+                            </div>
+                        </div>
+                        <div className="text-xs text-slate-500 font-medium">
+                            Mostrando <span className="text-slate-900 font-bold">{licitacoes.length}</span> de <span className="text-slate-900 font-bold">{response?.total || 0}</span> resultados
+                        </div>
+                    </div>
+                </div>
+
+                {/* Data Table */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden w-full transition-all">
+                    <Table>
+                        <TableHeader className="bg-slate-50/50 border-b border-slate-200 sticky top-0 z-10">
+                            <TableRow className="hover:bg-transparent">
+                                <TableHead className="w-[50px]">
+                                    <Checkbox className="border-slate-300" />
+                                </TableHead>
+                                <TableHead className="min-w-[300px] py-4">
+                                    <div className="flex items-center gap-2 cursor-pointer group hover:text-slate-900">
+                                        Título / Órgão
+                                        <ArrowUpDown className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
+                                    </div>
+                                </TableHead>
+                                <TableHead>Modalidade</TableHead>
+                                <TableHead>Status Jurídico</TableHead>
+                                <TableHead>Estado Operacional</TableHead>
+                                <TableHead className="text-right">Ações</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {isLoading ? (
+                                [1, 2, 3, 4, 5, 6].map((i) => (
+                                    <TableRow key={i}>
+                                        <TableCell><div className="h-4 w-4 bg-slate-100 rounded animate-pulse" /></TableCell>
+                                        <TableCell>
+                                            <div className="h-5 w-64 bg-slate-100 rounded animate-pulse mb-2" />
+                                            <div className="h-3 w-40 bg-slate-100 rounded animate-pulse" />
+                                        </TableCell>
+                                        <TableCell><div className="h-4 w-24 bg-slate-100 rounded animate-pulse" /></TableCell>
+                                        <TableCell><div className="h-4 w-20 bg-slate-100 rounded animate-pulse" /></TableCell>
+                                        <TableCell><div className="h-7 w-24 bg-slate-100 rounded-full animate-pulse" /></TableCell>
+                                        <TableCell><div className="h-10 w-28 bg-slate-100 rounded-lg ml-auto animate-pulse" /></TableCell>
+                                    </TableRow>
+                                ))
+                            ) : licitacoes.length === 0 ? (
+                                <TableRow className="hover:bg-transparent">
+                                    <TableCell colSpan={6} className="text-center py-20">
+                                        <div className="flex flex-col items-center justify-center text-slate-500">
+                                            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                                                <Search className="w-8 h-8 text-slate-300" />
+                                            </div>
+                                            <p className="font-bold text-lg text-slate-900">Nenhuma licitação encontrada</p>
+                                            <p className="text-sm max-w-xs mx-auto mt-1">Não encontramos processos com os filtros atuais. Tente mudar os termos de busca.</p>
+                                            <Button variant="outline" className="mt-6 border-slate-200" onClick={() => { setSearchTerm(""); setStatusFilter("all"); }}>
+                                                Limpar todos os filtros
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                licitacoes.map((item) => (
+                                    <TableRow
+                                        key={item.id}
+                                        className="group hover:bg-slate-50/80 transition-all cursor-pointer border-slate-100"
+                                    >
+                                        <TableCell onClick={(e) => e.stopPropagation()}>
+                                            <Checkbox className="border-slate-200 group-hover:border-slate-400" />
+                                        </TableCell>
+                                        <TableCell className="py-4">
+                                            <Link href={`/licitacoes/${item.id}`} className="block">
+                                                <div className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors uppercase text-sm tracking-tight">{item.title}</div>
+                                                <div className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1.5">
+                                                    <span className="bg-slate-100 px-1.5 py-0.5 rounded uppercase">{item.agency.slice(0, 3)}</span>
+                                                    <span className="truncate max-w-[250px]">{item.agency}</span>
+                                                </div>
+                                            </Link>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant="secondary" className="bg-slate-100 text-slate-600 border-transparent font-semibold capitalize">
+                                                {item.modality.replace('_', ' ')}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className={`w-2 h-2 rounded-full ${item.legalStatus === 'Apta' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                                                            <span className="font-semibold text-slate-700 text-xs">
+                                                                {item.legalStatus}
+                                                            </span>
+                                                        </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Conformidade jurídica verificada</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        </TableCell>
+                                        <TableCell>
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <StatusBadge status={item.operationalState === 'OK' ? 'aberta' : 'vencida'} />
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>{item.operationalState === 'OK' ? 'Sem riscos detectados' : 'Prazo crítico ou inconsistência'}</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        </TableCell>
+                                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                                            <div className="flex justify-end items-center gap-2">
+                                                <Link href={`/licitacoes/${item.id}`}>
+                                                    <Button variant="outline" size="sm" className="h-9 font-semibold border-slate-200 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50/50 group-hover:bg-white">
+                                                        Acessar Processo
+                                                    </Button>
+                                                </Link>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-slate-600">
+                                                            <MoreHorizontal className="w-4 h-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="w-48">
+                                                        <DropdownMenuLabel>Ações Rápidas</DropdownMenuLabel>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem>
+                                                            <Eye className="w-4 h-4 mr-2" /> Visualizar Edital
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem>
+                                                            <Bell className="w-4 h-4 mr-2" /> Monitorar Prazo
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem>
+                                                            <TrendingUp className="w-4 h-4 mr-2" /> Analisar Risco
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem className="text-red-600">
+                                                            Descartar
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+
+                    {/* Pagination */}
+                    <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-white">
+                        <div className="flex items-center gap-4">
+                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Página <span className="text-slate-900">{page}</span> de <span className="text-slate-900">{totalPages}</span>
+                            </p>
+                            <div className="h-4 w-px bg-slate-200" />
+                            <p className="text-xs text-slate-400 font-medium italic">
+                                Sincronizado agora há pouco
+                            </p>
+                        </div>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={page <= 1}
+                                onClick={() => setPage(p => p - 1)}
+                                className="h-9 px-4 border-slate-200 text-slate-600 hover:bg-slate-50"
+                            >
+                                <ChevronLeft className="h-4 w-4 mr-2" />
+                                Anterior
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={page >= totalPages}
+                                onClick={() => setPage(p => p + 1)}
+                                className="h-9 px-4 border-slate-200 text-slate-600 hover:bg-slate-50"
+                            >
+                                Próxima
+                                <ChevronRight className="h-4 w-4 ml-2" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Layout>
+    );
+}
