@@ -1,107 +1,163 @@
-"use client";
+"use client"
 
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useRouter } from "next/navigation";
-import { login } from "@/lib/auth";
+import { api } from "@/lib/api";
+import { useAuth } from "@/contexts/auth-context";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
+import { Gavel, Loader2, ShieldCheck, Zap, BarChart3 } from "lucide-react";
+
+const loginSchema = z.object({
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres"),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login } = useAuth();
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsLoading(true);
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
+  const onSubmit = async (data: LoginFormValues) => {
+    setIsSubmitting(true);
     try {
-      await login(email, password);
+      const response = await api.post("/auth/login", data);
+      const { accessToken, user } = response.data;
+
+      login(accessToken, user);
+
+      toast({
+        title: "Login realizado",
+        description: `Bem-vindo, ${user.name}!`,
+      });
+
       router.push("/");
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao fazer login");
+    } catch (error: any) {
+      toast({
+        title: "Erro no login",
+        description: error.response?.data?.message || "Ocorreu um erro inesperado",
+        variant: "destructive",
+      });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
-      <div className="max-w-md w-full">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">
-            Licitafacil
-          </h1>
-          <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-6 text-center">
-            Login
-          </h2>
+    <div className="min-h-screen w-full flex flex-col md:flex-row bg-white">
+      {/* Left Side: Branding / Background */}
+      <div className="hidden md:flex md:w-1/2 bg-[#0a0f1d] relative overflow-hidden flex-col justify-between p-12 text-white">
+        {/* Abstract shapes / patterns */}
+        <div className="absolute top-0 right-0 w-full h-full opacity-10 pointer-events-none">
+          <div className="absolute top-[10%] right-[10%] w-64 h-64 bg-emerald-500 rounded-full blur-[120px]" />
+          <div className="absolute bottom-[10%] left-[10%] w-96 h-96 bg-blue-500 rounded-full blur-[150px]" />
+        </div>
 
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+        <div className="relative z-10">
+
+          <div className="max-w-md">
+
+          </div>
+        </div>
+
+        <div className="relative z-10 grid grid-cols-3 gap-8">
+
+
+
+        </div>
+      </div>
+
+      {/* Right Side: Login Form */}
+      <div className="flex-1 flex items-center justify-center p-8 bg-slate-50 md:bg-white">
+        <div className="w-full max-w-sm space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+          <div className="md:hidden flex justify-center mb-8">
+            <div className="flex items-center gap-2">
+              <Gavel className="w-8 h-8 text-emerald-600" />
+              <span className="text-2xl font-heading font-bold text-slate-900">LicitaFácil</span>
             </div>
-          )}
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isLoading}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                  bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                  focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                  disabled:opacity-50 disabled:cursor-not-allowed"
-                placeholder="seu@email.com"
+          <div>
+            <h2 className="text-3xl font-heading font-bold text-slate-900">Bem-vindo de volta</h2>
+            <p className="text-slate-500 mt-2">Acesse sua conta para gerenciar seus processos.</p>
+          </div>
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="text-slate-700 font-semibold">E-mail</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="nome@empresa.com.br"
+                        {...field}
+                        className="h-12 border-slate-200 bg-slate-50/50 focus:bg-white transition-all focus:ring-emerald-500"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Senha
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isLoading}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                  bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                  focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                  disabled:opacity-50 disabled:cursor-not-allowed"
-                placeholder="••••••••"
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="text-slate-700 font-semibold">Senha</FormLabel>
+                      <button type="button" className="text-xs font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-wider transition-colors">Esqueceu a senha?</button>
+                    </div>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        {...field}
+                        className="h-12 border-slate-200 bg-slate-50/50 focus:bg-white transition-all focus:ring-emerald-500"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
+              <Button
+                type="submit"
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white h-12 text-base font-bold transition-all shadow-lg active:scale-[0.98]"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Autenticando...
+                  </>
+                ) : (
+                  "Acessar Plataforma"
+                )}
+              </Button>
+            </form>
+          </Form>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium
-                disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {isLoading ? "Entrando..." : "Entrar"}
-            </button>
-          </form>
-
-          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-              Ainda não tem uma conta? Entre em contato com o administrador.
+          <div className="pt-4 text-center">
+            <p className="text-sm text-slate-500">
+              Ainda não tem acesso? <button className="text-emerald-600 font-bold hover:underline">Entre em contato</button>
             </p>
           </div>
         </div>

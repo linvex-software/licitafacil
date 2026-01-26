@@ -10,7 +10,7 @@ export default async function DocumentosPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="container mx-auto px-4 py-8 ">
         <div className="mb-6">
           <Link
             href={`/licitacoes/${id}`}

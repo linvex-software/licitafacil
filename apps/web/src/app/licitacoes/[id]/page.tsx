@@ -1,234 +1,202 @@
-import { notFound } from "next/navigation";
-import { fetchBid } from "@/lib/api";
-import { Card, CardHeader, CardContent } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { Section, SectionItem } from "@/components/ui/Section";
+"use client"
+
+import { Layout } from "@/components/layout";
+import { StatusBadge } from "@/components/status-badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { useLicitacao, useUpdateBid } from "@/hooks/use-licitacoes";
 import Link from "next/link";
+import { useParams } from "next/navigation";
+import {
+  ArrowLeft,
+  Building2,
+  Calendar,
+  FileText,
+  DollarSign,
+  Download,
+  CheckCircle2,
+  AlertTriangle
+} from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { useToast } from "@/hooks/use-toast";
 
-interface PageProps {
-  params: Promise<{ id: string }>;
-}
+export default function LicitacaoDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
+  const { data: licitacao, isLoading } = useLicitacao(id);
+  const { mutateAsync: updateBid, isPending } = useUpdateBid();
+  const { toast } = useToast();
 
-// Função auxiliar para formatar modalidade
-function formatModality(modality: string): string {
-  const modalityMap: Record<string, string> = {
-    PREGAO_ELETRONICO: "Pregão Eletrônico",
-    CONCORRENCIA: "Concorrência",
-    DISPENSA: "Dispensa",
-    OUTRA: "Outra",
+  const handleToggleRisk = async () => {
+    if (!licitacao) return;
+
+    // In a real app we'd use the markAtRisk/clearRisk endpoints
+    // For now we use the general patch for simplicity in mapping
+    try {
+      const newState = licitacao.operationalState === 'OK' ? 'EM_RISCO' : 'OK';
+      await updateBid({
+        id,
+        data: { operationalState: newState as any }
+      });
+
+      toast({
+        title: "Status atualizado",
+        description: `Licitação marcada como ${newState}.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
-  return modalityMap[modality] || modality;
-}
 
-// Função auxiliar para formatar status jurídico
-function formatLegalStatus(status: string): string {
-  const statusMap: Record<string, string> = {
-    ANALISANDO: "Analisando",
-    PARTICIPANDO: "Participando",
-    DESCARTADA: "Descartada",
-    VENCIDA: "Vencida",
-    PERDIDA: "Perdida",
-    CANCELADA: "Cancelada",
-  };
-  return statusMap[status] || status;
-}
-
-// Função auxiliar para formatar estado operacional
-function formatOperationalState(state: string): string {
-  const stateMap: Record<string, string> = {
-    OK: "OK",
-    EM_RISCO: "Em Risco",
-  };
-  return stateMap[state] || state;
-}
-
-// Função para obter cor do badge de status jurídico
-function getLegalStatusVariant(status: string): "default" | "success" | "warning" | "danger" | "info" {
-  const variantMap: Record<string, "default" | "success" | "warning" | "danger" | "info"> = {
-    ANALISANDO: "info",
-    PARTICIPANDO: "success",
-    DESCARTADA: "default",
-    VENCIDA: "success",
-    PERDIDA: "danger",
-    CANCELADA: "warning",
-  };
-  return variantMap[status] || "default";
-}
-
-// Função para obter cor do badge de estado operacional
-function getOperationalStateVariant(
-  state: string,
-): "default" | "success" | "warning" | "danger" | "info" {
-  return state === "EM_RISCO" ? "warning" : "success";
-}
-
-export default async function LicitacaoDetailPage({ params }: PageProps) {
-  const { id } = await params;
-
-  let bid;
-  try {
-    bid = await fetchBid(id);
-  } catch (error) {
-    console.error("Erro ao buscar licitação:", error);
-    notFound();
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className=" mx-auto space-y-6">
+          <div className="h-8 w-32 bg-slate-200 rounded animate-pulse" />
+          <div className="h-64 bg-slate-100 rounded-xl animate-pulse" />
+          <div className="h-32 bg-slate-100 rounded-xl animate-pulse" />
+        </div>
+      </Layout>
+    );
   }
 
-  if (!bid) {
-    notFound();
+  if (!licitacao) {
+    return (
+      <Layout>
+        <div className="flex flex-col items-center justify-center min-h-[50vh]">
+          <h2 className="text-xl font-bold text-slate-900">Licitação não encontrada</h2>
+          <Link href="/licitacoes" className="mt-4 text-emerald-600 hover:underline">
+            Voltar para lista
+          </Link>
+        </div>
+      </Layout>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <Layout>
+      <div className=" mx-auto">
         {/* Header */}
-        <div className="mb-6">
-          <Link
-            href="/"
-            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 mb-4 inline-block"
-          >
-            ← Voltar
+        <div className="mb-8">
+          <Link href="/licitacoes">
+            <Button variant="ghost" className="pl-0 text-slate-500 hover:text-slate-900 hover:bg-transparent mb-4">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar para Lista
+            </Button>
           </Link>
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                {bid.title}
+              <div className="flex items-center gap-3 mb-2">
+                <StatusBadge status={licitacao.operationalState === 'OK' ? 'aberta' : 'vencida'} />
+                <span className="text-sm font-mono text-slate-400">ID: {licitacao.id.substring(0, 8)}</span>
+              </div>
+              <h1 className="text-2xl md:text-3xl font-heading font-bold text-slate-900 max-w-3xl leading-tight">
+                {licitacao.title}
               </h1>
-              <p className="text-lg text-gray-600 dark:text-gray-400">{bid.agency}</p>
+              <div className="flex items-center gap-2 mt-4 text-slate-600">
+                <Building2 className="w-4 h-4" />
+                <span className="font-medium">{licitacao.agency}</span>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Badge variant={getLegalStatusVariant(bid.legalStatus)}>
-                {formatLegalStatus(bid.legalStatus)}
-              </Badge>
-              <Badge variant={getOperationalStateVariant(bid.operationalState)}>
-                {formatOperationalState(bid.operationalState)}
-              </Badge>
-            </div>
+
+            <Button
+              size="lg"
+              variant={licitacao.operationalState === 'OK' ? "outline" : "destructive"}
+              onClick={handleToggleRisk}
+              disabled={isPending}
+              className="shadow-lg"
+            >
+              {licitacao.operationalState === 'OK' ? (
+                <>
+                  <AlertTriangle className="w-4 h-4 mr-2" />
+                  Sinalizar Risco
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Resolver Risco
+                </>
+              )}
+            </Button>
           </div>
         </div>
 
-        {/* Conteúdo principal */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Coluna principal */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Dados Gerais */}
-            <Card>
-              <CardHeader>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  Dados Gerais
-                </h2>
-              </CardHeader>
-              <CardContent>
-                <Section title="">
-                  <div className="space-y-4">
-                    <SectionItem label="Modalidade" value={formatModality(bid.modality)} />
-                    <SectionItem label="Órgão" value={bid.agency} />
-                    <SectionItem
-                      label="Criado em"
-                      value={new Date(bid.createdAt).toLocaleDateString("pt-BR", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    />
-                    <SectionItem
-                      label="Atualizado em"
-                      value={new Date(bid.updatedAt).toLocaleDateString("pt-BR", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    />
-                  </div>
-                </Section>
-              </CardContent>
-            </Card>
-
-            {/* Status Jurídico */}
-            <Card>
-              <CardHeader>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  Status Jurídico
-                </h2>
-              </CardHeader>
-              <CardContent>
-                <Section title="">
-                  <SectionItem
-                    label="Status"
-                    value={
-                      <Badge variant={getLegalStatusVariant(bid.legalStatus)}>
-                        {formatLegalStatus(bid.legalStatus)}
-                      </Badge>
-                    }
-                  />
-                </Section>
-              </CardContent>
-            </Card>
-
-            {/* Estado Operacional */}
-            <Card>
-              <CardHeader>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  Estado Operacional
-                </h2>
-              </CardHeader>
-              <CardContent>
-                <Section title="">
-                  <SectionItem
-                    label="Estado"
-                    value={
-                      <Badge variant={getOperationalStateVariant(bid.operationalState)}>
-                        {formatOperationalState(bid.operationalState)}
-                      </Badge>
-                    }
-                  />
-                </Section>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar - Ações e Links */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  Ações
-                </h2>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {/* TODO: Implementar página de documentos quando F1-05 estiver concluída */}
-                  <Link
-                    href={`/licitacoes/${id}/documentos`}
-                    className="block w-full text-left px-4 py-3 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg transition-colors font-medium"
-                  >
-                    📄 Documentos
-                  </Link>
-
-                  {/* TODO: Implementar página de prazos quando F1-06 estiver concluída */}
-                  <Link
-                    href={`/licitacoes/${id}/prazos`}
-                    className="block w-full text-left px-4 py-3 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg transition-colors font-medium"
-                  >
-                    📅 Prazos
-                  </Link>
-
-                  {/* TODO: Implementar página de checklist quando F1-07 estiver concluída */}
-                  <Link
-                    href={`/licitacoes/${id}/checklist`}
-                    className="block w-full text-left px-4 py-3 bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg transition-colors font-medium"
-                  >
-                    ✅ Checklist
-                  </Link>
+        {/* Info Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <Card className="lg:col-span-2 shadow-sm border-slate-200">
+            <CardHeader>
+              <CardTitle className="text-lg font-heading">Detalhes do Processo</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1">
+                <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Modalidade</span>
+                <p className="font-medium text-slate-900">{licitacao.modality.replace('_', ' ')}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Status Jurídico</span>
+                <p className="font-medium text-slate-900 uppercase tracking-tight">{licitacao.legalStatus}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Cadastrado em</span>
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-slate-500" />
+                  <p className="font-medium text-slate-900">
+                    {format(new Date(licitacao.createdAt), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+              <div className="space-y-1">
+                <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Manual Override</span>
+                <p className="font-medium text-slate-900">{licitacao.manualRiskOverride ? "Sim" : "Não"}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm border-slate-200 bg-slate-50">
+            <CardHeader>
+              <CardTitle className="text-lg font-heading">Arquivos</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-slate-500 italic">Funcionalidade de arquivos em desenvolvimento.</p>
+              <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 opacity-50">
+                <div className="flex items-center gap-3">
+                  <FileText className="w-4 h-4 text-slate-400" />
+                  <span className="text-sm font-medium">Edital_Padrao.pdf</span>
+                </div>
+                <Download className="w-4 h-4 text-slate-400" />
+              </div>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Audit / Info Card */}
+        {licitacao.operationalState === 'EM_RISCO' && (
+          <Card className="border-red-200 bg-red-50 mb-8">
+            <CardContent className="pt-6">
+              <div className="flex gap-4">
+                <AlertTriangle className="w-6 h-6 text-red-600 shrink-0" />
+                <div>
+                  <h4 className="font-bold text-red-900">Motivo do Risco</h4>
+                  <p className="text-sm text-red-800 mt-1">
+                    {licitacao.riskReason || "Esta licitação foi sinalizada com problemas operacionais ou pendências críticas no checklist."}
+                  </p>
+                  {licitacao.lastRiskAnalysisAt && (
+                    <p className="text-xs text-red-600 mt-2 font-medium">
+                      Análise realizada em: {format(new Date(licitacao.lastRiskAnalysisAt), "dd/MM/yyyy HH:mm")}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
-    </div>
+    </Layout>
   );
 }
