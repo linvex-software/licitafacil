@@ -12,6 +12,7 @@ import { BidModule } from "./bid/bid.module";
 import { DocumentModule } from "./document/document.module";
 import { ChecklistTemplateModule } from "./checklist-template/checklist-template.module";
 import { ChecklistItemModule } from "./checklist-item/checklist-item.module";
+import { PrazoModule } from "./prazo/prazo.module";
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ChecklistItemModule } from "./checklist-item/checklist-item.module";
     DocumentModule,
     ChecklistTemplateModule,
     ChecklistItemModule,
+    PrazoModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

@@ -12,10 +12,12 @@ import {
   Building2,
   Calendar,
   FileText,
-  DollarSign,
   Download,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Clock,
+  ListChecks,
+  ChevronRight,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -160,19 +162,59 @@ export default function LicitacaoDetailPage() {
 
           <Card className="shadow-sm border-slate-200 bg-slate-50">
             <CardHeader>
-              <CardTitle className="text-lg font-heading">Arquivos</CardTitle>
+              <CardTitle className="text-lg font-heading">Documentos</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-xs text-slate-500 italic">Funcionalidade de arquivos em desenvolvimento.</p>
-              <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 opacity-50">
-                <div className="flex items-center gap-3">
-                  <FileText className="w-4 h-4 text-slate-400" />
-                  <span className="text-sm font-medium">Edital_Padrao.pdf</span>
-                </div>
-                <Download className="w-4 h-4 text-slate-400" />
-              </div>
+              <p className="text-sm text-slate-600">
+                Edite, envie e acompanhe os documentos desta licitação.
+              </p>
+              <Link href={`/licitacoes/${id}/documentos`}>
+                <Button variant="outline" className="w-full justify-between group border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50">
+                  <span className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-slate-500 group-hover:text-emerald-600" />
+                    Ver documentos
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600" />
+                </Button>
+              </Link>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Ações da licitação: Prazos, Checklist */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+          <Link href={`/licitacoes/${id}/prazos`}>
+            <Card className="shadow-sm border-slate-200 hover:border-emerald-500/50 hover:shadow-md transition-all cursor-pointer group h-full">
+              <CardContent className="pt-6 pb-6 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 group-hover:bg-emerald-500/20 transition-colors">
+                    <Clock className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-semibold text-slate-900 group-hover:text-emerald-700">Prazos</h3>
+                    <p className="text-sm text-slate-500">Cadastre e acompanhe os prazos e dias restantes</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-emerald-500 shrink-0" />
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href={`/licitacoes/${id}/checklist`}>
+            <Card className="shadow-sm border-slate-200 hover:border-emerald-500/50 hover:shadow-md transition-all cursor-pointer group h-full">
+              <CardContent className="pt-6 pb-6 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 group-hover:bg-emerald-500/20 transition-colors">
+                    <ListChecks className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-semibold text-slate-900 group-hover:text-emerald-700">Checklist</h3>
+                    <p className="text-sm text-slate-500">Itens obrigatórios e evidências desta licitação</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-emerald-500 shrink-0" />
+              </CardContent>
+            </Card>
+          </Link>
         </div>
 
         {/* Audit / Info Card */}

@@ -33,3 +33,118 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// --- Checklist (itens de checklist da licitação) ---
+export async function fetchChecklistItems(licitacaoId: string) {
+  const { data } = await api.get(`/checklist-items/licitacao/${licitacaoId}`);
+  return data;
+}
+
+export async function markChecklistItemCompleted(itemId: string, evidenciaId?: string | null) {
+  const { data } = await api.post(`/checklist-items/${itemId}/complete`, evidenciaId != null ? { evidenciaId } : {});
+  return data;
+}
+
+export async function markChecklistItemIncomplete(itemId: string) {
+  const { data } = await api.post(`/checklist-items/${itemId}/incomplete`);
+  return data;
+}
+
+// --- Prazos (deadlines da licitação) ---
+export async function fetchPrazosByBid(bidId: string) {
+  const { data } = await api.get(`/prazos/bid/${bidId}`);
+  return data;
+}
+
+export async function fetchPrazo(id: string) {
+  const { data } = await api.get(`/prazos/${id}`);
+  return data;
+}
+
+export async function createPrazo(body: { bidId: string; titulo: string; dataPrazo: string; descricao?: string | null }) {
+  const { data } = await api.post("/prazos", body);
+  return data;
+}
+
+export async function updatePrazo(id: string, body: { titulo?: string; dataPrazo?: string; descricao?: string | null }) {
+  const { data } = await api.patch(`/prazos/${id}`, body);
+  return data;
+}
+
+export async function deletePrazo(id: string) {
+  const { data } = await api.delete(`/prazos/${id}`);
+  return data;
+}
+
+// --- Documentos ---
+export interface FetchDocumentsParams {
+  page?: number;
+  limit?: number;
+  bidId?: string;
+  category?: string;
+  search?: string;
+}
+
+export interface DocumentsResponse {
+  data: import("@licitafacil/shared").Document[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export async function fetchDocuments(params: FetchDocumentsParams = {}): Promise<DocumentsResponse> {
+  const { data } = await api.get<DocumentsResponse>("/documents", {
+    params: {
+      page: params.page ?? 1,
+      limit: params.limit ?? 20,
+      bidId: params.bidId,
+      category: params.category || undefined,
+      search: params.search || undefined,
+    },
+  });
+  return data;
+}
+
+/** Faz download do arquivo e dispara o save no navegador */
+export async function downloadDocument(documentId: string, fileName: string): Promise<void> {
+  const { data } = await api.get(`/documents/${documentId}/download`, {
+    responseType: "blob",
+  });
+  const url = window.URL.createObjectURL(new Blob([data]));
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", fileName || "documento");
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
+export async function deleteDocument(id: string): Promise<void> {
+  await api.delete(`/documents/${id}`);
+}
+
+export async function uploadDocument(
+  file: File,
+  body: { name: string; category: string; bidId?: string }
+): Promise<import("@licitafacil/shared").Document> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("name", body.name);
+  formData.append("category", body.category);
+  if (body.bidId) {
+    formData.append("bidId", body.bidId);
+  }
+  const { data } = await api.post("/documents", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
+}
+
+export async function fetchDocumentVersions(documentId: string) {
+  const { data } = await api.get(`/documents/${documentId}/versions`);
+  return data;
+}
+
+export async function restoreDocumentVersion(documentId: string, versionNumber: number) {
+  const { data } = await api.post(`/documents/${documentId}/versions/${versionNumber}/restore`);
+  return data;
+}
