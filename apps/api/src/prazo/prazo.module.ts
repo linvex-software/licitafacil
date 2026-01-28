@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { PrazoController } from "./prazo.controller";
 import { PrazoService } from "./prazo.service";
+import { PrazoCriticalityService } from "./prazo-criticality.service";
 import { PrismaModule } from "../prisma/prisma.module";
 import { CommonModule } from "../common/common.module";
 import { AuditLogModule } from "../audit-log/audit-log.module";
@@ -18,7 +19,7 @@ import { UserModule } from "../user/user.module";
     UserModule,
   ],
   controllers: [PrazoController],
-  providers: [PrazoService],
-  exports: [PrazoService],
+  providers: [PrazoService, PrazoCriticalityService],
+  exports: [PrazoService, PrazoCriticalityService],
 })
 export class PrazoModule {}
