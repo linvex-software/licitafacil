@@ -50,6 +50,8 @@ describe("PrazoCriticalityService", () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    // Limpar variáveis de ambiente após cada teste
+    delete process.env.PRAZO_ENABLE_CHECKLIST_HEURISTIC;
   });
 
   describe("analyzeCriticality - Prazo Vencido (EXPIRED)", () => {
@@ -153,7 +155,35 @@ describe("PrazoCriticalityService", () => {
   });
 
   describe("analyzeCriticality - Item de Checklist Crítico Pendente (CRITICAL_CHECKLIST_PENDING)", () => {
-    it("deve identificar prazo associado a item crítico não concluído como crítico", async () => {
+    it("NÃO deve identificar quando feature flag está desabilitada (default)", async () => {
+      // Garantir que flag está desabilitada (default)
+      delete process.env.PRAZO_ENABLE_CHECKLIST_HEURISTIC;
+
+      const hoje = new Date();
+      const dataPrazo = new Date(hoje);
+      dataPrazo.setDate(hoje.getDate() + 30); // 30 dias no futuro
+
+      const prismaClient = prismaTenant.forTenant(empresaId);
+      // Mesmo com item crítico, não deve buscar checklist items (heurística desabilitada)
+      (prismaClient.checklistItem.findMany as jest.Mock).mockResolvedValue([]);
+
+      const result = await service.analyzeCriticality({
+        prazoId,
+        dataPrazo,
+        bidId,
+        empresaId,
+      });
+
+      // Não deve ser crítico por checklist (heurística desabilitada)
+      expect(result.isCritical).toBe(false);
+      expect(result.criticalReason).toBeNull();
+      // Verificar que findMany não foi chamado (heurística desabilitada)
+      expect(prismaClient.checklistItem.findMany).not.toHaveBeenCalled();
+    });
+
+    it("deve identificar prazo associado a item crítico não concluído quando flag habilitada e category=PRAZO", async () => {
+      process.env.PRAZO_ENABLE_CHECKLIST_HEURISTIC = "true";
+
       const hoje = new Date();
       const dataPrazo = new Date(hoje);
       dataPrazo.setDate(hoje.getDate() + 30); // 30 dias no futuro
@@ -164,7 +194,7 @@ describe("PrazoCriticalityService", () => {
           id: "item-1",
           isCritical: true,
           concluido: false,
-          category: "PRAZO",
+          category: "PRAZO", // category === "PRAZO" (heurística restritiva)
           titulo: "Prazo de entrega de propostas",
           exigeEvidencia: false,
           evidenciaId: null,
@@ -180,6 +210,38 @@ describe("PrazoCriticalityService", () => {
 
       expect(result.isCritical).toBe(true);
       expect(result.criticalReason).toBe(CriticalReason.CRITICAL_CHECKLIST_PENDING);
+    });
+
+    it("NÃO deve identificar quando item tem título com 'prazo' mas category não é PRAZO (heurística restritiva)", async () => {
+      process.env.PRAZO_ENABLE_CHECKLIST_HEURISTIC = "true";
+
+      const hoje = new Date();
+      const dataPrazo = new Date(hoje);
+      dataPrazo.setDate(hoje.getDate() + 30);
+
+      const prismaClient = prismaTenant.forTenant(empresaId);
+      (prismaClient.checklistItem.findMany as jest.Mock).mockResolvedValue([
+        {
+          id: "item-1",
+          isCritical: true,
+          concluido: false,
+          category: "DOCUMENTACAO", // category !== "PRAZO"
+          titulo: "Prazo para entrega de documentos", // Título contém "prazo", mas não conta (heurística restritiva)
+          exigeEvidencia: false,
+          evidenciaId: null,
+        },
+      ]);
+
+      const result = await service.analyzeCriticality({
+        prazoId,
+        dataPrazo,
+        bidId,
+        empresaId,
+      });
+
+      // Não deve ser crítico (heurística restritiva: apenas category === "PRAZO")
+      expect(result.isCritical).toBe(false);
+      expect(result.criticalReason).toBeNull();
     });
 
     it("não deve identificar prazo se item crítico está concluído", async () => {
@@ -213,34 +275,6 @@ describe("PrazoCriticalityService", () => {
       expect(result.criticalReason).toBeNull();
     });
 
-    it("deve identificar prazo mesmo se item não tem category PRAZO mas título menciona prazo", async () => {
-      const hoje = new Date();
-      const dataPrazo = new Date(hoje);
-      dataPrazo.setDate(hoje.getDate() + 30);
-
-      const prismaClient = prismaTenant.forTenant(empresaId);
-      (prismaClient.checklistItem.findMany as jest.Mock).mockResolvedValue([
-        {
-          id: "item-1",
-          isCritical: true,
-          concluido: false,
-          category: "DOCUMENTACAO",
-          titulo: "Prazo para entrega de documentos", // Título menciona "prazo"
-          exigeEvidencia: false,
-          evidenciaId: null,
-        },
-      ]);
-
-      const result = await service.analyzeCriticality({
-        prazoId,
-        dataPrazo,
-        bidId,
-        empresaId,
-      });
-
-      expect(result.isCritical).toBe(true);
-      expect(result.criticalReason).toBe(CriticalReason.CRITICAL_CHECKLIST_PENDING);
-    });
   });
 
   describe("analyzeCriticality - Documento Obrigatório Não Entregue (MISSING_REQUIRED_DOCUMENT)", () => {
@@ -249,7 +283,31 @@ describe("PrazoCriticalityService", () => {
      * Não há FK direta entre Prazo e Document - a relação é indireta via ChecklistItem.
      * Se o modelo evoluir para ter relação direta, esta regra deve ser revisada.
      */
-    it("deve identificar prazo associado a item que exige evidência sem documento", async () => {
+    it("NÃO deve identificar quando feature flag está desabilitada (default)", async () => {
+      delete process.env.PRAZO_ENABLE_CHECKLIST_HEURISTIC;
+
+      const hoje = new Date();
+      const dataPrazo = new Date(hoje);
+      dataPrazo.setDate(hoje.getDate() + 30);
+
+      const prismaClient = prismaTenant.forTenant(empresaId);
+      (prismaClient.checklistItem.findMany as jest.Mock).mockResolvedValue([]);
+
+      const result = await service.analyzeCriticality({
+        prazoId,
+        dataPrazo,
+        bidId,
+        empresaId,
+      });
+
+      expect(result.isCritical).toBe(false);
+      expect(result.criticalReason).toBeNull();
+      expect(prismaClient.checklistItem.findMany).not.toHaveBeenCalled();
+    });
+
+    it("deve identificar prazo associado a item que exige evidência sem documento quando flag habilitada e category=PRAZO", async () => {
+      process.env.PRAZO_ENABLE_CHECKLIST_HEURISTIC = "true";
+
       const hoje = new Date();
       const dataPrazo = new Date(hoje);
       dataPrazo.setDate(hoje.getDate() + 30);
@@ -260,7 +318,7 @@ describe("PrazoCriticalityService", () => {
           id: "item-1",
           isCritical: false,
           concluido: false,
-          category: "PRAZO",
+          category: "PRAZO", // category === "PRAZO" (heurística restritiva)
           titulo: "Prazo de entrega de documentos",
           exigeEvidencia: true,
           evidenciaId: null, // Sem documento
@@ -367,7 +425,9 @@ describe("PrazoCriticalityService", () => {
       expect(result.criticalReason).toBe(CriticalReason.EXPIRED); // Prioridade sobre outras regras
     });
 
-    it("deve priorizar CRITICAL_CHECKLIST_PENDING sobre MISSING_REQUIRED_DOCUMENT", async () => {
+    it("deve priorizar CRITICAL_CHECKLIST_PENDING sobre MISSING_REQUIRED_DOCUMENT quando flag habilitada", async () => {
+      process.env.PRAZO_ENABLE_CHECKLIST_HEURISTIC = "true";
+
       const hoje = new Date();
       const dataPrazo = new Date(hoje);
       dataPrazo.setDate(hoje.getDate() + 30);
@@ -396,7 +456,9 @@ describe("PrazoCriticalityService", () => {
       expect(result.criticalReason).toBe(CriticalReason.CRITICAL_CHECKLIST_PENDING); // Prioridade sobre MISSING_REQUIRED_DOCUMENT
     });
 
-    it("deve priorizar CRITICAL_CHECKLIST_PENDING sobre EXPIRING_SOON", async () => {
+    it("deve priorizar CRITICAL_CHECKLIST_PENDING sobre EXPIRING_SOON quando flag habilitada", async () => {
+      process.env.PRAZO_ENABLE_CHECKLIST_HEURISTIC = "true";
+
       const hoje = new Date();
       const dataPrazo = new Date(hoje);
       dataPrazo.setDate(hoje.getDate() + CRITICAL_DAYS_THRESHOLD_DEFAULT); // Dentro do threshold
@@ -515,6 +577,8 @@ describe("PrazoCriticalityService", () => {
      * TODO: Implementar criticalReasons[] para suportar múltiplas razões.
      */
     it("deve retornar apenas o motivo principal quando múltiplas regras se aplicam (perda de informação)", async () => {
+      process.env.PRAZO_ENABLE_CHECKLIST_HEURISTIC = "true";
+
       const hoje = new Date();
       const hojeUTC = new Date(Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth(), hoje.getUTCDate(), 0, 0, 0, 0));
       const dataPrazo = new Date(hojeUTC);

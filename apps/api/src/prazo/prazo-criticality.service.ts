@@ -24,6 +24,31 @@ export function getCriticalDaysThresholdConfig(): number {
 }
 
 /**
+ * Verifica se a heurística de checklist está habilitada.
+ * Default: false (desabilitado por segurança para evitar falsos positivos).
+ */
+function isChecklistHeuristicEnabled(): boolean {
+  const raw = process.env.PRAZO_ENABLE_CHECKLIST_HEURISTIC ?? "false";
+  return raw.toLowerCase() === "true";
+}
+
+/**
+ * Verifica se um item de checklist está relacionado a um prazo (heurística restritiva).
+ * Aplica apenas quando category === "PRAZO" (sem fallback de título para reduzir falsos positivos).
+ * Retorna false se a heurística estiver desabilitada.
+ */
+function isChecklistItemRelatedToPrazo(item: {
+  category: string | null;
+  titulo: string;
+}): boolean {
+  if (!isChecklistHeuristicEnabled()) {
+    return false;
+  }
+  // Heurística restritiva: apenas category === "PRAZO" (sem fallback de título)
+  return item.category === "PRAZO";
+}
+
+/**
  * Enum com os motivos de criticidade de um prazo
  */
 export enum CriticalReason {
@@ -120,29 +145,43 @@ export class PrazoCriticalityService {
       };
     }
 
-    // Buscar checklist items da licitação
+    // Buscar checklist items da licitação (apenas se heurística habilitada)
     // ⚠️ HEURÍSTICA: Não existe relação direta (FK) entre ChecklistItem e Prazo no modelo atual.
-    // A associação é feita via heurística: category === "PRAZO" OU título contém "prazo".
+    // A associação é feita via heurística restritiva: category === "PRAZO" (sem fallback de título).
+    // Feature flag PRAZO_ENABLE_CHECKLIST_HEURISTIC controla se a heurística é aplicada.
+    // Default: false (desabilitado por segurança para evitar falsos positivos).
     // TODO [ALTA PRIORIDADE]: Adicionar campo prazoId em ChecklistItem OU entityId/entityType
     // para relação determinística. A heurística atual pode gerar falsos positivos/negativos.
     // Issue sugerida: "F4-02: Adicionar relação determinística ChecklistItem ↔ Prazo"
     const prismaWithTenant = this.prismaTenant.forTenant(data.empresaId);
 
-    const checklistItems = await prismaWithTenant.checklistItem.findMany({
-      where: {
-        empresaId: data.empresaId,
-        licitacaoId: data.bidId,
-        deletedAt: null,
-      },
-    });
+    let checklistItems: Array<{
+      isCritical: boolean;
+      concluido: boolean;
+      category: string | null;
+      titulo: string;
+      exigeEvidencia: boolean;
+      evidenciaId: string | null;
+    }> = [];
+
+    if (isChecklistHeuristicEnabled()) {
+      checklistItems = await prismaWithTenant.checklistItem.findMany({
+        where: {
+          empresaId: data.empresaId,
+          licitacaoId: data.bidId,
+          deletedAt: null,
+        },
+      });
+    }
 
     // Regra 2: Item de checklist marcado como crítico (isCritical) ainda não concluído
-    // ⚠️ Usa heurística: category === "PRAZO" ou título contém "prazo" (case-insensitive)
+    // ⚠️ Heurística restritiva: apenas category === "PRAZO" (sem fallback de título)
+    // ⚠️ Aplicada apenas se PRAZO_ENABLE_CHECKLIST_HEURISTIC=true
     const hasCriticalChecklistPending = checklistItems.some(
       (item) =>
         item.isCritical &&
         !item.concluido &&
-        (item.category === "PRAZO" || item.titulo.toLowerCase().includes("prazo")),
+        isChecklistItemRelatedToPrazo(item),
     );
 
     if (hasCriticalChecklistPending) {
@@ -153,7 +192,8 @@ export class PrazoCriticalityService {
     }
 
       // Regra 3: Proxy "documento obrigatório não entregue" = exigeEvidencia sem evidenciaId, não concluído
-      // ⚠️ Usa heurística: category === "PRAZO" ou título contém "prazo" (case-insensitive)
+      // ⚠️ Heurística restritiva: apenas category === "PRAZO" (sem fallback de título)
+      // ⚠️ Aplicada apenas se PRAZO_ENABLE_CHECKLIST_HEURISTIC=true
       // ⚠️ Proxy: exigeEvidencia/evidenciaId é usado como indicador de "documento obrigatório não entregue"
       // (não há FK direta Prazo → Document; relação é via ChecklistItem)
       const hasMissingRequiredDocument = checklistItems.some(
@@ -161,7 +201,7 @@ export class PrazoCriticalityService {
           item.exigeEvidencia &&
           !item.evidenciaId &&
           !item.concluido &&
-          (item.category === "PRAZO" || item.titulo.toLowerCase().includes("prazo")),
+          isChecklistItemRelatedToPrazo(item),
       );
 
     if (hasMissingRequiredDocument) {
@@ -198,19 +238,20 @@ export class PrazoCriticalityService {
     const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
 
     // Uma única query: todos os itens de checklist das licitações dos prazos (evita N+1)
+    // ⚠️ Busca apenas se heurística habilitada (PRAZO_ENABLE_CHECKLIST_HEURISTIC=true)
     type ChecklistRow = Awaited<
       ReturnType<typeof prismaWithTenant.checklistItem.findMany>
     >[number];
     const allItems: ChecklistRow[] =
-      bidIds.length === 0
-        ? []
-        : await prismaWithTenant.checklistItem.findMany({
+      isChecklistHeuristicEnabled() && bidIds.length > 0
+        ? await prismaWithTenant.checklistItem.findMany({
             where: {
               empresaId,
               licitacaoId: { in: bidIds },
               deletedAt: null,
             },
-          });
+          })
+        : [];
 
     const checklistItemsByBid = new Map<string, ChecklistRow[]>();
     for (const item of allItems) {
@@ -233,12 +274,13 @@ export class PrazoCriticalityService {
       const checklistItems = checklistItemsByBid.get(prazo.bidId) ?? [];
 
       // Regra 2: Item de checklist crítico pendente
-      // ⚠️ Heurística: category === "PRAZO" ou título contém "prazo"
+      // ⚠️ Heurística restritiva: apenas category === "PRAZO" (sem fallback de título)
+      // ⚠️ Aplicada apenas se PRAZO_ENABLE_CHECKLIST_HEURISTIC=true
       const hasCriticalChecklistPending = checklistItems.some(
         (item) =>
           item.isCritical &&
           !item.concluido &&
-          (item.category === "PRAZO" || item.titulo.toLowerCase().includes("prazo")),
+          isChecklistItemRelatedToPrazo(item),
       );
       if (hasCriticalChecklistPending) {
         results.set(prazo.id, {
@@ -249,14 +291,15 @@ export class PrazoCriticalityService {
       }
 
       // Regra 3: Documento obrigatório não entregue
-      // ⚠️ Heurística: category === "PRAZO" ou título contém "prazo"
+      // ⚠️ Heurística restritiva: apenas category === "PRAZO" (sem fallback de título)
+      // ⚠️ Aplicada apenas se PRAZO_ENABLE_CHECKLIST_HEURISTIC=true
       // ⚠️ Proxy: exigeEvidencia/evidenciaId
       const hasMissingRequiredDocument = checklistItems.some(
         (item) =>
           item.exigeEvidencia &&
           !item.evidenciaId &&
           !item.concluido &&
-          (item.category === "PRAZO" || item.titulo.toLowerCase().includes("prazo")),
+          isChecklistItemRelatedToPrazo(item),
       );
       if (hasMissingRequiredDocument) {
         results.set(prazo.id, {
