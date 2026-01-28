@@ -56,6 +56,11 @@ export interface PrazoCriticalityData {
 /**
  * Início do dia em UTC para uma data (00:00:00.000 UTC).
  * Usado para comparar prazos por "data civil" em UTC e evitar diferenças de timezone do servidor.
+ *
+ * IMPORTANTE: Embora Prazo.dataPrazo seja DateTime (tem hora), a lógica de criticidade
+ * compara apenas a DATA CIVIL (ignora hora). Um prazo "2025-01-28 23:59:59" é tratado
+ * como "2025-01-28 00:00:00" para fins de cálculo de dias restantes.
+ * Isso é intencional: prazos são considerados por dia, não por hora exata.
  */
 function startOfDayUTC(d: Date): Date {
   const x = new Date(d);
@@ -65,6 +70,9 @@ function startOfDayUTC(d: Date): Date {
 /**
  * Dias restantes até a data do prazo, considerando apenas a data civil em UTC (não a hora).
  * Positivo = futuro, zero = hoje, negativo = passado.
+ *
+ * NOTA: Ignora a hora do prazo. Um prazo às 23:59:59 do dia 28 é tratado como "dia 28"
+ * para comparação. Se precisar considerar hora exata no futuro, ajustar esta função.
  */
 function daysRemainingUTC(deadline: Date): number {
   const now = new Date();
@@ -112,7 +120,12 @@ export class PrazoCriticalityService {
       };
     }
 
-    // Buscar checklist items da licitação (relação indireta: category PRAZO ou título contém "prazo")
+    // Buscar checklist items da licitação
+    // ⚠️ HEURÍSTICA: Não existe relação direta (FK) entre ChecklistItem e Prazo no modelo atual.
+    // A associação é feita via heurística: category === "PRAZO" OU título contém "prazo".
+    // TODO [ALTA PRIORIDADE]: Adicionar campo prazoId em ChecklistItem OU entityId/entityType
+    // para relação determinística. A heurística atual pode gerar falsos positivos/negativos.
+    // Issue sugerida: "F4-02: Adicionar relação determinística ChecklistItem ↔ Prazo"
     const prismaWithTenant = this.prismaTenant.forTenant(data.empresaId);
 
     const checklistItems = await prismaWithTenant.checklistItem.findMany({
@@ -124,6 +137,7 @@ export class PrazoCriticalityService {
     });
 
     // Regra 2: Item de checklist marcado como crítico (isCritical) ainda não concluído
+    // ⚠️ Usa heurística: category === "PRAZO" ou título contém "prazo" (case-insensitive)
     const hasCriticalChecklistPending = checklistItems.some(
       (item) =>
         item.isCritical &&
@@ -138,14 +152,17 @@ export class PrazoCriticalityService {
       };
     }
 
-    // Regra 3: Proxy "documento obrigatório não entregue" = exigeEvidencia sem evidenciaId, não concluído
-    const hasMissingRequiredDocument = checklistItems.some(
-      (item) =>
-        item.exigeEvidencia &&
-        !item.evidenciaId &&
-        !item.concluido &&
-        (item.category === "PRAZO" || item.titulo.toLowerCase().includes("prazo")),
-    );
+      // Regra 3: Proxy "documento obrigatório não entregue" = exigeEvidencia sem evidenciaId, não concluído
+      // ⚠️ Usa heurística: category === "PRAZO" ou título contém "prazo" (case-insensitive)
+      // ⚠️ Proxy: exigeEvidencia/evidenciaId é usado como indicador de "documento obrigatório não entregue"
+      // (não há FK direta Prazo → Document; relação é via ChecklistItem)
+      const hasMissingRequiredDocument = checklistItems.some(
+        (item) =>
+          item.exigeEvidencia &&
+          !item.evidenciaId &&
+          !item.concluido &&
+          (item.category === "PRAZO" || item.titulo.toLowerCase().includes("prazo")),
+      );
 
     if (hasMissingRequiredDocument) {
       return {
@@ -215,6 +232,8 @@ export class PrazoCriticalityService {
 
       const checklistItems = checklistItemsByBid.get(prazo.bidId) ?? [];
 
+      // Regra 2: Item de checklist crítico pendente
+      // ⚠️ Heurística: category === "PRAZO" ou título contém "prazo"
       const hasCriticalChecklistPending = checklistItems.some(
         (item) =>
           item.isCritical &&
@@ -229,6 +248,9 @@ export class PrazoCriticalityService {
         continue;
       }
 
+      // Regra 3: Documento obrigatório não entregue
+      // ⚠️ Heurística: category === "PRAZO" ou título contém "prazo"
+      // ⚠️ Proxy: exigeEvidencia/evidenciaId
       const hasMissingRequiredDocument = checklistItems.some(
         (item) =>
           item.exigeEvidencia &&

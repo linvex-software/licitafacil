@@ -33,13 +33,17 @@ export const CriticalReason = {
 
 /**
  * Schema de validação para Prazo completo (resposta da API)
+ *
+ * NOTA: dataPrazo é DateTime (tem hora), mas a lógica de criticidade compara apenas
+ * a DATA CIVIL em UTC (ignora hora). Um prazo "2025-01-28 23:59:59" é tratado como
+ * "2025-01-28" para cálculo de dias restantes.
  */
 export const prazoSchema = z.object({
   id: z.string().uuid(),
   empresaId: z.string().uuid(),
   bidId: z.string().uuid(),
   titulo: z.string(),
-  dataPrazo: z.string().datetime(),
+  dataPrazo: z.string().datetime(), // DateTime (tem hora), mas comparação usa apenas data civil UTC
   descricao: z.string().nullable(),
   isCritical: z.boolean(), // Indica se o prazo é crítico
   criticalReason: z
