@@ -64,7 +64,9 @@ export function AlertsDropdown() {
           <p className="text-xs text-slate-500">
             {unseenCount > 0
               ? `${unseenCount} não ${unseenCount === 1 ? "lido" : "lidos"}`
-              : connected ? "Tudo em dia" : "Conectando…"}
+              : loading
+                ? "Carregando…"
+                : "Tudo em dia"}
           </p>
         </div>
         <div className="max-h-[320px] overflow-y-auto">

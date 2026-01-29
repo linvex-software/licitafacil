@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { type Document, DocumentCategory } from "@licitafacil/shared";
 import { fetchDocuments, downloadDocument, deleteDocument } from "@/lib/api";
 import { Badge } from "@/components/ui/Badge";
@@ -8,7 +9,8 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { DocumentVersions } from "./DocumentVersions";
 
 interface DocumentsListProps {
-  bidId?: string; // Mantido para compatibilidade futura, pode ser usado para filtrar por licitação
+  /** Quando não informado, lista todos os documentos da empresa (incluindo os vinculados a licitações). */
+  bidId?: string;
   onError: (error: string) => void;
 }
 
@@ -204,6 +206,17 @@ export function DocumentsList({ bidId, onError }: DocumentsListProps) {
                           <>
                             <span>•</span>
                             <span className="uppercase">{doc.mimeType.split("/")[1]}</span>
+                          </>
+                        )}
+                        {!bidId && doc.bidId && (
+                          <>
+                            <span>•</span>
+                            <Link
+                              href={`/licitacoes/${doc.bidId}/documentos`}
+                              className="text-emerald-600 hover:text-emerald-700 font-medium"
+                            >
+                              Ver na licitação
+                            </Link>
                           </>
                         )}
                       </div>

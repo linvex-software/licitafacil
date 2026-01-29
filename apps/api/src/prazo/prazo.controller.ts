@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   HttpCode,
   HttpStatus,
   BadRequestException,
@@ -81,6 +82,21 @@ export class PrazoController {
   @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
   async findByBid(@Param("bidId") bidId: string, @Tenant() empresaId: string) {
     return this.prazoService.findAll({ empresaId, bidId });
+  }
+
+  /**
+   * Lista próximos prazos da empresa (dashboard), ordenados por data.
+   * GET /prazos/upcoming?limit=10
+   * Permissão: ADMIN e COLABORADOR
+   */
+  @Get("upcoming")
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  async findUpcoming(
+    @Tenant() empresaId: string,
+    @Query("limit") limit?: string,
+  ) {
+    const limitNum = limit ? Math.min(parseInt(limit, 10) || 10, 50) : 10;
+    return this.prazoService.findUpcoming(empresaId, limitNum);
   }
 
   /**

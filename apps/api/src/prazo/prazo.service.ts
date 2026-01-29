@@ -17,6 +17,10 @@ export interface PrazoWithDaysRemaining extends Prazo {
   diasRestantes: number | null; // null se data no passado (já venceu), número de dias até a data
 }
 
+export interface PrazoUpcomingItem extends PrazoWithDaysRemaining {
+  bidTitle?: string | null;
+}
+
 @Injectable()
 export class PrazoService {
   constructor(
@@ -106,6 +110,45 @@ export class PrazoService {
       return {
         ...this.mapToPrazo(item, criticality.isCritical, criticality.criticalReason),
         diasRestantes: PrazoService.calcularDiasRestantes(item.dataPrazo),
+      };
+    });
+  }
+
+  /**
+   * Lista próximos prazos da empresa (para dashboard), ordenados por data.
+   * Não exige bidId; retorna prazos de todas as licitações do tenant.
+   */
+  async findUpcoming(empresaId: string, limit: number = 10): Promise<PrazoUpcomingItem[]> {
+    const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
+
+    const items = await prismaWithTenant.prazo.findMany({
+      where: {
+        empresaId,
+        deletedAt: null,
+      },
+      orderBy: { dataPrazo: "asc" },
+      take: limit,
+      include: { bid: { select: { id: true, title: true } } },
+    });
+
+    const criticalityMap = await this.criticalityService.analyzeMultipleCriticality(
+      items.map((item) => ({
+        id: item.id,
+        dataPrazo: item.dataPrazo,
+        bidId: item.bidId,
+      })),
+      empresaId,
+    );
+
+    return items.map((item) => {
+      const criticality = criticalityMap.get(item.id) || {
+        isCritical: false,
+        criticalReason: null,
+      };
+      return {
+        ...this.mapToPrazo(item, criticality.isCritical, criticality.criticalReason),
+        diasRestantes: PrazoService.calcularDiasRestantes(item.dataPrazo),
+        bidTitle: item.bid?.title ?? null,
       };
     });
   }

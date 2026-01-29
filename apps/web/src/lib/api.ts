@@ -57,6 +57,22 @@ export async function fetchPrazosByBid(bidId: string) {
   return data;
 }
 
+/** Próximos prazos da empresa (dashboard), ordenados por data */
+export async function fetchUpcomingPrazos(limit = 10): Promise<
+  Array<{
+    id: string;
+    titulo: string;
+    dataPrazo: string;
+    bidId: string;
+    bidTitle?: string | null;
+    diasRestantes: number | null;
+    isCritical?: boolean;
+  }>
+> {
+  const { data } = await api.get("/prazos/upcoming", { params: { limit } });
+  return data;
+}
+
 export async function fetchPrazo(id: string) {
   const { data } = await api.get(`/prazos/${id}`);
   return data;
@@ -84,6 +100,10 @@ export interface FetchDocumentsParams {
   bidId?: string;
   category?: string;
   search?: string;
+  /** Filtro por validade: EXPIRING_SOON = documentos que vencem em até expiringDays */
+  status?: "VALID" | "EXPIRING_SOON" | "EXPIRED" | "NO_EXPIRATION";
+  /** Documentos expirando em até N dias (usado com status=EXPIRING_SOON) */
+  expiringDays?: number;
 }
 
 export interface DocumentsResponse {
@@ -99,6 +119,8 @@ export async function fetchDocuments(params: FetchDocumentsParams = {}): Promise
       bidId: params.bidId,
       category: params.category || undefined,
       search: params.search || undefined,
+      status: params.status,
+      expiringDays: params.expiringDays,
     },
   });
   return data;

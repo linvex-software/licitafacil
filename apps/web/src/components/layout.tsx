@@ -37,7 +37,7 @@ const navItems = [
         items: [
             { label: "Dashboard", icon: LayoutDashboard, href: "/" },
             { label: "Licitações", icon: Gavel, href: "/licitacoes" },
-            { label: "Contratos", icon: FileText, href: "/contratos" },
+            { label: "Documentos", icon: FileText, href: "/documentos" },
         ]
     },
     {
