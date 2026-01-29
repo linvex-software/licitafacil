@@ -13,6 +13,7 @@ import { DocumentModule } from "./document/document.module";
 import { ChecklistTemplateModule } from "./checklist-template/checklist-template.module";
 import { ChecklistItemModule } from "./checklist-item/checklist-item.module";
 import { PrazoModule } from "./prazo/prazo.module";
+import { AlertModule } from "./alert/alert.module";
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { PrazoModule } from "./prazo/prazo.module";
     ChecklistTemplateModule,
     ChecklistItemModule,
     PrazoModule,
+    AlertModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

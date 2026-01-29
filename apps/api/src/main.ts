@@ -1,8 +1,12 @@
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
+import { IoAdapter } from "@nestjs/platform-socket.io";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // WebSocket: Socket.IO (single server, sem Redis)
+  app.useWebSocketAdapter(new IoAdapter(app));
 
   // Enable CORS for development
   app.enableCors({
@@ -16,6 +20,7 @@ async function bootstrap() {
   await app.listen(port);
   console.log(`🚀 API running on http://localhost:${port}`);
   console.log(`📊 Health check: http://localhost:${port}/health`);
+  console.log(`🔔 Alerts WebSocket: ws path /alerts-ws`);
 }
 
 bootstrap();

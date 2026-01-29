@@ -162,17 +162,20 @@ export default function LicitacaoDetailPage() {
 
           <Card className="shadow-sm border-slate-200 bg-slate-50">
             <CardHeader>
-              <CardTitle className="text-lg font-heading">Documentos</CardTitle>
+              <CardTitle className="text-lg font-heading flex items-center gap-2">
+                <FileText className="w-5 h-5 text-emerald-600" />
+                Documentos
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="text-sm text-slate-600">
-                Edite, envie e acompanhe os documentos desta licitação.
+                Edite, envie, baixe e acompanhe os documentos desta licitação.
               </p>
               <Link href={`/licitacoes/${id}/documentos`}>
                 <Button variant="outline" className="w-full justify-between group border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50">
                   <span className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-slate-500 group-hover:text-emerald-600" />
-                    Ver documentos
+                    <Download className="w-4 h-4 text-slate-500 group-hover:text-emerald-600" />
+                    Ver e baixar documentos
                   </span>
                   <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600" />
                 </Button>

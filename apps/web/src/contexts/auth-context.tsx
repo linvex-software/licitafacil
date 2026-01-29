@@ -1,8 +1,9 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { User } from "@licitafacil/shared";
+import type { User } from "@licitafacil/shared";
 import { useRouter, usePathname } from "next/navigation";
+import { getToken, getUser, setAuth, clearAuth } from "@/lib/auth";
 
 interface AuthContextType {
     user: User | null;
@@ -22,12 +23,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
 
     useEffect(() => {
-        const savedToken = localStorage.getItem("auth-token");
-        const savedUser = localStorage.getItem("auth-user");
+        const savedToken = getToken();
+        const savedUser = getUser();
 
         if (savedToken && savedUser) {
             setToken(savedToken);
-            setUser(JSON.parse(savedUser));
+            setUser(savedUser);
         } else if (pathname !== "/login") {
             // router.push("/login"); // Optional: auto-redirect if not logged in
         }
@@ -35,17 +36,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, [pathname, router]);
 
     const login = (newToken: string, newUser: User) => {
+        setAuth(newToken, newUser);
         setToken(newToken);
         setUser(newUser);
-        localStorage.setItem("auth-token", newToken);
-        localStorage.setItem("auth-user", JSON.stringify(newUser));
     };
 
     const logout = () => {
+        clearAuth();
         setToken(null);
         setUser(null);
-        localStorage.removeItem("auth-token");
-        localStorage.removeItem("auth-user");
         router.push("/login");
     };
 

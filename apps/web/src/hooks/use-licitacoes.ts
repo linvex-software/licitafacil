@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { Bid, PaginatedResponse } from "@licitafacil/shared";
+import type { Bid, PaginatedResponse } from "@licitafacil/shared";
 
 export type LicitacaoStatus = 'aberta' | 'em_analise' | 'encerrada' | 'vencida' | 'EM_ANDAMENTO' | 'EM_RISCO' | 'CONCLUIDA' | 'CANCELADA';
 

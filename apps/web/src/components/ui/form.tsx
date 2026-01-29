@@ -4,12 +4,10 @@ import * as React from "react"
 import * as SlotPrimitive from "@radix-ui/react-slot"
 import {
     Controller,
-    ControllerProps,
-    FieldPath,
-    FieldValues,
     FormProvider,
     useFormContext,
 } from "react-hook-form"
+import type { ControllerProps, FieldPath, FieldValues } from "react-hook-form"
 
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"

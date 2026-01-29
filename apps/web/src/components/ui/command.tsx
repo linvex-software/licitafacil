@@ -122,7 +122,7 @@ const CommandItem = React.forwardRef<
     />
 ))
 
-CommandItem.displayName = CommandItem.displayName
+CommandItem.displayName = "CommandItem"
 
 const CommandShortcut = ({
     className,

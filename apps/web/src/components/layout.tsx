@@ -6,7 +6,6 @@ import {
     LayoutDashboard,
     Gavel,
     Settings,
-    Bell,
     Search,
     User,
     LogOut,
@@ -17,6 +16,7 @@ import {
     ClipboardList,
     HelpCircle
 } from "lucide-react";
+import { AlertsDropdown } from "@/components/AlertsDropdown";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -163,44 +163,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     </div>
 
                     <div className="flex items-center gap-2 sm:gap-4">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="relative hover:bg-slate-100 h-10 w-10">
-                                    <Bell className="w-5 h-5 text-slate-600" />
-                                    <span className="absolute top-2 right-2 w-4 h-4 bg-red-500 text-[10px] font-bold text-white rounded-full flex items-center justify-center border-2 border-white">
-                                        3
-                                    </span>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-80 p-0">
-                                <div className="p-4 border-b border-slate-100">
-                                    <h3 className="font-semibold text-slate-900">Notificações</h3>
-                                    <p className="text-xs text-slate-500">Você tem 3 alertas urgentes</p>
-                                </div>
-                                <div className="max-h-[300px] overflow-y-auto">
-                                    {[
-                                        { title: "Prazo de Edital", desc: "Processo #123 encerra em 2 horas", type: "critical" },
-                                        { title: "Risco Corrigido", desc: "Análise concluída para Concorrência Internacional", type: "info" },
-                                        { title: "Novo Documento", desc: "Edital 045/2026 foi atualizado pelo órgão", type: "warning" },
-                                    ].map((n, i) => (
-                                        <div key={i} className="p-4 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 cursor-pointer">
-                                            <div className="flex items-start gap-3">
-                                                <div className={`mt-0.5 w-2 h-2 rounded-full shrink-0 ${n.type === 'critical' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' :
-                                                    n.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500'
-                                                    }`} />
-                                                <div className="space-y-1">
-                                                    <p className="text-sm font-medium text-slate-900 leading-none">{n.title}</p>
-                                                    <p className="text-xs text-slate-500 leading-snug">{n.desc}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="p-3 bg-slate-50 text-center border-t border-slate-100">
-                                    <Button variant="link" className="text-xs text-emerald-600 h-auto p-0 font-semibold">Ver todas as notificações</Button>
-                                </div>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        <AlertsDropdown />
 
                         <Button variant="ghost" size="icon" className="h-10 w-10 text-slate-600 hover:bg-slate-100">
                             <HelpCircle className="w-5 h-5" />
