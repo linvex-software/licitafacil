@@ -38,7 +38,7 @@ function severityDot(severity: string) {
 
 export function AlertsDropdown() {
   const router = useRouter();
-  const { alerts, unseenCount, loading, markSeen, connected } = useAlerts();
+  const { alerts, unseenCount, loading, markSeen } = useAlerts();
 
   const handleAlertClick = (alert: Alert) => {
     if (alert.status === "UNSEEN") markSeen(alert.id);
