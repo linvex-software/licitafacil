@@ -1,4 +1,6 @@
 import axios from "axios";
+import { getToken, clearAuth } from "@/lib/auth";
+import type { Document } from "@licitafacil/shared";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -6,10 +8,10 @@ export const api = axios.create({
   baseURL: API_URL,
 });
 
-// Interceptor to add token to requests
+// Interceptor to add token to requests (usa o mesmo token do auth)
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
-    const token = localStorage.getItem("auth-token");
+    const token = getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -23,8 +25,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       if (typeof window !== "undefined") {
-        localStorage.removeItem("auth-token");
-        localStorage.removeItem("auth-user");
+        clearAuth();
         if (window.location.pathname !== "/login") {
           window.location.href = "/login";
         }
@@ -86,7 +87,7 @@ export interface FetchDocumentsParams {
 }
 
 export interface DocumentsResponse {
-  data: import("@licitafacil/shared").Document[];
+  data: Document[];
   pagination: { page: number; limit: number; total: number; totalPages: number };
 }
 
@@ -125,7 +126,7 @@ export async function deleteDocument(id: string): Promise<void> {
 export async function uploadDocument(
   file: File,
   body: { name: string; category: string; bidId?: string }
-): Promise<import("@licitafacil/shared").Document> {
+): Promise<Document> {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("name", body.name);
@@ -146,5 +147,34 @@ export async function fetchDocumentVersions(documentId: string) {
 
 export async function restoreDocumentVersion(documentId: string, versionNumber: number) {
   const { data } = await api.post(`/documents/${documentId}/versions/${versionNumber}/restore`);
+  return data;
+}
+
+// --- Alerts ---
+export async function fetchAlerts(params: { page?: number; limit?: number; status?: string; severity?: string; type?: string } = {}) {
+  const { data } = await api.get("/alerts", {
+    params: {
+      page: params.page ?? 1,
+      limit: params.limit ?? 20,
+      status: params.status,
+      severity: params.severity,
+      type: params.type,
+    },
+  });
+  return data;
+}
+
+export async function createAlert(body: { title: string; message: string; type?: string; severity?: string; resourceType?: string; resourceId?: string; metadata?: Record<string, unknown> }) {
+  const { data } = await api.post("/alerts", body);
+  return data;
+}
+
+export async function markAlertSeen(id: string) {
+  const { data } = await api.post(`/alerts/${id}/mark-seen`);
+  return data;
+}
+
+export async function markAlertResolved(id: string) {
+  const { data } = await api.post(`/alerts/${id}/mark-resolved`);
   return data;
 }

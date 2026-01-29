@@ -34,6 +34,8 @@ model Empresa {
   checklistItems     ChecklistItem[]
   // Relacionamento: Uma empresa tem muitos prazos
   prazos             Prazo[]
+  // Relacionamento: Uma empresa tem muitos alertas
+  alerts             Alert[]
 
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("empresas")
@@ -312,4 +314,34 @@ model Prazo {
   @@index([dataPrazo]) // Consultas por data (alertas, dashboard)
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("prazos")
+}
+
+// Entidade Alert (Central de Alertas)
+model Alert {
+  id          String   @id @default(uuid())
+  empresaId   String   // Multi-tenancy
+  title       String
+  message     String
+  type        String?  // Ex: DOCUMENT, BID, SYSTEM, RISK
+  severity    String   // INFO | WARNING | CRITICAL
+  resourceType String? // Ex: "Document", "Bid", "Prazo"
+  resourceId  String?  // ID do recurso relacionado
+  metadata    Json?    // Payload opcional
+  status      String   @default("UNSEEN") // UNSEEN | SEEN | RESOLVED
+  createdBy   String?  // userId opcional
+  seenAt      DateTime?
+  resolvedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  // Relacionamento: pertence a uma empresa
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@index([empresaId, status])
+  @@index([empresaId, severity])
+  @@index([empresaId, resourceType, resourceId])
+  @@index([createdAt])
+  @@index([empresaId, deletedAt])
+  @@map("alerts")
 }

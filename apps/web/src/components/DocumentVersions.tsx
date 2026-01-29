@@ -135,7 +135,7 @@ export function DocumentVersions({
                       Versão {version.versionNumber}
                     </span>
                     {version.isCurrent && (
-                      <Badge variant="success">Versão Atual</Badge>
+                      <Badge variant="secondary">Versão Atual</Badge>
                     )}
                   </div>
                   <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">

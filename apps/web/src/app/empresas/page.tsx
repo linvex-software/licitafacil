@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Building2 } from "lucide-react";
 
 export default function EmpresasPage() {
-    const { data: empresa, isLoading } = useQuery({
+    const { data: _empresa, isLoading } = useQuery({
         queryKey: ["empresa-principal"],
         queryFn: async () => {
             // In this setup, we usually get the user's company

@@ -25,15 +25,15 @@ const categoryLabels: Record<string, string> = {
   OUTROS: "Outros",
 };
 
-const categoryColors: Record<string, "default" | "success" | "warning" | "danger" | "info"> = {
-  CONTRATOS: "info",
-  CERTIFICADOS: "success",
-  CERTIDOES: "success",
-  LICENCAS: "warning",
-  PROPOSTAS: "info",
-  HABILITACAO: "warning",
+const categoryColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  CONTRATOS: "default",
+  CERTIFICADOS: "secondary",
+  CERTIDOES: "secondary",
+  LICENCAS: "outline",
+  PROPOSTAS: "default",
+  HABILITACAO: "outline",
   COMPROVANTES: "default",
-  FINANCEIRO: "danger",
+  FINANCEIRO: "destructive",
   ADMINISTRATIVO: "default",
   OUTROS: "default",
 };
