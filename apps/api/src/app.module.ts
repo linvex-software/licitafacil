@@ -13,10 +13,12 @@ import { DocumentModule } from "./document/document.module";
 import { ChecklistTemplateModule } from "./checklist-template/checklist-template.module";
 import { ChecklistItemModule } from "./checklist-item/checklist-item.module";
 import { PrazoModule } from "./prazo/prazo.module";
+import { PlanoModule } from "./plano/plano.module";
 
 @Module({
   imports: [
     PrismaModule,
+    PlanoModule,
     EmpresaModule,
     UserModule,
     AuthModule,

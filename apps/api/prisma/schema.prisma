@@ -10,14 +10,44 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Enum de tipo de plano de assinatura
+enum TipoPlano {
+  INDIVIDUAL
+  EMPRESA
+}
+
+// Entidade Plano (Plano de assinatura)
+model Plano {
+  id          String    @id @default(uuid())
+  nome        String // ex: "Individual", "Empresa"
+  tipo        TipoPlano
+  maxEmpresas Int // Quantidade máxima de empresas permitidas
+  maxUsuarios Int // Quantidade máxima de usuários permitidos (base)
+  precoMensal Decimal   @db.Decimal(10, 2)
+  ativo       Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relacionamento: Um plano pode estar em várias empresas
+  empresas Empresa[]
+
+  @@index([tipo])
+  @@index([ativo])
+  @@map("planos")
+}
+
 // Entidade Empresa (Tenant)
 model Empresa {
-  id        String    @id @default(uuid())
-  name      String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime? // Soft delete: quando não null, registro está deletado
+  id                        String    @id @default(uuid())
+  name                      String
+  planoId                   String // Plano de assinatura da empresa
+  usuariosExtrasContratados Int       @default(0) // Usuários extras (apenas plano EMPRESA)
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  deletedAt                 DateTime? // Soft delete: quando não null, registro está deletado
 
+  // Relacionamento: Uma empresa pertence a um plano
+  plano              Plano               @relation(fields: [planoId], references: [id], onDelete: Restrict)
   // Relacionamento: Uma empresa tem muitos usuários
   users              User[]
   // Relacionamento: Uma empresa tem muitas licitações
@@ -35,6 +65,7 @@ model Empresa {
   // Relacionamento: Uma empresa tem muitos prazos
   prazos             Prazo[]
 
+  @@index([planoId])
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("empresas")
 }
@@ -103,7 +134,7 @@ model Bid {
   // Relacionamento: Uma licitação pode ter vários itens de checklist
   checklistItems ChecklistItem[]
   // Relacionamento: Uma licitação pode ter vários prazos
-  prazos          Prazo[]
+  prazos         Prazo[]
 
   @@index([empresaId])
   @@index([empresaId, operationalState]) // Consultas por empresa e estado operacional
@@ -290,15 +321,15 @@ model ChecklistItem {
 
 // Entidade Prazo (Prazo da licitação)
 model Prazo {
-  id         String    @id @default(uuid())
-  empresaId  String // Multi-tenancy: isolamento por empresa
-  bidId      String // Licitação à qual o prazo pertence
-  titulo     String // Nome do prazo (ex: "Entrega de propostas", "Abertura")
-  dataPrazo  DateTime // Data (e hora) do prazo
-  descricao  String? // Observações opcionais
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  deletedAt  DateTime? // Soft delete: quando não null, registro está deletado
+  id        String    @id @default(uuid())
+  empresaId String // Multi-tenancy: isolamento por empresa
+  bidId     String // Licitação à qual o prazo pertence
+  titulo    String // Nome do prazo (ex: "Entrega de propostas", "Abertura")
+  dataPrazo DateTime // Data (e hora) do prazo
+  descricao String? // Observações opcionais
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete: quando não null, registro está deletado
 
   // Relacionamento: Um prazo pertence a uma empresa
   empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)

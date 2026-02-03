@@ -7,9 +7,11 @@ export * from "./schemas/document";
 export * from "./schemas/checklist-template";
 export * from "./schemas/checklist-item";
 export * from "./schemas/prazo";
+export * from "./schemas/plano";
 
 // Enums
 export * from "./enums/user-role.enum";
+export * from "./enums/tipo-plano.enum";
 
 // Types
 export * from "./types";

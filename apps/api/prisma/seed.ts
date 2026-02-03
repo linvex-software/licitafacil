@@ -3,17 +3,52 @@ import * as bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
+const PLANO_INDIVIDUAL_ID = "00000000-0000-0000-0000-000000000010";
+const PLANO_EMPRESA_ID = "00000000-0000-0000-0000-000000000011";
+
 async function main() {
   console.log("🌱 Iniciando seed do banco de dados...");
+
+  // 0. Criar planos (Individual e Empresa)
+  console.log("📋 Criando planos...");
+  await prisma.plano.upsert({
+    where: { id: PLANO_INDIVIDUAL_ID },
+    update: {},
+    create: {
+      id: PLANO_INDIVIDUAL_ID,
+      nome: "Individual",
+      tipo: "INDIVIDUAL",
+      maxEmpresas: 1,
+      maxUsuarios: 1,
+      precoMensal: 29.9,
+      ativo: true,
+    },
+  });
+  await prisma.plano.upsert({
+    where: { id: PLANO_EMPRESA_ID },
+    update: {},
+    create: {
+      id: PLANO_EMPRESA_ID,
+      nome: "Empresa",
+      tipo: "EMPRESA",
+      maxEmpresas: 1,
+      maxUsuarios: 5,
+      precoMensal: 99.9,
+      ativo: true,
+    },
+  });
+  console.log("✅ Planos Individual e Empresa criados/atualizados");
 
   // 1. Criar empresa (tenant)
   console.log("📦 Criando empresa...");
   const empresa = await prisma.empresa.upsert({
     where: { id: "00000000-0000-0000-0000-000000000001" },
-    update: {},
+    update: { planoId: PLANO_INDIVIDUAL_ID },
     create: {
       id: "00000000-0000-0000-0000-000000000001",
       name: "Empresa de Teste DEV",
+      planoId: PLANO_INDIVIDUAL_ID,
+      usuariosExtrasContratados: 0,
     },
   });
   console.log(`✅ Empresa criada: ${empresa.id} - ${empresa.name}`);
