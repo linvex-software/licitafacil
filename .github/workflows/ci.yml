@@ -19,6 +19,10 @@ jobs:
           cache: pnpm
       - name: Install
         run: pnpm install --frozen-lockfile
+      - name: Prisma generate
+        run: pnpm --filter @licitafacil/api exec prisma generate
+      - name: Build
+        run: pnpm run build
       - name: Lint
         run: pnpm lint
       - name: Typecheck
