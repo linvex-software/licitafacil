@@ -47,6 +47,47 @@ export class PlanoService {
   }
 
   /**
+   * Retorna o uso do plano da empresa (usuários ativos, limite, pode adicionar).
+   * Usado no frontend para exibir "X/Y usuários" e habilitar/desabilitar botão de novo usuário.
+   */
+  async getUsoByEmpresaId(empresaId: string): Promise<{
+    usuariosAtivos: number;
+    limiteUsuarios: number;
+    podeAdicionarUsuario: boolean;
+    plano: { id: string; nome: string; tipo: TipoPlano; maxUsuarios: number };
+    usuariosExtrasContratados: number;
+  }> {
+    const limites = await this.getLimitesByEmpresaId(empresaId);
+    const usuariosAtivos = await this.prisma.user.count({
+      where: { empresaId, deletedAt: null },
+    });
+    const limiteUsuarios = limites.maxUsuarios + limites.usuariosExtrasContratados;
+    const podeAdicionarUsuario = usuariosAtivos < limiteUsuarios;
+
+    const empresa = await this.prisma.empresa.findUnique({
+      where: { id: empresaId },
+      include: { plano: true },
+    });
+
+    if (!empresa?.plano) {
+      throw new BadRequestException("Empresa sem plano associado");
+    }
+
+    return {
+      usuariosAtivos,
+      limiteUsuarios,
+      podeAdicionarUsuario,
+      plano: {
+        id: empresa.plano.id,
+        nome: empresa.plano.nome,
+        tipo: empresa.plano.tipo as TipoPlano,
+        maxUsuarios: empresa.plano.maxUsuarios,
+      },
+      usuariosExtrasContratados: empresa.usuariosExtrasContratados,
+    };
+  }
+
+  /**
    * Retorna os limites do plano da empresa (para validações de negócio)
    */
   async getLimitesByEmpresaId(empresaId: string): Promise<LimitesPlano> {

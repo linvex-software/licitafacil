@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { PlanoService } from "../plano/plano.service";
-import type { CreateEmpresaInput, Empresa } from "@licitafacil/shared";
+import type { CreateEmpresaInput, Empresa, UpdateEmpresaPlanoInput } from "@licitafacil/shared";
 
 @Injectable()
 export class EmpresaService {
@@ -75,6 +75,56 @@ export class EmpresaService {
     });
 
     return !!empresa;
+  }
+
+  /**
+   * Atualiza o plano da empresa (upgrade/downgrade ou usuários extras).
+   * Valida: novo limite deve ser >= quantidade atual de usuários ativos.
+   */
+  async updatePlano(empresaId: string, userEmpresaId: string, data: UpdateEmpresaPlanoInput): Promise<Empresa> {
+    if (empresaId !== userEmpresaId) {
+      throw new ForbiddenException("Acesso negado: você só pode alterar o plano da sua empresa");
+    }
+
+    const empresa = await this.prisma.empresa.findUnique({
+      where: { id: empresaId },
+      include: { plano: true },
+    });
+
+    if (!empresa) {
+      throw new NotFoundException(`Empresa com ID ${empresaId} não encontrada`);
+    }
+
+    const planoId = data.planoId ?? empresa.planoId;
+    const usuariosExtrasContratados = data.usuariosExtrasContratados ?? empresa.usuariosExtrasContratados;
+
+    await this.planoService.assertValidEmpresaPlanConfig(planoId, usuariosExtrasContratados);
+
+    const novoPlano = await this.prisma.plano.findUnique({
+      where: { id: planoId },
+    });
+
+    if (!novoPlano) {
+      throw new NotFoundException(`Plano com ID ${planoId} não encontrado`);
+    }
+
+    const usuariosAtivos = await this.prisma.user.count({
+      where: { empresaId, deletedAt: null },
+    });
+    const novoLimite = novoPlano.maxUsuarios + usuariosExtrasContratados;
+
+    if (usuariosAtivos > novoLimite) {
+      throw new BadRequestException(
+        `O plano selecionado permite até ${novoLimite} usuário(s). Sua empresa tem ${usuariosAtivos} usuário(s) ativo(s). Remova usuários ou escolha um plano com limite maior.`,
+      );
+    }
+
+    const updated = await this.prisma.empresa.update({
+      where: { id: empresaId },
+      data: { planoId, usuariosExtrasContratados },
+    });
+
+    return this.mapToEmpresa(updated);
   }
 
   private mapToEmpresa(empresa: {

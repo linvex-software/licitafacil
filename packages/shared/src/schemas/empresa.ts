@@ -21,5 +21,14 @@ export const empresaSchema = z.object({
   updatedAt: z.string().datetime(),
 });
 
+/**
+ * Schema para atualização do plano da empresa (upgrade/downgrade)
+ */
+export const updateEmpresaPlanoSchema = z.object({
+  planoId: z.string().uuid("ID do plano inválido").optional(),
+  usuariosExtrasContratados: z.number().int().min(0, "Usuários extras não pode ser negativo").optional(),
+});
+
+export type UpdateEmpresaPlanoInput = z.infer<typeof updateEmpresaPlanoSchema>;
 export type CreateEmpresaInput = z.infer<typeof createEmpresaSchema>;
 export type Empresa = z.infer<typeof empresaSchema>;
