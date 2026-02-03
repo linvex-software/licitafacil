@@ -1,7 +1,9 @@
 import { Injectable, ConflictException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { PrismaTenantService } from "../prisma/prisma-tenant.service";
-import { type CreateUserInput, type User, UserRole } from "@licitafacil/shared";
+import { PlanoService } from "../plano/plano.service";
+import type { CreateUserInput, User } from "@licitafacil/shared";
+import { UserRole } from "@licitafacil/shared";
 import * as bcrypt from "bcrypt";
 
 @Injectable()
@@ -9,12 +11,16 @@ export class UserService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly prismaTenant: PrismaTenantService,
+    private readonly planoService: PlanoService,
   ) {}
 
   /**
-   * Cria um novo usuário com senha hasheada
+   * Cria um novo usuário com senha hasheada.
+   * Valida limite de usuários do plano da empresa antes de criar.
    */
   async create(data: CreateUserInput): Promise<User> {
+    await this.planoService.assertCanAddUser(data.empresaId);
+
     // Verificar se email já existe
     const existingUser = await this.prisma.user.findUnique({
       where: { email: data.email },

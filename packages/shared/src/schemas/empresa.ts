@@ -5,6 +5,8 @@ import { z } from "zod";
  */
 export const createEmpresaSchema = z.object({
   name: z.string().min(1, "Nome da empresa é obrigatório").max(255, "Nome muito longo"),
+  planoId: z.string().uuid("ID do plano inválido"),
+  usuariosExtrasContratados: z.number().int().min(0, "Usuários extras não pode ser negativo").optional().default(0),
 });
 
 /**
@@ -13,6 +15,8 @@ export const createEmpresaSchema = z.object({
 export const empresaSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
+  planoId: z.string().uuid(),
+  usuariosExtrasContratados: z.number().int(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
