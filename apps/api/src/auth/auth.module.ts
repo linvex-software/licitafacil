@@ -9,11 +9,13 @@ import { DevBypassGuard } from "./guards/dev-bypass.guard";
 import { UserModule } from "../user/user.module";
 import { EmpresaModule } from "../empresa/empresa.module";
 import { AuditLogModule } from "../audit-log/audit-log.module";
+import { AssinaturaModule } from "../assinatura/assinatura.module";
 
 @Module({
   imports: [
     UserModule,
     EmpresaModule,
+    AssinaturaModule,
     AuditLogModule,
     PassportModule,
     JwtModule.register({

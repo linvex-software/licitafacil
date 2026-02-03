@@ -17,6 +17,7 @@ import {
 import { ChecklistTemplateService } from "./checklist-template.service";
 import { SoftDeleteService } from "../common/services/soft-delete.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { AssinaturaAtivaGuard } from "../assinatura/assinatura.guard";
 import { RolesGuard } from "../common/guards/roles.guard";
 import { Roles } from "../common/decorators/roles.decorator";
 import { Tenant } from "../common/decorators/tenant.decorator";
@@ -38,7 +39,7 @@ import type { Request } from "express";
  * Todos os endpoints requerem autenticação e isolamento por tenant
  */
 @Controller("checklist-templates")
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, AssinaturaAtivaGuard, RolesGuard)
 @UseInterceptors(AuditInterceptor)
 export class ChecklistTemplateController {
   constructor(

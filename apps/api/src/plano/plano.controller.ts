@@ -1,6 +1,7 @@
 import { Controller, Get, Param, UseGuards } from "@nestjs/common";
 import { PlanoService } from "./plano.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { AssinaturaAtivaGuard } from "../assinatura/assinatura.guard";
 import { RolesGuard } from "../common/guards/roles.guard";
 import { Roles } from "../common/decorators/roles.decorator";
 import { Tenant } from "../common/decorators/tenant.decorator";
@@ -16,7 +17,7 @@ export class PlanoController {
    * GET /planos
    */
   @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, AssinaturaAtivaGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
   async findAll(): Promise<Plano[]> {
     return this.planoService.findAll();
@@ -27,7 +28,7 @@ export class PlanoController {
    * GET /planos/uso
    */
   @Get("uso")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, AssinaturaAtivaGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
   async getUso(@Tenant() empresaId: string) {
     return this.planoService.getUsoByEmpresaId(empresaId);
@@ -38,7 +39,7 @@ export class PlanoController {
    * GET /planos/:id
    */
   @Get(":id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, AssinaturaAtivaGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
   async findOne(@Param("id") id: string): Promise<Plano> {
     return this.planoService.findById(id);

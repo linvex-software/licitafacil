@@ -19,16 +19,32 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Interceptor to handle unauthorized errors
+// Interceptor to handle unauthorized and subscription errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (typeof window === "undefined") {
+      return Promise.reject(error);
+    }
     if (error.response?.status === 401) {
-      if (typeof window !== "undefined") {
-        clearAuth();
-        if (window.location.pathname !== "/login") {
-          window.location.href = "/login";
+      clearAuth();
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+      return Promise.reject(error);
+    }
+    // F8-03: assinatura vencida ou cancelada — redirecionar para tela de renovação
+    if (error.response?.status === 403) {
+      const msg = error.response?.data?.message;
+      const text = typeof msg === "string" ? msg : Array.isArray(msg) ? msg.join(" ") : "";
+      if (
+        text.includes("Assinatura") &&
+        (text.toLowerCase().includes("vencida") || text.toLowerCase().includes("cancelada"))
+      ) {
+        if (window.location.pathname !== "/assinatura-vencida") {
+          window.location.href = "/assinatura-vencida";
         }
+        return Promise.reject(error);
       }
     }
     return Promise.reject(error);
@@ -253,6 +269,20 @@ export interface UserApi {
 
 export async function fetchUsers(): Promise<UserApi[]> {
   const { data } = await api.get<UserApi[]>("/users");
+  return data;
+}
+
+/** Status da assinatura da empresa (F8-03). GET /assinaturas/status não exige assinatura ativa. */
+export interface AssinaturaStatus {
+  status: string | null;
+  dataVencimento: string | null;
+  podeAcessar: boolean;
+  assinaturaId: string | null;
+  planoNome: string | null;
+}
+
+export async function fetchAssinaturaStatus(): Promise<AssinaturaStatus> {
+  const { data } = await api.get<AssinaturaStatus>("/assinaturas/status");
   return data;
 }
 

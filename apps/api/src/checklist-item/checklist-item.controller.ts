@@ -15,6 +15,7 @@ import {
 import { ChecklistItemService } from "./checklist-item.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { DevBypassGuard } from "../auth/guards/dev-bypass.guard";
+import { AssinaturaAtivaGuard } from "../assinatura/assinatura.guard";
 import { RolesGuard } from "../common/guards/roles.guard";
 import { Roles } from "../common/decorators/roles.decorator";
 import { Tenant } from "../common/decorators/tenant.decorator";
@@ -37,7 +38,7 @@ import type { Request } from "express";
  * Todos os endpoints requerem autenticação e isolamento por tenant
  */
 @Controller("checklist-items")
-@UseGuards(DevBypassGuard, JwtAuthGuard, RolesGuard)
+@UseGuards(DevBypassGuard, JwtAuthGuard, AssinaturaAtivaGuard, RolesGuard)
 @UseInterceptors(AuditInterceptor)
 export class ChecklistItemController {
   constructor(private readonly checklistItemService: ChecklistItemService) {}

@@ -9,6 +9,7 @@ import { CommonModule } from "../common/common.module";
 import { AuditLogModule } from "../audit-log/audit-log.module";
 import { AuthModule } from "../auth/auth.module";
 import { UserModule } from "../user/user.module";
+import { AssinaturaModule } from "../assinatura/assinatura.module";
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { UserModule } from "../user/user.module";
     AuditLogModule,
     AuthModule,
     UserModule,
+    AssinaturaModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || "your-secret-key-change-in-production",
       signOptions: { expiresIn: "24h" },

@@ -11,6 +11,7 @@ import {
 import { type Request } from "express";
 import { AuthService } from "./auth.service";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
+import { AssinaturaAtivaGuard } from "../assinatura/assinatura.guard";
 import { CurrentUser } from "./decorators/current-user.decorator";
 import {
   createUserSchema,
@@ -71,7 +72,7 @@ export class AuthController {
    * removendo o token. Este endpoint serve apenas para logs/auditoria.
    */
   @Post("logout")
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AssinaturaAtivaGuard)
   @HttpCode(HttpStatus.OK)
   async logout(@CurrentUser() user: User) {
     // Opcional: adicionar log de auditoria aqui

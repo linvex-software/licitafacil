@@ -8,6 +8,7 @@ import { AuditLogModule } from "../audit-log/audit-log.module";
 import { BidModule } from "../bid/bid.module";
 import { AuthModule } from "../auth/auth.module";
 import { UserModule } from "../user/user.module";
+import { AssinaturaModule } from "../assinatura/assinatura.module";
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { UserModule } from "../user/user.module";
     BidModule,
     AuthModule,
     UserModule,
+    AssinaturaModule,
   ],
   controllers: [PrazoController],
   providers: [PrazoService, PrazoCriticalityService],

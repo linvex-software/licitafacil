@@ -1,6 +1,7 @@
 import { Controller, Get, UseGuards } from "@nestjs/common";
 import { UserService } from "./user.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { AssinaturaAtivaGuard } from "../assinatura/assinatura.guard";
 import { RolesGuard } from "../common/guards/roles.guard";
 import { Roles } from "../common/decorators/roles.decorator";
 import { Tenant } from "../common/decorators/tenant.decorator";
@@ -13,12 +14,12 @@ export class UserController {
   /**
    * Lista todos os usuários da empresa do usuário autenticado
    * GET /users
-   * 
+   *
    * Permissão: ADMIN e COLABORADOR podem ver
    * Isolamento: Só retorna usuários da mesma empresa
    */
   @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, AssinaturaAtivaGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
   async findAll(@Tenant() empresaId: string): Promise<User[]> {
     return this.userService.findAll(empresaId);

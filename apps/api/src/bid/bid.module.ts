@@ -6,9 +6,10 @@ import { PrismaModule } from "../prisma/prisma.module";
 import { CommonModule } from "../common/common.module";
 import { AuditLogModule } from "../audit-log/audit-log.module";
 import { DocumentModule } from "../document/document.module";
+import { AssinaturaModule } from "../assinatura/assinatura.module";
 
 @Module({
-  imports: [PrismaModule, CommonModule, AuditLogModule, DocumentModule],
+  imports: [PrismaModule, CommonModule, AuditLogModule, DocumentModule, AssinaturaModule],
   controllers: [BidController],
   providers: [BidService, BidRiskService],
   exports: [BidService, BidRiskService],

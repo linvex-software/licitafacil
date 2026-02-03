@@ -12,6 +12,7 @@ import {
 } from "@nestjs/common";
 import { EmpresaService } from "./empresa.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { AssinaturaAtivaGuard } from "../assinatura/assinatura.guard";
 import { RolesGuard } from "../common/guards/roles.guard";
 import { Roles } from "../common/decorators/roles.decorator";
 import { Tenant } from "../common/decorators/tenant.decorator";
@@ -54,7 +55,7 @@ export class EmpresaController {
    * Permissão: ADMIN e COLABORADOR podem ver
    */
   @Get("me")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, AssinaturaAtivaGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
   async findMyEmpresa(@Tenant() empresaId: string): Promise<Empresa> {
     return this.empresaService.findMyEmpresa(empresaId);
@@ -67,7 +68,7 @@ export class EmpresaController {
    * Permissão: apenas ADMIN
    */
   @Patch("me")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, AssinaturaAtivaGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   async updateMyEmpresaPlano(
     @Tenant() empresaId: string,
@@ -91,7 +92,7 @@ export class EmpresaController {
    * Permissão: ADMIN e COLABORADOR podem ver
    */
   @Get(":id")
-  @UseGuards(JwtAuthGuard, RolesGuard, TenantGuard)
+  @UseGuards(JwtAuthGuard, AssinaturaAtivaGuard, RolesGuard, TenantGuard)
   @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
   async findOne(@Param("id") id: string, @Tenant() empresaId: string): Promise<Empresa> {
     return this.empresaService.findOne(id, empresaId);

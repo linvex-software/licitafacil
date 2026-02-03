@@ -22,6 +22,7 @@ import { DocumentService } from "./document.service";
 import { SoftDeleteService } from "../common/services/soft-delete.service";
 import { AuditLogService } from "../audit-log/audit-log.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { AssinaturaAtivaGuard } from "../assinatura/assinatura.guard";
 import { RolesGuard } from "../common/guards/roles.guard";
 import { Roles } from "../common/decorators/roles.decorator";
 import { Tenant } from "../common/decorators/tenant.decorator";
@@ -90,7 +91,7 @@ const multerOptions = {
  * Todos os endpoints requerem autenticação e isolamento por tenant
  */
 @Controller("documents")
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, AssinaturaAtivaGuard, RolesGuard)
 @UseInterceptors(AuditInterceptor)
 export class DocumentController {
   constructor(

@@ -8,6 +8,7 @@ import { BidModule } from "../bid/bid.module";
 import { DocumentModule } from "../document/document.module";
 import { AuthModule } from "../auth/auth.module";
 import { UserModule } from "../user/user.module";
+import { AssinaturaModule } from "../assinatura/assinatura.module";
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { UserModule } from "../user/user.module";
     DocumentModule,
     AuthModule,
     UserModule,
+    AssinaturaModule,
   ],
   controllers: [ChecklistItemController],
   providers: [ChecklistItemService],

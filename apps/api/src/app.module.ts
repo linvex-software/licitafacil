@@ -15,11 +15,13 @@ import { ChecklistItemModule } from "./checklist-item/checklist-item.module";
 import { PrazoModule } from "./prazo/prazo.module";
 import { AlertModule } from "./alert/alert.module";
 import { PlanoModule } from "./plano/plano.module";
+import { AssinaturaModule } from "./assinatura/assinatura.module";
 
 @Module({
   imports: [
     PrismaModule,
     PlanoModule,
+    AssinaturaModule,
     EmpresaModule,
     UserModule,
     AuthModule,

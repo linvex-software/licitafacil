@@ -12,6 +12,7 @@ import {
 } from "@nestjs/common";
 import { AlertService } from "./alert.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { AssinaturaAtivaGuard } from "../assinatura/assinatura.guard";
 import { RolesGuard } from "../common/guards/roles.guard";
 import { Roles } from "../common/decorators/roles.decorator";
 import { Tenant } from "../common/decorators/tenant.decorator";
@@ -28,7 +29,7 @@ import {
 } from "@licitafacil/shared";
 
 @Controller("alerts")
-@UseGuards(DevBypassGuard, JwtAuthGuard, RolesGuard)
+@UseGuards(DevBypassGuard, JwtAuthGuard, AssinaturaAtivaGuard, RolesGuard)
 @UseInterceptors(AuditInterceptor)
 export class AlertController {
   constructor(private readonly alertService: AlertService) {}
