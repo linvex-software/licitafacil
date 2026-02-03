@@ -3,6 +3,7 @@ import { PlanoService } from "./plano.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../common/guards/roles.guard";
 import { Roles } from "../common/decorators/roles.decorator";
+import { Tenant } from "../common/decorators/tenant.decorator";
 import type { Plano } from "@licitafacil/shared";
 import { UserRole } from "@licitafacil/shared";
 
@@ -19,6 +20,17 @@ export class PlanoController {
   @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
   async findAll(): Promise<Plano[]> {
     return this.planoService.findAll();
+  }
+
+  /**
+   * Retorna uso do plano da empresa do usuário (usuários ativos, limite, pode adicionar).
+   * GET /planos/uso
+   */
+  @Get("uso")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  async getUso(@Tenant() empresaId: string) {
+    return this.planoService.getUsoByEmpresaId(empresaId);
   }
 
   /**

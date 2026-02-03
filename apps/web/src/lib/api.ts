@@ -200,3 +200,70 @@ export async function markAlertResolved(id: string) {
   const { data } = await api.post(`/alerts/${id}/mark-resolved`);
   return data;
 }
+
+// --- Planos e uso do plano (F8-02) ---
+export interface Plano {
+  id: string;
+  nome: string;
+  tipo: string;
+  maxEmpresas: number;
+  maxUsuarios: number;
+  precoMensal: number;
+  ativo: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UsoPlano {
+  usuariosAtivos: number;
+  limiteUsuarios: number;
+  podeAdicionarUsuario: boolean;
+  plano: { id: string; nome: string; tipo: string; maxUsuarios: number };
+  usuariosExtrasContratados: number;
+}
+
+export async function fetchPlanos(): Promise<Plano[]> {
+  const { data } = await api.get<Plano[]>("/planos");
+  return data;
+}
+
+export async function fetchUsoPlano(): Promise<UsoPlano> {
+  const { data } = await api.get<UsoPlano>("/planos/uso");
+  return data;
+}
+
+export async function updateEmpresaPlano(body: {
+  planoId?: string;
+  usuariosExtrasContratados?: number;
+}) {
+  const { data } = await api.patch("/empresas/me", body);
+  return data;
+}
+
+// --- Usuários ---
+export interface UserApi {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  empresaId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function fetchUsers(): Promise<UserApi[]> {
+  const { data } = await api.get<UserApi[]>("/users");
+  return data;
+}
+
+/** Cria usuário (admin) via register; empresaId deve ser da empresa do usuário logado. */
+export async function createUser(body: {
+  email: string;
+  name: string;
+  password: string;
+  empresaId: string;
+  role?: string;
+}) {
+  const { data } = await api.post("/auth/register", body);
+  return data;
+}

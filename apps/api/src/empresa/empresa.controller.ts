@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Param,
+  Patch,
   HttpCode,
   HttpStatus,
   BadRequestException,
@@ -15,7 +16,12 @@ import { RolesGuard } from "../common/guards/roles.guard";
 import { Roles } from "../common/decorators/roles.decorator";
 import { Tenant } from "../common/decorators/tenant.decorator";
 import { TenantGuard } from "../common/guards/tenant.guard";
-import { createEmpresaSchema, type Empresa, UserRole } from "@licitafacil/shared";
+import {
+  createEmpresaSchema,
+  updateEmpresaPlanoSchema,
+  type Empresa,
+  UserRole,
+} from "@licitafacil/shared";
 
 @Controller("empresas")
 export class EmpresaController {
@@ -44,7 +50,7 @@ export class EmpresaController {
   /**
    * Busca a empresa do usuário autenticado
    * GET /empresas/me
-   * 
+   *
    * Permissão: ADMIN e COLABORADOR podem ver
    */
   @Get("me")
@@ -52,6 +58,29 @@ export class EmpresaController {
   @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
   async findMyEmpresa(@Tenant() empresaId: string): Promise<Empresa> {
     return this.empresaService.findMyEmpresa(empresaId);
+  }
+
+  /**
+   * Atualiza o plano da empresa do usuário (upgrade/downgrade ou usuários extras).
+   * PATCH /empresas/me
+   *
+   * Permissão: apenas ADMIN
+   */
+  @Patch("me")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  async updateMyEmpresaPlano(
+    @Tenant() empresaId: string,
+    @Body() body: unknown,
+  ): Promise<Empresa> {
+    const result = updateEmpresaPlanoSchema.safeParse(body);
+    if (!result.success) {
+      throw new BadRequestException({
+        message: "Dados inválidos",
+        errors: result.error.errors,
+      });
+    }
+    return this.empresaService.updatePlano(empresaId, empresaId, result.data);
   }
 
   /**
