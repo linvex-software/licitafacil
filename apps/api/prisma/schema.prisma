@@ -36,6 +36,8 @@ model Empresa {
   prazos             Prazo[]
   // Relacionamento: Uma empresa tem muitos alertas
   alerts             Alert[]
+  // Relacionamento: Uma empresa pode ter uma configuração de cliente (1:1)
+  clienteConfig      ClienteConfig?
 
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("empresas")
@@ -43,8 +45,23 @@ model Empresa {
 
 // Enum de papéis de usuário
 enum UserRole {
+  SUPER_ADMIN
   ADMIN
   COLABORADOR
+}
+
+// Enums de plano e status do cliente
+enum PlanoTipo {
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum ClienteStatus {
+  ATIVO
+  SUSPENSO
+  CANCELADO
+  TRIAL
 }
 
 // Entidade User (Usuário)
@@ -344,4 +361,42 @@ model Alert {
   @@index([createdAt])
   @@index([empresaId, deletedAt])
   @@map("alerts")
+}
+
+// Entidade ClienteConfig (Configuração de billing/plano do cliente B2B)
+// Relação 1:1 com Empresa (tenant)
+model ClienteConfig {
+  id                    String        @id @default(uuid())
+  empresaId             String        @unique // 1:1 com Empresa
+  cnpj                  String        @unique
+  email                 String // Email comercial
+  telefone              String?
+  responsavelComercial  String? // SDR que fechou a venda
+
+  // Plano e Billing
+  plano                 PlanoTipo     @default(STARTER)
+  valorSetup            Decimal       @db.Decimal(10, 2)
+  mensalidade           Decimal       @db.Decimal(10, 2)
+  dataInicio            DateTime      @default(now())
+  dataProximaCobranca   DateTime?
+  status                ClienteStatus @default(ATIVO)
+
+  // Limites do plano
+  maxUsuarios           Int           @default(10)
+  maxStorageGB          Int           @default(10)
+  maxLicitacoesMes      Int           @default(50)
+
+  // Metadata
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  deletedAt             DateTime? // Soft delete
+
+  // Relacionamento: pertence a uma empresa (tenant)
+  empresa               Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([plano])
+  @@index([deletedAt])
+  @@index([cnpj])
+  @@map("clientes_config")
 }

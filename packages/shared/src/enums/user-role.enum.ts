@@ -2,6 +2,7 @@
  * Papéis (Roles) de usuário no sistema
  */
 export enum UserRole {
+  SUPER_ADMIN = "SUPER_ADMIN",
   ADMIN = "ADMIN",
   COLABORADOR = "COLABORADOR",
 }
