@@ -14,7 +14,8 @@ import {
     BarChart3,
     AlertTriangle,
     ClipboardList,
-    HelpCircle
+    HelpCircle,
+    ShieldCheck,
 } from "lucide-react";
 import { AlertsDropdown } from "@/components/AlertsDropdown";
 import { useState } from "react";
@@ -110,6 +111,43 @@ export function Layout({ children }: { children: React.ReactNode }) {
                         })}
                     </div>
                 ))}
+
+                {/* Seção Admin — visível apenas para SUPER_ADMIN */}
+                {user?.role === "SUPER_ADMIN" && (
+                    <div className="space-y-1 text-slate-400">
+                        <p className="px-3 text-[10px] font-bold uppercase tracking-widest text-amber-500/80 mb-2">
+                            Administração
+                        </p>
+                        {[
+                            { label: "Gerenciar Clientes", icon: ShieldCheck, href: "/admin/clientes" },
+                        ].map((item) => {
+                            const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
+                            return (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    className={`
+                                        group flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200
+                                        ${isActive
+                                            ? "bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/20"
+                                            : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}
+                                    `}
+                                >
+                                    <div className={`
+                                        flex items-center justify-center rounded transition-colors
+                                        ${isActive ? "text-amber-400" : "text-slate-500 group-hover:text-slate-300"}
+                                    `}>
+                                        <item.icon className="w-4 h-4" />
+                                    </div>
+                                    {item.label}
+                                    {isActive && (
+                                        <div className="ml-auto w-1 h-4 bg-amber-500 rounded-full" />
+                                    )}
+                                </Link>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
 
             <div className="p-4 mt-auto border-t border-slate-800">

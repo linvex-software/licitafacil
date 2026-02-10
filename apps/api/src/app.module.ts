@@ -14,6 +14,7 @@ import { ChecklistTemplateModule } from "./checklist-template/checklist-template
 import { ChecklistItemModule } from "./checklist-item/checklist-item.module";
 import { PrazoModule } from "./prazo/prazo.module";
 import { AlertModule } from "./alert/alert.module";
+import { AdminModule } from "./admin/admin.module";
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AlertModule } from "./alert/alert.module";
     ChecklistItemModule,
     PrazoModule,
     AlertModule,
+    AdminModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

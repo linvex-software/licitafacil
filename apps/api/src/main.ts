@@ -1,9 +1,22 @@
 import { NestFactory } from "@nestjs/core";
+import { ValidationPipe } from "@nestjs/common";
 import { AppModule } from "./app.module";
 import { IoAdapter } from "@nestjs/platform-socket.io";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Validação global de DTOs (class-validator)
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // Remove campos não decorados
+      forbidNonWhitelisted: true, // Rejeita campos não permitidos
+      transform: true, // Auto-transforma tipos (string → number, etc.)
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  );
 
   // WebSocket: Socket.IO (single server, sem Redis)
   app.useWebSocketAdapter(new IoAdapter(app));
