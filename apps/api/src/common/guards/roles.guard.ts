@@ -1,6 +1,6 @@
 import { Injectable, type CanActivate, type ExecutionContext, ForbiddenException } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { type UserRole } from "@licitafacil/shared";
+import { UserRole } from "@licitafacil/shared";
 import { ROLES_KEY } from "../decorators/roles.decorator";
 
 /**
@@ -11,7 +11,7 @@ import { ROLES_KEY } from "../decorators/roles.decorator";
  */
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(private reflector: Reflector) { }
 
   canActivate(context: ExecutionContext): boolean {
     // Obter papéis necessários do decorator @Roles()
@@ -31,6 +31,11 @@ export class RolesGuard implements CanActivate {
 
     if (!user) {
       throw new ForbiddenException("Usuário não autenticado");
+    }
+
+    // SUPER_ADMIN tem acesso irrestrito
+    if (user.role === UserRole.SUPER_ADMIN) {
+      return true;
     }
 
     // Verificar se o usuário possui um dos papéis necessários
