@@ -311,6 +311,7 @@ export default function PainelAdminClientes() {
                     <TableRow
                       key={cliente.id}
                       className="cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => router.push(`/admin/clientes/${cliente.empresaId}`)}
                     >
                       <TableCell className="font-medium">{cliente.empresa.name}</TableCell>
                       <TableCell className="font-mono text-sm">{formatCNPJ(cliente.cnpj)}</TableCell>

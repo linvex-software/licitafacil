@@ -38,6 +38,8 @@ model Empresa {
   alerts             Alert[]
   // Relacionamento: Uma empresa pode ter uma configuração de cliente (1:1)
   clienteConfig      ClienteConfig?
+  // Relacionamento: Uma empresa pode ter um contrato (1:1)
+  contrato           Contrato?
 
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("empresas")
@@ -399,4 +401,69 @@ model ClienteConfig {
   @@index([deletedAt])
   @@index([cnpj])
   @@map("clientes_config")
+}
+
+// Enums de contrato e pagamento
+enum ContratoStatus {
+  TRIAL
+  ATIVO
+  SUSPENSO
+  CANCELADO
+}
+
+enum TipoPagamento {
+  SETUP
+  MENSALIDADE
+  EXTRA
+}
+
+// Entidade Contrato (Faturamento do cliente B2B)
+// Relação 1:1 com Empresa (tenant)
+model Contrato {
+  id                String         @id @default(cuid())
+  empresaId         String         @unique
+  empresa           Empresa        @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  planoNome         String         // "Starter", "Professional", "Enterprise"
+  valorSetup        Decimal        @db.Decimal(10, 2)
+  valorMensalidade  Decimal        @db.Decimal(10, 2)
+
+  dataInicio        DateTime       @default(now())
+  proximoVencimento DateTime
+
+  status            ContratoStatus @default(TRIAL)
+  observacoes       String?
+
+  pagamentos        Pagamento[]
+
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([status])
+  @@index([proximoVencimento])
+  @@map("contratos")
+}
+
+// Entidade Pagamento (Registro de pagamento manual)
+model Pagamento {
+  id              String        @id @default(cuid())
+  contratoId      String
+  contrato        Contrato      @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+
+  tipo            TipoPagamento
+  valor           Decimal       @db.Decimal(10, 2)
+
+  dataPrevista    DateTime
+  dataPago        DateTime?
+
+  metodoPagamento String?       // "Boleto", "PIX", "TED"
+  comprovanteUrl  String?
+  observacoes     String?
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([contratoId])
+  @@index([dataPrevista])
+  @@map("pagamentos")
 }

@@ -1,4 +1,9 @@
-import { Injectable, ConflictException, NotFoundException } from "@nestjs/common";
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { PrismaTenantService } from "../prisma/prisma-tenant.service";
 import { type CreateUserInput, type User, UserRole } from "@licitafacil/shared";
@@ -120,6 +125,190 @@ export class UserService {
    */
   async validatePassword(password: string, hashedPassword: string): Promise<boolean> {
     return bcrypt.compare(password, hashedPassword);
+  }
+
+  // ========================================================
+  // CRUD de Usuários (gestão pela empresa)
+  // ========================================================
+
+  /**
+   * Cria um novo usuário para a empresa do admin logado
+   */
+  async createForEmpresa(
+    empresaId: string,
+    data: { email: string; password: string; name: string; role?: string },
+  ): Promise<User> {
+    // Verificar se email já existe
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: data.email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException("Email já cadastrado");
+    }
+
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    const user = await this.prisma.user.create({
+      data: {
+        email: data.email,
+        password: hashedPassword,
+        name: data.name,
+        empresaId,
+        role: (data.role as any) || UserRole.COLABORADOR,
+      },
+    });
+
+    return this.mapToUser(user);
+  }
+
+  /**
+   * Atualiza um usuário da mesma empresa
+   */
+  async updateForEmpresa(
+    id: string,
+    empresaId: string,
+    data: { name?: string; role?: string },
+  ): Promise<User> {
+    // Verificar que pertence à empresa
+    const usuario = await this.prisma.user.findFirst({
+      where: { id, empresaId, deletedAt: null },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException("Usuário não encontrado");
+    }
+
+    const updateData: any = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.role !== undefined) updateData.role = data.role;
+
+    const updated = await this.prisma.user.update({
+      where: { id },
+      data: updateData,
+    });
+
+    return this.mapToUser(updated);
+  }
+
+  /**
+   * Desativa um usuário (soft delete)
+   */
+  async deactivate(id: string, empresaId: string, currentUserId: string): Promise<{ message: string }> {
+    // Impedir auto-desativação
+    if (id === currentUserId) {
+      throw new ForbiddenException("Você não pode desativar a si mesmo");
+    }
+
+    const usuario = await this.prisma.user.findFirst({
+      where: { id, empresaId, deletedAt: null },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException("Usuário não encontrado");
+    }
+
+    await this.prisma.user.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+
+    return { message: "Usuário desativado com sucesso" };
+  }
+
+  /**
+   * Exclui um usuário permanentemente (hard delete)
+   */
+  async deletePermanent(
+    id: string,
+    empresaId: string,
+    currentUserId: string,
+  ): Promise<{ message: string }> {
+    if (id === currentUserId) {
+      throw new ForbiddenException("Você não pode excluir sua própria conta");
+    }
+
+    const usuario = await this.prisma.user.findFirst({
+      where: { id, empresaId },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException("Usuário não encontrado");
+    }
+
+    await this.prisma.user.delete({ where: { id } });
+
+    return { message: "Usuário excluído permanentemente" };
+  }
+
+  /**
+   * Reativa um usuário (reverter soft delete)
+   */
+  async reactivate(id: string, empresaId: string): Promise<User> {
+    const usuario = await this.prisma.user.findFirst({
+      where: { id, empresaId, deletedAt: { not: null } },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException("Usuário inativo não encontrado");
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id },
+      data: { deletedAt: null },
+    });
+
+    return this.mapToUser(updated);
+  }
+
+  /**
+   * Lista todos os usuários da empresa (incluindo inativos)
+   */
+  async findAllIncludingInactive(empresaId: string) {
+    const users = await this.prisma.user.findMany({
+      where: { empresaId },
+      orderBy: [
+        { deletedAt: "asc" }, // Ativos primeiro
+        { createdAt: "desc" },
+      ],
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        empresaId: true,
+        createdAt: true,
+        updatedAt: true,
+        deletedAt: true,
+      },
+    });
+
+    return users.map((u) => ({
+      ...this.mapToUser(u),
+      ativo: u.deletedAt === null,
+    }));
+  }
+
+  /**
+   * Retorna informações de limite de usuários da empresa
+   */
+  async obterLimite(empresaId: string) {
+    const config = await this.prisma.clienteConfig.findUnique({
+      where: { empresaId },
+    });
+
+    const maxUsuarios = config?.maxUsuarios ?? 999999;
+
+    const usuariosAtivos = await this.prisma.user.count({
+      where: { empresaId, deletedAt: null },
+    });
+
+    return {
+      atual: usuariosAtivos,
+      limite: maxUsuarios,
+      disponivel: Math.max(0, maxUsuarios - usuariosAtivos),
+      percentual: maxUsuarios > 0 ? (usuariosAtivos / maxUsuarios) * 100 : 0,
+    };
   }
 
   /**

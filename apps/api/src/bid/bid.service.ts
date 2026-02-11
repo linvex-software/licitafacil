@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
 import { PrismaTenantService } from "../prisma/prisma-tenant.service";
 import { type CreateBidInput, type UpdateBidInput, type Bid } from "@licitafacil/shared";
 
@@ -18,6 +19,7 @@ export interface ListBidsFilters {
 @Injectable()
 export class BidService {
   constructor(
+    private readonly prisma: PrismaService,
     private readonly prismaTenant: PrismaTenantService,
   ) {}
 
@@ -228,5 +230,38 @@ export class BidService {
   async count(empresaId: string): Promise<number> {
     const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
     return prismaWithTenant.bid.count();
+  }
+
+  /**
+   * Retorna informações de limite mensal de licitações da empresa
+   */
+  async obterLimite(empresaId: string) {
+    const config = await this.prisma.clienteConfig.findUnique({
+      where: { empresaId },
+    });
+
+    const maxLicitacoesMes = config?.maxLicitacoesMes ?? 999999;
+
+    const inicioMes = new Date();
+    inicioMes.setDate(1);
+    inicioMes.setHours(0, 0, 0, 0);
+
+    const licitacoesNoMes = await this.prisma.bid.count({
+      where: {
+        empresaId,
+        deletedAt: null,
+        createdAt: { gte: inicioMes },
+      },
+    });
+
+    return {
+      atual: licitacoesNoMes,
+      limite: maxLicitacoesMes,
+      disponivel: Math.max(0, maxLicitacoesMes - licitacoesNoMes),
+      percentual:
+        maxLicitacoesMes > 0
+          ? (licitacoesNoMes / maxLicitacoesMes) * 100
+          : 0,
+    };
   }
 }

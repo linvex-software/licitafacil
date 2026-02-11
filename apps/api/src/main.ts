@@ -33,7 +33,7 @@ async function bootstrap() {
   await app.listen(port);
   console.log(`🚀 API running on http://localhost:${port}`);
   console.log(`📊 Health check: http://localhost:${port}/health`);
-  console.log(`🔔 Alerts WebSocket: ws path /alerts-ws`);
+  console.log(`🔔 Alerts WebSocket: namespace /alerts-ws`);
 }
 
 bootstrap();

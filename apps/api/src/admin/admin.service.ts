@@ -1,13 +1,19 @@
 import {
   Injectable,
   ConflictException,
+  NotFoundException,
   Logger,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { MailService } from "../mail/mail.service";
 import { AuditLogService } from "../audit-log/audit-log.service";
-import { CriarClienteDto, ListarClientesDto } from "./dto";
-import { PlanoTipo, ClienteStatus, UserRole } from "@prisma/client";
+import {
+  CriarClienteDto,
+  ListarClientesDto,
+  CriarContratoDto,
+  RegistrarPagamentoDto,
+} from "./dto";
+import { PlanoTipo, ClienteStatus, UserRole, TipoPagamento } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 import { randomBytes } from "crypto";
 
@@ -306,5 +312,161 @@ export class AdminService {
     const proxima = new Date(dataInicio);
     proxima.setMonth(proxima.getMonth() + 1);
     return proxima;
+  }
+
+  // ========================================================
+  // Uso de Limites
+  // ========================================================
+
+  /**
+   * Retorna o uso atual de limites do cliente (usuários, licitações, storage)
+   */
+  async obterUsoCliente(empresaId: string) {
+    const config = await this.prisma.clienteConfig.findUnique({
+      where: { empresaId },
+    });
+
+    if (!config) {
+      throw new NotFoundException("Configuração do cliente não encontrada");
+    }
+
+    const usuariosAtivos = await this.prisma.user.count({
+      where: { empresaId, deletedAt: null },
+    });
+
+    const inicioMes = new Date();
+    inicioMes.setDate(1);
+    inicioMes.setHours(0, 0, 0, 0);
+
+    const licitacoesNoMes = await this.prisma.bid.count({
+      where: { empresaId, createdAt: { gte: inicioMes }, deletedAt: null },
+    });
+
+    const storageAggregate = await this.prisma.document.aggregate({
+      where: { empresaId, deletedAt: null },
+      _sum: { size: true },
+    });
+
+    const storageUsadoGB = (storageAggregate._sum.size || 0) / 1024 ** 3;
+
+    return {
+      usuarios: {
+        atual: usuariosAtivos,
+        limite: config.maxUsuarios,
+        percentual:
+          config.maxUsuarios > 0
+            ? (usuariosAtivos / config.maxUsuarios) * 100
+            : 0,
+      },
+      licitacoes: {
+        atual: licitacoesNoMes,
+        limite: config.maxLicitacoesMes,
+        percentual:
+          config.maxLicitacoesMes > 0
+            ? (licitacoesNoMes / config.maxLicitacoesMes) * 100
+            : 0,
+      },
+      storage: {
+        atualGB: storageUsadoGB,
+        limiteGB: config.maxStorageGB,
+        percentual:
+          config.maxStorageGB > 0
+            ? (storageUsadoGB / config.maxStorageGB) * 100
+            : 0,
+      },
+    };
+  }
+
+  // ========================================================
+  // Faturamento - Contratos
+  // ========================================================
+
+  /**
+   * Cria um novo contrato para um cliente
+   */
+  async criarContrato(dto: CriarContratoDto) {
+    const proximoVencimento = new Date(dto.dataInicio);
+    proximoVencimento.setDate(proximoVencimento.getDate() + 30);
+
+    return this.prisma.contrato.create({
+      data: {
+        empresaId: dto.empresaId,
+        planoNome: dto.planoNome,
+        valorSetup: dto.valorSetup,
+        valorMensalidade: dto.valorMensalidade,
+        dataInicio: new Date(dto.dataInicio),
+        proximoVencimento,
+        status: dto.status,
+        observacoes: dto.observacoes,
+      },
+      include: { empresa: true },
+    });
+  }
+
+  /**
+   * Obtém contrato de um cliente com histórico de pagamentos
+   */
+  async obterContrato(empresaId: string) {
+    return this.prisma.contrato.findUnique({
+      where: { empresaId },
+      include: {
+        empresa: true,
+        pagamentos: { orderBy: { dataPrevista: "desc" } },
+      },
+    });
+  }
+
+  // ========================================================
+  // Faturamento - Pagamentos
+  // ========================================================
+
+  /**
+   * Registra um novo pagamento (manual)
+   */
+  async registrarPagamento(dto: RegistrarPagamentoDto) {
+    const pagamento = await this.prisma.pagamento.create({
+      data: {
+        contratoId: dto.contratoId,
+        tipo: dto.tipo,
+        valor: dto.valor,
+        dataPrevista: new Date(dto.dataPrevista),
+        dataPago: dto.dataPago ? new Date(dto.dataPago) : null,
+        metodoPagamento: dto.metodoPagamento,
+        comprovanteUrl: dto.comprovanteUrl,
+        observacoes: dto.observacoes,
+      },
+    });
+
+    // Se pago e é mensalidade, atualizar próximo vencimento do contrato
+    if (dto.dataPago && dto.tipo === TipoPagamento.MENSALIDADE) {
+      const contrato = await this.prisma.contrato.findUnique({
+        where: { id: dto.contratoId },
+      });
+
+      if (contrato) {
+        const novoVencimento = new Date(contrato.proximoVencimento);
+        novoVencimento.setDate(novoVencimento.getDate() + 30);
+
+        await this.prisma.contrato.update({
+          where: { id: dto.contratoId },
+          data: {
+            proximoVencimento: novoVencimento,
+            status: "ATIVO", // Reativar se estava suspenso
+          },
+        });
+      }
+    }
+
+    return pagamento;
+  }
+
+  /**
+   * Lista pagamentos de um contrato
+   */
+  async listarPagamentos(contratoId: string) {
+    return this.prisma.pagamento.findMany({
+      where: { contratoId },
+      orderBy: { dataPrevista: "desc" },
+    });
   }
 }
