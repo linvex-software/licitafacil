@@ -60,35 +60,46 @@ export default function LicitacaoDetailPage() {
   const handleAplicarAnalise = (dados: AnalisarEditalResponse) => {
     if (!licitacao) return;
 
-    // Monta os dados para atualizar a licitação
+    // Mapear modalidade da IA para valores aceitos pelo sistema
+    const mapModalidade = (modalidadeIA: string): string | null => {
+      const mapa: Record<string, string> = {
+        PREGAO_ELETRONICO: "PREGAO_ELETRONICO",
+        PREGAO_PRESENCIAL: "PREGAO_ELETRONICO", // Mais próximo
+        CONCORRENCIA: "CONCORRENCIA",
+        TOMADA_PRECOS: "CONCORRENCIA", // Mais próximo
+        CONVITE: "DISPENSA", // Mais próximo
+        DISPENSA: "DISPENSA",
+        INEXIGIBILIDADE: "DISPENSA", // Mais próximo
+      };
+      return mapa[modalidadeIA] || "OUTRA";
+    };
+
     const updateData: Record<string, any> = {};
 
     if (dados.modalidade) {
-      updateData.modality = dados.modalidade;
+      updateData.modality = mapModalidade(dados.modalidade);
     }
     if (dados.objeto) {
       updateData.title = dados.objeto;
     }
 
-    // Se temos dados para atualizar, fazemos a chamada
     if (Object.keys(updateData).length > 0) {
       updateBid({ id, data: updateData as any }).then(() => {
         toast({
-          title: "Dados aplicados",
-          description: "Revise as informações e clique em Salvar para confirmar.",
+          title: "Dados aplicados com sucesso",
+          description: `Modalidade e título atualizados.${dados.valorEstimado ? ` Valor estimado: R$ ${dados.valorEstimado.toLocaleString("pt-BR")}` : ""}`,
         });
-      }).catch(() => {
-        // Toast de sucesso parcial - dados foram extraídos mas não salvos automaticamente
+      }).catch((err: any) => {
         toast({
-          title: "Dados da análise extraídos",
-          description: "Não foi possível aplicar automaticamente. Revise e salve manualmente.",
+          title: "Erro ao aplicar dados",
+          description: err?.response?.data?.message || "Não foi possível salvar. Tente novamente.",
           variant: "destructive",
         });
       });
     } else {
       toast({
-        title: "Dados da análise extraídos",
-        description: "Revise os dados da análise. Nenhuma alteração automática foi feita.",
+        title: "Nenhum dado para aplicar",
+        description: "A análise não retornou dados compatíveis com os campos da licitação.",
       });
     }
   };
