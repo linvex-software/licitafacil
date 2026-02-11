@@ -85,3 +85,20 @@ export function useBidStats() {
         },
     });
 }
+
+export interface BidLimite {
+    atual: number;
+    limite: number;
+    disponivel: number;
+    percentual: number;
+}
+
+export function useBidLimite() {
+    return useQuery({
+        queryKey: ["bid-limite"],
+        queryFn: async () => {
+            const { data } = await api.get<BidLimite>("/bids/limite");
+            return data;
+        },
+    });
+}

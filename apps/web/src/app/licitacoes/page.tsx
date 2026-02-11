@@ -19,7 +19,10 @@ import {
     TableHeader,
     TableRow
 } from "@/components/ui/table";
-import { useLicitacoes } from "@/hooks/use-licitacoes";
+import { useLicitacoes, useBidLimite } from "@/hooks/use-licitacoes";
+import { CriarLicitacaoModal } from "@/components/licitacoes/criar-licitacao-modal";
+import { api } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import {
     Search,
@@ -39,13 +42,16 @@ import {
     ArrowUpDown,
     SlidersHorizontal,
     LayoutGrid,
-    List
+    List,
+    Trash2
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { MetricsCard } from "@/components/metrics-card";
 import { Badge } from "@/components/ui/Badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Progress } from "@/components/ui/progress";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -61,14 +67,48 @@ export default function LicitacoesListPage() {
     const [page, setPage] = useState(1);
     const [lastSync, setLastSync] = useState<string>("");
 
-    const { data: response, isLoading } = useLicitacoes({
+    const { toast } = useToast();
+
+    const { data: response, isLoading, refetch } = useLicitacoes({
         page,
         search: searchTerm,
         status: statusFilter !== 'all' ? statusFilter : undefined
     });
 
+    const { data: limite, refetch: refetchLimite } = useBidLimite();
+
     const licitacoes = response?.data || [];
     const totalPages = response?.totalPages || 1;
+
+    const recarregarDados = () => {
+        refetch();
+        refetchLimite();
+    };
+
+    const handleLicitacaoCriada = () => {
+        recarregarDados();
+    };
+
+    async function deletarLicitacao(id: string) {
+        if (!window.confirm("Tem certeza que deseja descartar esta licitação?")) {
+            return;
+        }
+
+        try {
+            await api.delete(`/bids/${id}`);
+            toast({
+                title: "Licitação descartada",
+                description: "A licitação foi removida com sucesso.",
+            });
+            recarregarDados();
+        } catch (error: any) {
+            toast({
+                title: "Erro ao descartar",
+                description: error.response?.data?.message || "Tente novamente",
+                variant: "destructive",
+            });
+        }
+    }
 
     useEffect(() => {
         setLastSync(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
@@ -104,12 +144,18 @@ export default function LicitacoesListPage() {
                             Exportar
                         </Button>
                         <Button
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200/50"
+                            variant="outline"
+                            className="border-slate-200 text-slate-600 hover:bg-slate-50"
                             onClick={handleSync}
                         >
                             <RefreshCcw className="w-4 h-4 mr-2" />
-                            Sincronizar Licitações
+                            Sincronizar
                         </Button>
+                        <CriarLicitacaoModal
+                            onSuccess={handleLicitacaoCriada}
+                            limiteAtingido={limite?.disponivel === 0}
+                            limiteDisponivel={limite?.disponivel}
+                        />
                     </div>
                 </div>
 
@@ -144,6 +190,53 @@ export default function LicitacoesListPage() {
                         variant="warning"
                     />
                 </div>
+
+                {/* Card de Limite Mensal */}
+                {limite && (
+                    <Card className={`border ${
+                        limite.percentual >= 90
+                            ? "border-red-200 bg-red-50/50"
+                            : limite.percentual >= 75
+                            ? "border-amber-200 bg-amber-50/50"
+                            : "border-slate-200"
+                    }`}>
+                        <CardContent className="py-4 px-6">
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                    <TrendingUp className="w-4 h-4 text-slate-500" />
+                                    <span className="text-sm font-semibold text-slate-700">
+                                        Limite Mensal de Licitações
+                                    </span>
+                                </div>
+                                <span className="text-lg font-bold text-slate-900">
+                                    {limite.atual} / {limite.limite}
+                                </span>
+                            </div>
+                            <Progress
+                                value={limite.percentual}
+                                className={
+                                    limite.percentual >= 90
+                                        ? "[&>div]:bg-red-500"
+                                        : limite.percentual >= 75
+                                        ? "[&>div]:bg-amber-500"
+                                        : "[&>div]:bg-emerald-500"
+                                }
+                            />
+                            {limite.percentual >= 90 && limite.disponivel > 0 && (
+                                <p className="text-amber-700 text-xs mt-2 flex items-center gap-1">
+                                    <AlertCircle className="w-3 h-3" />
+                                    Limite quase atingido! {limite.disponivel} licitação(ões) disponível(is).
+                                </p>
+                            )}
+                            {limite.disponivel === 0 && (
+                                <p className="text-red-700 text-xs font-medium mt-2 flex items-center gap-1">
+                                    <AlertCircle className="w-3 h-3" />
+                                    Limite mensal atingido. Aguarde o próximo mês ou faça upgrade do plano.
+                                </p>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Filter Corporate Bar */}
                 <div className="flex flex-col gap-4">
@@ -339,7 +432,11 @@ export default function LicitacoesListPage() {
                                                             <TrendingUp className="w-4 h-4 mr-2" /> Analisar Risco
                                                         </DropdownMenuItem>
                                                         <DropdownMenuSeparator />
-                                                        <DropdownMenuItem className="text-red-600">
+                                                        <DropdownMenuItem
+                                                            className="text-red-600 cursor-pointer"
+                                                            onClick={() => deletarLicitacao(item.id)}
+                                                        >
+                                                            <Trash2 className="w-4 h-4 mr-2" />
                                                             Descartar
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>

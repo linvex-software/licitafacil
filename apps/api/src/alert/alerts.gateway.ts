@@ -13,7 +13,7 @@ const EMPRESA_ROOM_PREFIX = "empresa:";
 
 @WebSocketGateway({
   cors: { origin: ["http://localhost:3000", "http://localhost:3002"] },
-  path: "/alerts-ws",
+  namespace: "/alerts-ws",
 })
 export class AlertsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()

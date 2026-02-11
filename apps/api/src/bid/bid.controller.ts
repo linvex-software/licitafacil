@@ -21,6 +21,7 @@ import { SoftDeleteService } from "../common/services/soft-delete.service";
 import { AuditLogService } from "../audit-log/audit-log.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../common/guards/roles.guard";
+import { CheckLicitacaoLimitGuard } from "../common/guards/limites.guard";
 import { Roles } from "../common/decorators/roles.decorator";
 import { Tenant } from "../common/decorators/tenant.decorator";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
@@ -63,6 +64,7 @@ export class BidController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  @UseGuards(CheckLicitacaoLimitGuard)
   @Audit({ action: "bid.create", resourceType: "Bid" })
   async create(
     @Body() body: unknown,
@@ -117,6 +119,18 @@ export class BidController {
       operationalState,
       search,
     });
+  }
+
+  /**
+   * Retorna informações de limite mensal de licitações
+   * GET /bids/limite
+   * 
+   * Permissão: ADMIN e COLABORADOR
+   */
+  @Get("limite")
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  async obterLimite(@Tenant() empresaId: string) {
+    return this.bidService.obterLimite(empresaId);
   }
 
   /**
