@@ -22,6 +22,8 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import { AnalisarEditalModal } from "@/components/licitacoes/analisar-edital-modal";
+import type { AnalisarEditalResponse } from "@/hooks/use-analisar-edital";
 
 export default function LicitacaoDetailPage() {
   const params = useParams();
@@ -51,6 +53,53 @@ export default function LicitacaoDetailPage() {
         title: "Erro ao atualizar",
         description: error.message,
         variant: "destructive",
+      });
+    }
+  };
+
+  const handleAplicarAnalise = (dados: AnalisarEditalResponse) => {
+    if (!licitacao) return;
+
+    // Mapear modalidade da IA para valores aceitos pelo sistema
+    const mapModalidade = (modalidadeIA: string): string | null => {
+      const mapa: Record<string, string> = {
+        PREGAO_ELETRONICO: "PREGAO_ELETRONICO",
+        PREGAO_PRESENCIAL: "PREGAO_ELETRONICO", // Mais próximo
+        CONCORRENCIA: "CONCORRENCIA",
+        TOMADA_PRECOS: "CONCORRENCIA", // Mais próximo
+        CONVITE: "DISPENSA", // Mais próximo
+        DISPENSA: "DISPENSA",
+        INEXIGIBILIDADE: "DISPENSA", // Mais próximo
+      };
+      return mapa[modalidadeIA] || "OUTRA";
+    };
+
+    const updateData: Record<string, any> = {};
+
+    if (dados.modalidade) {
+      updateData.modality = mapModalidade(dados.modalidade);
+    }
+    if (dados.objeto) {
+      updateData.title = dados.objeto;
+    }
+
+    if (Object.keys(updateData).length > 0) {
+      updateBid({ id, data: updateData as any }).then(() => {
+        toast({
+          title: "Dados aplicados com sucesso",
+          description: `Modalidade e título atualizados.${dados.valorEstimado ? ` Valor estimado: R$ ${dados.valorEstimado.toLocaleString("pt-BR")}` : ""}`,
+        });
+      }).catch((err: any) => {
+        toast({
+          title: "Erro ao aplicar dados",
+          description: err?.response?.data?.message || "Não foi possível salvar. Tente novamente.",
+          variant: "destructive",
+        });
+      });
+    } else {
+      toast({
+        title: "Nenhum dado para aplicar",
+        description: "A análise não retornou dados compatíveis com os campos da licitação.",
       });
     }
   };
@@ -107,25 +156,31 @@ export default function LicitacaoDetailPage() {
               </div>
             </div>
 
-            <Button
-              size="lg"
-              variant={licitacao.operationalState === 'OK' ? "outline" : "destructive"}
-              onClick={handleToggleRisk}
-              disabled={isPending}
-              className="shadow-lg"
-            >
-              {licitacao.operationalState === 'OK' ? (
-                <>
-                  <AlertTriangle className="w-4 h-4 mr-2" />
-                  Sinalizar Risco
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Resolver Risco
-                </>
-              )}
-            </Button>
+            <div className="flex gap-2 flex-wrap">
+              <AnalisarEditalModal
+                bidId={id}
+                onAplicar={handleAplicarAnalise}
+              />
+              <Button
+                size="lg"
+                variant={licitacao.operationalState === 'OK' ? "outline" : "destructive"}
+                onClick={handleToggleRisk}
+                disabled={isPending}
+                className="shadow-lg"
+              >
+                {licitacao.operationalState === 'OK' ? (
+                  <>
+                    <AlertTriangle className="w-4 h-4 mr-2" />
+                    Sinalizar Risco
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    Resolver Risco
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
 

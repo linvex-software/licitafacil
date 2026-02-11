@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { PrismaTenantService } from "../prisma/prisma-tenant.service";
+import { AiService } from "../ai/ai.service";
+import { PdfParserUtil } from "../common/utils/pdf-parser.util";
 import { type CreateBidInput, type UpdateBidInput, type Bid } from "@licitafacil/shared";
+import type { AnalisarEditalResponseDto } from "./dto/analisar-edital.dto";
 
 /**
  * Interface para filtros de listagem de licitações
@@ -21,6 +24,7 @@ export class BidService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly prismaTenant: PrismaTenantService,
+    private readonly aiService: AiService,
   ) {}
 
   /**
@@ -263,5 +267,32 @@ export class BidService {
           ? (licitacoesNoMes / maxLicitacoesMes) * 100
           : 0,
     };
+  }
+
+  /**
+   * Analisa edital de licitação com IA (GPT-4o)
+   */
+  async analisarEdital(
+    bidId: string,
+    empresaId: string,
+    pdf: Express.Multer.File,
+  ): Promise<AnalisarEditalResponseDto> {
+    // Verificar se licitação existe e pertence à empresa
+    await this.findOne(bidId, empresaId);
+
+    // Validar tamanho
+    PdfParserUtil.validarTamanho(pdf.buffer, 50);
+
+    // Extrair texto
+    const texto = await PdfParserUtil.extrairTexto(pdf.buffer);
+
+    // Analisar com IA
+    const resultado = await this.aiService.analisarEdital(
+      texto,
+      bidId,
+      empresaId,
+    );
+
+    return resultado;
   }
 }
