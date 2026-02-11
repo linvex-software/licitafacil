@@ -12,8 +12,13 @@ import {
   BadRequestException,
   UseGuards,
   UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
   Req,
 } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
 import { BidService } from "./bid.service";
 import { BidRiskService } from "./bid-risk.service";
 import { DocumentService } from "../document/document.service";
@@ -21,7 +26,7 @@ import { SoftDeleteService } from "../common/services/soft-delete.service";
 import { AuditLogService } from "../audit-log/audit-log.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../common/guards/roles.guard";
-import { CheckLicitacaoLimitGuard } from "../common/guards/limites.guard";
+import { CheckLicitacaoLimitGuard, CheckAnaliseIALimitGuard } from "../common/guards/limites.guard";
 import { Roles } from "../common/decorators/roles.decorator";
 import { Tenant } from "../common/decorators/tenant.decorator";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
@@ -505,5 +510,35 @@ export class BidController {
       updated: result.updated,
       analysis: result.analysis,
     };
+  }
+
+  /**
+   * Analisa edital de licitação com IA (GPT-4o)
+   * POST /bids/:id/analisar-edital
+   *
+   * Recebe um PDF do edital, extrai texto e envia para análise com IA.
+   * Retorna JSON estruturado com modalidade, número, objeto, prazos e documentos.
+   *
+   * Permissão: ADMIN e COLABORADOR
+   */
+  @Post(":id/analisar-edital")
+  @HttpCode(HttpStatus.OK)
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  @UseGuards(CheckAnaliseIALimitGuard)
+  @UseInterceptors(FileInterceptor("pdf"))
+  async analisarEdital(
+    @Param("id") id: string,
+    @Tenant() empresaId: string,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 50 * 1024 * 1024 }), // 50MB
+          new FileTypeValidator({ fileType: "application/pdf" }),
+        ],
+      }),
+    )
+    pdf: Express.Multer.File,
+  ) {
+    return this.bidService.analisarEdital(id, empresaId, pdf);
   }
 }

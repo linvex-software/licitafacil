@@ -40,6 +40,8 @@ model Empresa {
   clienteConfig      ClienteConfig?
   // Relacionamento: Uma empresa pode ter um contrato (1:1)
   contrato           Contrato?
+  // Relacionamento: Uma empresa tem muitas análises de edital
+  editalAnalises     EditalAnalise[]
 
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("empresas")
@@ -125,6 +127,8 @@ model Bid {
   checklistItems ChecklistItem[]
   // Relacionamento: Uma licitação pode ter vários prazos
   prazos          Prazo[]
+  // Relacionamento: Uma licitação pode ter várias análises de edital
+  editalAnalises  EditalAnalise[]
 
   @@index([empresaId])
   @@index([empresaId, operationalState]) // Consultas por empresa e estado operacional
@@ -387,6 +391,7 @@ model ClienteConfig {
   maxUsuarios           Int           @default(10)
   maxStorageGB          Int           @default(10)
   maxLicitacoesMes      Int           @default(50)
+  maxAnalisesMes        Int           @default(50) // Limite de análises IA/mês
 
   // Metadata
   createdAt             DateTime      @default(now())
@@ -466,4 +471,39 @@ model Pagamento {
   @@index([contratoId])
   @@index([dataPrevista])
   @@map("pagamentos")
+}
+
+// Enum de status da análise de edital
+enum AnaliseStatus {
+  PROCESSANDO
+  CONCLUIDA
+  ERRO
+}
+
+// Entidade EditalAnalise (Log de análises de edital com IA)
+model EditalAnalise {
+  id            String        @id @default(cuid())
+  bidId         String
+  empresaId     String
+
+  pdfUrl        String?       // URL do PDF analisado
+  pdfTamanhoMB  Float?        // Tamanho em MB
+
+  resultado     Json?         // JSON retornado pela IA
+  tokensUsados  Int?          // Total de tokens consumidos
+  tempoSegundos Int?          // Tempo de processamento
+
+  status        AnaliseStatus @default(PROCESSANDO)
+  erroMensagem  String?       @db.Text
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relacionamentos
+  bid           Bid           @relation(fields: [bidId], references: [id], onDelete: Cascade)
+  empresa       Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@index([empresaId, createdAt])
+  @@index([bidId])
+  @@map("edital_analises")
 }

@@ -75,6 +75,45 @@ export class CheckLicitacaoLimitGuard implements CanActivate {
 }
 
 @Injectable()
+export class CheckAnaliseIALimitGuard implements CanActivate {
+  constructor(private prisma: PrismaService) {}
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest();
+    const empresaId = request.user?.empresaId;
+
+    if (!empresaId) return true;
+
+    const config = await this.prisma.clienteConfig.findUnique({
+      where: { empresaId },
+    });
+
+    if (!config) return true;
+
+    // Contar análises do mês atual
+    const inicioMes = new Date();
+    inicioMes.setDate(1);
+    inicioMes.setHours(0, 0, 0, 0);
+
+    const analisesNoMes = await this.prisma.editalAnalise.count({
+      where: {
+        empresaId,
+        status: "CONCLUIDA",
+        createdAt: { gte: inicioMes },
+      },
+    });
+
+    if (analisesNoMes >= config.maxAnalisesMes) {
+      throw new ForbiddenException(
+        `Limite mensal de análises IA atingido (${analisesNoMes}/${config.maxAnalisesMes}). Faça upgrade do plano.`,
+      );
+    }
+
+    return true;
+  }
+}
+
+@Injectable()
 export class CheckStorageLimitGuard implements CanActivate {
   constructor(private prisma: PrismaService) {}
 

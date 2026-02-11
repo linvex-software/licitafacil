@@ -22,6 +22,8 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import { AnalisarEditalModal } from "@/components/licitacoes/analisar-edital-modal";
+import type { AnalisarEditalResponse } from "@/hooks/use-analisar-edital";
 
 export default function LicitacaoDetailPage() {
   const params = useParams();
@@ -51,6 +53,42 @@ export default function LicitacaoDetailPage() {
         title: "Erro ao atualizar",
         description: error.message,
         variant: "destructive",
+      });
+    }
+  };
+
+  const handleAplicarAnalise = (dados: AnalisarEditalResponse) => {
+    if (!licitacao) return;
+
+    // Monta os dados para atualizar a licitação
+    const updateData: Record<string, any> = {};
+
+    if (dados.modalidade) {
+      updateData.modality = dados.modalidade;
+    }
+    if (dados.objeto) {
+      updateData.title = dados.objeto;
+    }
+
+    // Se temos dados para atualizar, fazemos a chamada
+    if (Object.keys(updateData).length > 0) {
+      updateBid({ id, data: updateData as any }).then(() => {
+        toast({
+          title: "Dados aplicados",
+          description: "Revise as informações e clique em Salvar para confirmar.",
+        });
+      }).catch(() => {
+        // Toast de sucesso parcial - dados foram extraídos mas não salvos automaticamente
+        toast({
+          title: "Dados da análise extraídos",
+          description: "Não foi possível aplicar automaticamente. Revise e salve manualmente.",
+          variant: "destructive",
+        });
+      });
+    } else {
+      toast({
+        title: "Dados da análise extraídos",
+        description: "Revise os dados da análise. Nenhuma alteração automática foi feita.",
       });
     }
   };
@@ -107,25 +145,31 @@ export default function LicitacaoDetailPage() {
               </div>
             </div>
 
-            <Button
-              size="lg"
-              variant={licitacao.operationalState === 'OK' ? "outline" : "destructive"}
-              onClick={handleToggleRisk}
-              disabled={isPending}
-              className="shadow-lg"
-            >
-              {licitacao.operationalState === 'OK' ? (
-                <>
-                  <AlertTriangle className="w-4 h-4 mr-2" />
-                  Sinalizar Risco
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Resolver Risco
-                </>
-              )}
-            </Button>
+            <div className="flex gap-2 flex-wrap">
+              <AnalisarEditalModal
+                bidId={id}
+                onAplicar={handleAplicarAnalise}
+              />
+              <Button
+                size="lg"
+                variant={licitacao.operationalState === 'OK' ? "outline" : "destructive"}
+                onClick={handleToggleRisk}
+                disabled={isPending}
+                className="shadow-lg"
+              >
+                {licitacao.operationalState === 'OK' ? (
+                  <>
+                    <AlertTriangle className="w-4 h-4 mr-2" />
+                    Sinalizar Risco
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    Resolver Risco
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
 
