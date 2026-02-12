@@ -4,7 +4,13 @@
   "sourceRoot": "src",
   "compilerOptions": {
     "deleteOutDir": true,
-    "webpack": false
+    "webpack": false,
+    "assets": [
+      {
+        "include": "email/templates/**/*.html",
+        "watchAssets": true
+      }
+    ]
   }
 }
 

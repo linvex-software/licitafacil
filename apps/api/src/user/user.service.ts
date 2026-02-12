@@ -311,6 +311,60 @@ export class UserService {
     };
   }
 
+  // ========================================================
+  // Configurações de Notificações por Email
+  // ========================================================
+
+  /**
+   * Retorna as preferências de notificação do usuário
+   */
+  async getNotificacoes(userId: string) {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        receberEmails: true,
+        receberDocVencendo: true,
+        receberPrazoCritico: true,
+        receberRisco: true,
+        frequenciaEmail: true,
+      },
+    });
+  }
+
+  /**
+   * Atualiza as preferências de notificação do usuário
+   */
+  async updateNotificacoes(
+    userId: string,
+    dto: {
+      receberEmails?: boolean;
+      receberDocVencendo?: boolean;
+      receberPrazoCritico?: boolean;
+      receberRisco?: boolean;
+      frequenciaEmail?: string;
+    },
+  ) {
+    const updateData: Record<string, unknown> = {};
+
+    if (dto.receberEmails !== undefined) updateData.receberEmails = dto.receberEmails;
+    if (dto.receberDocVencendo !== undefined) updateData.receberDocVencendo = dto.receberDocVencendo;
+    if (dto.receberPrazoCritico !== undefined) updateData.receberPrazoCritico = dto.receberPrazoCritico;
+    if (dto.receberRisco !== undefined) updateData.receberRisco = dto.receberRisco;
+    if (dto.frequenciaEmail !== undefined) updateData.frequenciaEmail = dto.frequenciaEmail;
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      select: {
+        receberEmails: true,
+        receberDocVencendo: true,
+        receberPrazoCritico: true,
+        receberRisco: true,
+        frequenciaEmail: true,
+      },
+    });
+  }
+
   /**
    * Mapeia entidade Prisma para User (sem senha)
    * Converte role do Prisma enum para shared enum

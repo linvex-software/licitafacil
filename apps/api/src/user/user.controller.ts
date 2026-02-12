@@ -47,6 +47,41 @@ export class UserController {
     return this.userService.obterLimite(empresaId);
   }
 
+  // ========================================================
+  // Configurações de Notificações por Email
+  // (rotas /me/* devem vir ANTES das rotas /:id para evitar conflito)
+  // ========================================================
+
+  /**
+   * Retorna as preferências de notificação do usuário autenticado
+   * GET /users/me/notificacoes
+   */
+  @Get("me/notificacoes")
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  async getNotificacoes(@CurrentUser() currentUser: User) {
+    return this.userService.getNotificacoes(currentUser.id);
+  }
+
+  /**
+   * Atualiza as preferências de notificação do usuário autenticado
+   * PATCH /users/me/notificacoes
+   */
+  @Patch("me/notificacoes")
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  async updateNotificacoes(
+    @CurrentUser() currentUser: User,
+    @Body()
+    dto: {
+      receberEmails?: boolean;
+      receberDocVencendo?: boolean;
+      receberPrazoCritico?: boolean;
+      receberRisco?: boolean;
+      frequenciaEmail?: string;
+    },
+  ) {
+    return this.userService.updateNotificacoes(currentUser.id, dto);
+  }
+
   /**
    * Cria um novo usuário na empresa
    * POST /users
