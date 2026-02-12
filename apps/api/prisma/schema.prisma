@@ -93,6 +93,14 @@ model User {
   // Relacionamento: Um usuário pode concluir vários itens de checklist
   checklistItemsConcluidos  ChecklistItem[]
 
+  // Configurações de notificação por email
+  receberEmails        Boolean  @default(true)
+  receberDocVencendo   Boolean  @default(true)
+  receberPrazoCritico  Boolean  @default(true)
+  receberRisco         Boolean  @default(true)
+  frequenciaEmail      String   @default("IMEDIATO") // IMEDIATO | DIARIO | OFF
+  unsubscribeToken     String?  @unique
+
   @@index([email])
   @@index([empresaId])
   @@index([role])
@@ -118,6 +126,12 @@ model Bid {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   deletedAt            DateTime? // Soft delete: quando não null, registro está deletado
+
+  // Campos de alerta por email
+  alertaPrazoEnviado   Boolean   @default(false)
+  alertaPrazoEnviadoEm DateTime?
+  alertaRiscoEnviado   Boolean   @default(false)
+  alertaRiscoEnviadoEm DateTime?
 
   // Relacionamento: Uma licitação pertence a uma empresa
   empresa        Empresa         @relation(fields: [empresaId], references: [id], onDelete: Cascade)
@@ -178,6 +192,10 @@ model Document {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   deletedAt  DateTime? // Soft delete: quando não null, registro está deletado
+
+  // Campos de alerta de vencimento
+  alertaVencimentoEnviado   Boolean   @default(false)
+  alertaVencimentoEnviadoEm DateTime?
 
   // Campos de validade/vencimento
   doesExpire Boolean   @default(false) // Indica se o documento tem validade

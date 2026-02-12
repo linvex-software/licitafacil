@@ -1,0 +1,24 @@
+<h2>🔴 Licitação em Situação de Risco</h2>
+
+<p>Olá, <strong>{{nomeUsuario}}</strong>!</p>
+
+<p>Uma licitação de <strong>{{nomeEmpresa}}</strong> foi identificada em situação de risco:</p>
+
+<div class="alert-box danger">
+  📋 <strong>{{nomeLicitacao}}</strong><br>
+  Órgão: <strong>{{orgao}}</strong><br>
+  Estado: <strong>EM RISCO</strong>
+</div>
+
+<p><strong>Motivos identificados:</strong></p>
+<ul>
+  {{#each motivos}}
+  <li>{{this}}</li>
+  {{/each}}
+</ul>
+
+<p>Tome as medidas necessárias o quanto antes para não perder esta oportunidade.</p>
+
+<div class="cta">
+  <a href="{{frontendUrl}}/licitacoes/{{licitacaoId}}">Resolver Agora</a>
+</div>

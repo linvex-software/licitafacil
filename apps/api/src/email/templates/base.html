@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{assunto}}</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 20px auto; background: #fff; border-radius: 8px; overflow: hidden; }
+    .header { background: #1a1a2e; padding: 24px; text-align: center; }
+    .header img { height: 40px; }
+    .header h1 { color: #fff; margin: 8px 0 0; font-size: 18px; }
+    .body { padding: 32px; }
+    .body h2 { color: #1a1a2e; margin-top: 0; }
+    .body p { color: #555; line-height: 1.6; }
+    .cta { text-align: center; margin: 32px 0; }
+    .cta a { background: #16a34a; color: #fff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px; }
+    .alert-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 4px; margin: 16px 0; }
+    .alert-box.danger { background: #fee2e2; border-color: #ef4444; }
+    .alert-box.info { background: #dbeafe; border-color: #3b82f6; }
+    .footer { background: #f9f9f9; padding: 16px; text-align: center; border-top: 1px solid #eee; }
+    .footer p { color: #999; font-size: 12px; margin: 4px 0; }
+    .footer a { color: #999; text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🏛️ Limvex Licitação</h1>
+    </div>
+    <div class="body">
+      {{{conteudo}}}
+    </div>
+    <div class="footer">
+      <p>Limvex Licitação &bull; Plataforma de Gestão de Licitações</p>
+      <p>
+        <a href="{{frontendUrl}}/configuracoes/notificacoes">Gerenciar notificações</a> &bull;
+        <a href="{{frontendUrl}}/unsubscribe?token={{unsubscribeToken}}">Cancelar inscrição</a>
+      </p>
+      <p>&copy; 2026 Limvex. Todos os direitos reservados.</p>
+    </div>
+  </div>
+</body>
+</html>

@@ -44,6 +44,9 @@ importers:
       '@prisma/client':
         specifier: ^6.0.0
         version: 6.19.2(prisma@6.19.2(typescript@5.9.3))(typescript@5.9.3)
+      '@sendgrid/mail':
+        specifier: ^8.1.6
+        version: 8.1.6
       bcrypt:
         specifier: ^6.0.0
         version: 6.0.0
@@ -53,6 +56,9 @@ importers:
       class-validator:
         specifier: ^0.14.3
         version: 0.14.3
+      handlebars:
+        specifier: ^4.7.8
+        version: 4.7.8
       nodemailer:
         specifier: ^8.0.1
         version: 8.0.1
@@ -1801,6 +1807,18 @@ packages:
 
   '@rushstack/eslint-patch@1.15.0':
     resolution: {integrity: sha512-ojSshQPKwVvSMR8yT2L/QtUkV5SXi/IfDiJ4/8d6UbTPjiHVmxZzUAzGD8Tzks1b9+qQkZa0isUOvYObedITaw==}
+
+  '@sendgrid/client@8.1.6':
+    resolution: {integrity: sha512-/BHu0hqwXNHr2aLhcXU7RmmlVqrdfrbY9KpaNj00KZHlVOVoRxRVrpOCabIB+91ISXJ6+mLM9vpaVUhK6TwBWA==}
+    engines: {node: '>=12.*'}
+
+  '@sendgrid/helpers@8.0.0':
+    resolution: {integrity: sha512-Ze7WuW2Xzy5GT5WRx+yEv89fsg/pgy3T1E3FS0QEx0/VvRmigMZ5qyVGhJz4SxomegDkzXv/i0aFPpHKN8qdAA==}
+    engines: {node: '>= 12.0.0'}
+
+  '@sendgrid/mail@8.1.6':
+    resolution: {integrity: sha512-/ZqxUvKeEztU9drOoPC/8opEPOk+jLlB2q4+xpx6HVLq6aFu3pMpalkTpAQz8XfRfpLp8O25bh6pGPcHDCYpqg==}
+    engines: {node: '>=12.*'}
 
   '@sinclair/typebox@0.27.8':
     resolution: {integrity: sha512-+Fj43pSMwJs4KRrH/938Uf+uAELIgVBmQzg/q1YG10djyfA3TnrU8N8XzqCh/okZdszqBQTZf96idMfE5lnwTA==}
@@ -6971,6 +6989,24 @@ snapshots:
   '@rtsao/scc@1.1.0': {}
 
   '@rushstack/eslint-patch@1.15.0': {}
+
+  '@sendgrid/client@8.1.6':
+    dependencies:
+      '@sendgrid/helpers': 8.0.0
+      axios: 1.13.2
+    transitivePeerDependencies:
+      - debug
+
+  '@sendgrid/helpers@8.0.0':
+    dependencies:
+      deepmerge: 4.3.1
+
+  '@sendgrid/mail@8.1.6':
+    dependencies:
+      '@sendgrid/client': 8.1.6
+      '@sendgrid/helpers': 8.0.0
+    transitivePeerDependencies:
+      - debug
 
   '@sinclair/typebox@0.27.8': {}
 
