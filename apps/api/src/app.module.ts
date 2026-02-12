@@ -16,6 +16,7 @@ import { PrazoModule } from "./prazo/prazo.module";
 import { AlertModule } from "./alert/alert.module";
 import { AdminModule } from "./admin/admin.module";
 import { EmailModule } from "./email/email.module";
+import { RelatoriosModule } from "./relatorios/relatorios.module";
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { EmailModule } from "./email/email.module";
     AlertModule,
     AdminModule,
     EmailModule,
+    RelatoriosModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

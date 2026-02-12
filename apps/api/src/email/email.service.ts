@@ -84,12 +84,18 @@ export class EmailService {
     to: string;
     subject: string;
     html: string;
+    attachments?: Array<{
+      content: string;
+      filename: string;
+      type: string;
+      disposition: string;
+    }>;
   }): Promise<boolean> {
     const apiKey = process.env.SENDGRID_API_KEY;
 
     if (!apiKey || apiKey === "AGUARDANDO_CONFIGURACAO") {
       this.logger.warn(
-        `[SIMULADO] Email para ${params.to}: ${params.subject}`,
+        `[SIMULADO] Email para ${params.to}: ${params.subject}${params.attachments ? ` (com ${params.attachments.length} anexo(s))` : ""}`,
       );
       return true;
     }
@@ -103,6 +109,7 @@ export class EmailService {
         },
         subject: params.subject,
         html: params.html,
+        attachments: params.attachments,
       });
 
       this.logger.log(`Email enviado para ${params.to}: ${params.subject}`);
