@@ -42,6 +42,8 @@ model Empresa {
   contrato           Contrato?
   // Relacionamento: Uma empresa tem muitas análises de edital
   editalAnalises     EditalAnalise[]
+  // Relacionamento: Uma empresa tem muitas buscas salvas (ComprasNet)
+  buscasSalvas       BuscaSalva[]
 
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("empresas")
@@ -405,11 +407,11 @@ model ClienteConfig {
   dataProximaCobranca   DateTime?
   status                ClienteStatus @default(ATIVO)
 
-  // Limites do plano
-  maxUsuarios           Int           @default(10)
-  maxStorageGB          Int           @default(10)
-  maxLicitacoesMes      Int           @default(50)
-  maxAnalisesMes        Int           @default(50) // Limite de análises IA/mês
+  // Limites (plano único high-ticket — sem restrições)
+  maxUsuarios           Int           @default(999999)
+  maxStorageGB          Int           @default(999999)
+  maxLicitacoesMes      Int           @default(999999)
+  maxAnalisesMes        Int           @default(999999)
 
   // Metadata
   createdAt             DateTime      @default(now())
@@ -489,6 +491,28 @@ model Pagamento {
   @@index([contratoId])
   @@index([dataPrevista])
   @@map("pagamentos")
+}
+
+// Entidade BuscaSalva (Buscas salvas do ComprasNet)
+model BuscaSalva {
+  id              String    @id @default(uuid())
+  empresaId       String
+  nome            String
+  filtros         Json
+  ativa           Boolean   @default(true)
+  autoImportar    Boolean   @default(false)
+  ultimaExecucao  DateTime?
+  totalImportadas Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  // Relacionamento: Uma busca salva pertence a uma empresa
+  empresa         Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@index([empresaId, ativa])
+  @@index([empresaId, deletedAt])
+  @@map("buscas_salvas")
 }
 
 // Enum de status da análise de edital

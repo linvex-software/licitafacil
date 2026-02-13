@@ -24,12 +24,11 @@ import { UserPlus } from "lucide-react";
 
 interface CriarUsuarioModalProps {
   onSuccess: () => void;
-  limiteAtingido: boolean;
+  limiteAtingido?: boolean;
 }
 
 export function CriarUsuarioModal({
   onSuccess,
-  limiteAtingido,
 }: CriarUsuarioModalProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -80,9 +79,9 @@ export function CriarUsuarioModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button disabled={limiteAtingido}>
+        <Button>
           <UserPlus className="mr-2 h-4 w-4" />
-          {limiteAtingido ? "Limite atingido" : "Novo Usuário"}
+          Novo Usuário
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[450px]">

@@ -15,7 +15,6 @@ import { RolesGuard } from "../common/guards/roles.guard";
 import { Roles } from "../common/decorators/roles.decorator";
 import { Tenant } from "../common/decorators/tenant.decorator";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { CheckUserLimitGuard } from "../common/guards/limites.guard";
 import {
   type User,
   UserRole,
@@ -89,7 +88,6 @@ export class UserController {
    */
   @Post()
   @Roles(UserRole.ADMIN)
-  @UseGuards(CheckUserLimitGuard)
   async create(
     @Body() body: unknown,
     @Tenant() empresaId: string,
@@ -163,7 +161,6 @@ export class UserController {
    */
   @Post(":id/reativar")
   @Roles(UserRole.ADMIN)
-  @UseGuards(CheckUserLimitGuard)
   async reactivate(
     @Param("id") id: string,
     @Tenant() empresaId: string,

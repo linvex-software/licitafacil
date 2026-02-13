@@ -14,9 +14,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/Card";
 import { Progress } from "@/components/ui/progress";
-import { ChevronLeft, ChevronRight, Check, Building2, CreditCard, Settings2, UserPlus, ClipboardCheck } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Building2, CreditCard, UserPlus, ClipboardCheck } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 import { maskCNPJ, formatCurrency } from "@/lib/utils";
@@ -28,16 +27,12 @@ const schema = z.object({
   email: z.string().email("Email inválido"),
   telefone: z.string().optional(),
   responsavelComercial: z.string().optional(),
-  // Step 2 — Plano e billing
+  // Step 2 — Billing (plano fixo ENTERPRISE)
   plano: z.enum(["STARTER", "PROFESSIONAL", "ENTERPRISE"]),
   valorSetup: z.coerce.number().min(0, "Valor deve ser positivo"),
   mensalidade: z.coerce.number().min(0, "Valor deve ser positivo"),
   dataInicio: z.string().min(1, "Data de início é obrigatória"),
-  // Step 3 — Limites (opcionais; .catch(undefined) trata NaN de inputs vazios)
-  maxUsuarios: z.coerce.number().min(1).optional().catch(undefined),
-  maxStorageGB: z.coerce.number().min(1).optional().catch(undefined),
-  maxLicitacoesMes: z.coerce.number().min(1).optional().catch(undefined),
-  // Step 4 — Admin
+  // Step 3 — Admin
   nomeAdmin: z.string().min(3, "Nome deve ter no mínimo 3 caracteres"),
   emailAdmin: z.string().email("Email inválido"),
 });
@@ -52,35 +47,12 @@ interface Props {
 
 const STEPS = [
   { numero: 1, titulo: "Empresa", icon: Building2 },
-  { numero: 2, titulo: "Plano", icon: CreditCard },
-  { numero: 3, titulo: "Limites", icon: Settings2 },
-  { numero: 4, titulo: "Admin", icon: UserPlus },
-  { numero: 5, titulo: "Revisão", icon: ClipboardCheck },
+  { numero: 2, titulo: "Cobrança", icon: CreditCard },
+  { numero: 3, titulo: "Admin", icon: UserPlus },
+  { numero: 4, titulo: "Revisão", icon: ClipboardCheck },
 ];
 
-const PLANOS = {
-  STARTER: {
-    label: "Starter",
-    descricao: "Ideal para empresas iniciando em licitações",
-    setupPadrao: 5000,
-    mensalidadePadrao: 1500,
-    limites: { usuarios: 10, storage: 10, licitacoes: 50 },
-  },
-  PROFESSIONAL: {
-    label: "Professional",
-    descricao: "Para empresas com volume médio de licitações",
-    setupPadrao: 10000,
-    mensalidadePadrao: 3000,
-    limites: { usuarios: 30, storage: 50, licitacoes: "Ilimitado" },
-  },
-  ENTERPRISE: {
-    label: "Enterprise",
-    descricao: "Para grandes operações com necessidades avançadas",
-    setupPadrao: 15000,
-    mensalidadePadrao: 5000,
-    limites: { usuarios: "Ilimitado", storage: "Ilimitado", licitacoes: "Ilimitado" },
-  },
-} as const;
+const TOTAL_STEPS = STEPS.length;
 
 export function CriarClienteModal({ aberto, onFechar, onSucesso }: Props) {
   const [step, setStep] = useState(1);
@@ -99,35 +71,25 @@ export function CriarClienteModal({ aberto, onFechar, onSucesso }: Props) {
     resolver: zodResolver(schema) as any,
     defaultValues: {
       dataInicio: new Date().toISOString().split("T")[0],
-      plano: "PROFESSIONAL",
-      valorSetup: 10000,
-      mensalidade: 3000,
+      plano: "ENTERPRISE",
+      valorSetup: 15000,
+      mensalidade: 5000,
     },
   });
 
-  const planoSelecionado = watch("plano") as keyof typeof PLANOS;
-
-  const handlePlanoChange = (plano: keyof typeof PLANOS) => {
-    setValue("plano", plano);
-    setValue("valorSetup", PLANOS[plano].setupPadrao);
-    setValue("mensalidade", PLANOS[plano].mensalidadePadrao);
-  };
-
   // Submit manual — evita problemas de handleSubmit com multi-step forms
   const handleCriarCliente = async () => {
-    // Validar todos os campos antes de enviar
     const valid = await trigger();
     if (!valid) {
-      // Encontrar em qual step está o primeiro erro e navegar até lá
       const errorFields = Object.keys(errors) as (keyof FormData)[];
       if (errorFields.length > 0) {
         const step1Fields = ["nomeEmpresa", "cnpj", "email", "telefone", "responsavelComercial"];
         const step2Fields = ["plano", "valorSetup", "mensalidade", "dataInicio"];
-        const step4Fields = ["nomeAdmin", "emailAdmin"];
+        const step3Fields = ["nomeAdmin", "emailAdmin"];
 
         if (errorFields.some((f) => step1Fields.includes(f))) setStep(1);
         else if (errorFields.some((f) => step2Fields.includes(f))) setStep(2);
-        else if (errorFields.some((f) => step4Fields.includes(f))) setStep(4);
+        else if (errorFields.some((f) => step3Fields.includes(f))) setStep(3);
       }
 
       toast({
@@ -166,7 +128,6 @@ export function CriarClienteModal({ aberto, onFechar, onSucesso }: Props) {
     onFechar();
   };
 
-  // Validar campos do step atual antes de avançar
   const proximoStep = async () => {
     let fieldsToValidate: (keyof FormData)[] = [];
 
@@ -175,12 +136,9 @@ export function CriarClienteModal({ aberto, onFechar, onSucesso }: Props) {
         fieldsToValidate = ["nomeEmpresa", "cnpj", "email"];
         break;
       case 2:
-        fieldsToValidate = ["plano", "valorSetup", "mensalidade", "dataInicio"];
+        fieldsToValidate = ["valorSetup", "mensalidade", "dataInicio"];
         break;
       case 3:
-        // Limites são opcionais, sem validação obrigatória
-        break;
-      case 4:
         fieldsToValidate = ["nomeAdmin", "emailAdmin"];
         break;
     }
@@ -190,20 +148,20 @@ export function CriarClienteModal({ aberto, onFechar, onSucesso }: Props) {
       if (!valid) return;
     }
 
-    setStep((prev) => Math.min(prev + 1, 5));
+    setStep((prev) => Math.min(prev + 1, TOTAL_STEPS));
   };
 
   const voltarStep = () => setStep((prev) => Math.max(prev - 1, 1));
 
-  const progressoPercentual = (step / 5) * 100;
+  const progressoPercentual = (step / TOTAL_STEPS) * 100;
 
   return (
     <Dialog open={aberto} onOpenChange={(open) => { if (!open) handleClose(); }}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl">Criar Novo Cliente B2B</DialogTitle>
+          <DialogTitle className="text-xl">Criar Novo Cliente</DialogTitle>
           <DialogDescription>
-            Wizard de onboarding em 5 etapas. Preencha todos os dados para criar a conta.
+            Wizard de onboarding em {TOTAL_STEPS} etapas. Preencha todos os dados para criar a conta.
           </DialogDescription>
         </DialogHeader>
 
@@ -305,46 +263,12 @@ export function CriarClienteModal({ aberto, onFechar, onSucesso }: Props) {
             </div>
           )}
 
-          {/* Step 2: Plano e Cobrança */}
+          {/* Step 2: Cobrança */}
           {step === 2 && (
             <div className="space-y-4">
-              <div>
-                <Label>Plano *</Label>
-                <div className="grid grid-cols-3 gap-3 mt-2">
-                  {(Object.entries(PLANOS) as [keyof typeof PLANOS, (typeof PLANOS)[keyof typeof PLANOS]][]).map(
-                    ([key, plano]) => (
-                      <Card
-                        key={key}
-                        className={`p-4 cursor-pointer border-2 transition-all hover:shadow-md ${
-                          planoSelecionado === key
-                            ? "border-primary bg-primary/5 shadow-sm"
-                            : "border-muted hover:border-muted-foreground/30"
-                        }`}
-                        onClick={() => handlePlanoChange(key)}
-                      >
-                        <h4 className="font-semibold text-center">{plano.label}</h4>
-                        <p className="text-xs text-muted-foreground text-center mt-1">
-                          {plano.descricao}
-                        </p>
-                        <div className="mt-3 space-y-1 text-center">
-                          <p className="text-sm">
-                            Setup:{" "}
-                            <span className="font-semibold">
-                              {formatCurrency(plano.setupPadrao)}
-                            </span>
-                          </p>
-                          <p className="text-sm">
-                            Mensal:{" "}
-                            <span className="font-semibold">
-                              {formatCurrency(plano.mensalidadePadrao)}
-                            </span>
-                          </p>
-                        </div>
-                      </Card>
-                    ),
-                  )}
-                </div>
-              </div>
+              <p className="text-sm text-muted-foreground">
+                Configure os valores de setup e mensalidade para o cliente. Todos os recursos são ilimitados.
+              </p>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="valorSetup">Valor Setup (R$) *</Label>
@@ -383,63 +307,8 @@ export function CriarClienteModal({ aberto, onFechar, onSucesso }: Props) {
             </div>
           )}
 
-          {/* Step 3: Limites */}
+          {/* Step 3: Admin */}
           {step === 3 && (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Limites padrão baseados no plano <strong>{PLANOS[planoSelecionado]?.label}</strong>.
-                Personalize apenas se necessário.
-              </p>
-              <div>
-                <Label htmlFor="maxUsuarios">
-                  Máximo de Usuários{" "}
-                  <span className="text-muted-foreground">
-                    (padrão: {PLANOS[planoSelecionado]?.limites.usuarios})
-                  </span>
-                </Label>
-                <Input
-                  id="maxUsuarios"
-                  type="number"
-                  {...register("maxUsuarios")}
-                  placeholder={String(PLANOS[planoSelecionado]?.limites.usuarios)}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="maxStorageGB">
-                  Storage (GB){" "}
-                  <span className="text-muted-foreground">
-                    (padrão: {PLANOS[planoSelecionado]?.limites.storage})
-                  </span>
-                </Label>
-                <Input
-                  id="maxStorageGB"
-                  type="number"
-                  {...register("maxStorageGB")}
-                  placeholder={String(PLANOS[planoSelecionado]?.limites.storage)}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="maxLicitacoesMes">
-                  Licitações/Mês{" "}
-                  <span className="text-muted-foreground">
-                    (padrão: {PLANOS[planoSelecionado]?.limites.licitacoes})
-                  </span>
-                </Label>
-                <Input
-                  id="maxLicitacoesMes"
-                  type="number"
-                  {...register("maxLicitacoesMes")}
-                  placeholder={String(PLANOS[planoSelecionado]?.limites.licitacoes)}
-                  className="mt-1"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: Admin */}
-          {step === 4 && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
                 Crie o usuário administrador inicial do cliente. Uma senha temporária será gerada
@@ -473,8 +342,8 @@ export function CriarClienteModal({ aberto, onFechar, onSucesso }: Props) {
             </div>
           )}
 
-          {/* Step 5: Revisão */}
-          {step === 5 && (
+          {/* Step 4: Revisão */}
+          {step === 4 && (
             <div className="space-y-4">
               <h3 className="font-semibold text-lg">Revisão Final</h3>
               <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm border rounded-lg p-4">
@@ -491,8 +360,8 @@ export function CriarClienteModal({ aberto, onFechar, onSucesso }: Props) {
                   <p className="font-medium">{watch("email")}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Plano</p>
-                  <p className="font-medium">{PLANOS[watch("plano") as keyof typeof PLANOS]?.label}</p>
+                  <p className="text-muted-foreground">Recursos</p>
+                  <p className="font-medium">Ilimitados</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Valor Setup</p>
@@ -538,7 +407,7 @@ export function CriarClienteModal({ aberto, onFechar, onSucesso }: Props) {
                 </>
               )}
             </Button>
-            {step < 5 ? (
+            {step < TOTAL_STEPS ? (
               <Button type="button" onClick={proximoStep}>
                 Próximo
                 <ChevronRight className="ml-1 h-4 w-4" />
