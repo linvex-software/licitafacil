@@ -16,6 +16,7 @@ import {
     ClipboardList,
     HelpCircle,
     ShieldCheck,
+    Globe,
 } from "lucide-react";
 import { AlertsDropdown } from "@/components/AlertsDropdown";
 import { useState } from "react";
@@ -47,6 +48,12 @@ const navItems = [
             { label: "Análises", icon: BarChart3, href: "/analises" },
             { label: "Riscos", icon: AlertTriangle, href: "/riscos" },
             { label: "Relatórios", icon: ClipboardList, href: "/relatorios" },
+        ]
+    },
+    {
+        group: "Integrações",
+        items: [
+            { label: "ComprasNet", icon: Globe, href: "/integracoes/comprasnet" },
         ]
     },
     {

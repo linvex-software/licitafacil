@@ -237,15 +237,10 @@ export class BidService {
   }
 
   /**
-   * Retorna informações de limite mensal de licitações da empresa
+   * Retorna informações de uso mensal de licitações da empresa.
+   * Plano único high-ticket — sem restrições de limite.
    */
   async obterLimite(empresaId: string) {
-    const config = await this.prisma.clienteConfig.findUnique({
-      where: { empresaId },
-    });
-
-    const maxLicitacoesMes = config?.maxLicitacoesMes ?? 999999;
-
     const inicioMes = new Date();
     inicioMes.setDate(1);
     inicioMes.setHours(0, 0, 0, 0);
@@ -260,12 +255,9 @@ export class BidService {
 
     return {
       atual: licitacoesNoMes,
-      limite: maxLicitacoesMes,
-      disponivel: Math.max(0, maxLicitacoesMes - licitacoesNoMes),
-      percentual:
-        maxLicitacoesMes > 0
-          ? (licitacoesNoMes / maxLicitacoesMes) * 100
-          : 0,
+      limite: 999999,
+      disponivel: 999999,
+      percentual: 0,
     };
   }
 

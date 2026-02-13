@@ -270,38 +270,21 @@ export class AdminService {
   }
 
   /**
-   * Define limites padrão baseados no plano, permitindo override customizado
+   * Retorna limites padrão — plano único high-ticket, sem restrições.
+   * Mantém a assinatura para compatibilidade com o fluxo de criação de clientes.
    */
   private definirLimitesPorPlano(
-    plano: PlanoTipo,
-    custom?: {
+    _plano: PlanoTipo,
+    _custom?: {
       maxUsuarios?: number;
       maxStorageGB?: number;
       maxLicitacoesMes?: number;
     },
   ) {
-    const defaults: Record<
-      PlanoTipo,
-      { maxUsuarios: number; maxStorageGB: number; maxLicitacoesMes: number }
-    > = {
-      STARTER: { maxUsuarios: 10, maxStorageGB: 10, maxLicitacoesMes: 50 },
-      PROFESSIONAL: {
-        maxUsuarios: 30,
-        maxStorageGB: 50,
-        maxLicitacoesMes: 999999,
-      },
-      ENTERPRISE: {
-        maxUsuarios: 999999,
-        maxStorageGB: 999999,
-        maxLicitacoesMes: 999999,
-      },
-    };
-
     return {
-      maxUsuarios: custom?.maxUsuarios || defaults[plano].maxUsuarios,
-      maxStorageGB: custom?.maxStorageGB || defaults[plano].maxStorageGB,
-      maxLicitacoesMes:
-        custom?.maxLicitacoesMes || defaults[plano].maxLicitacoesMes,
+      maxUsuarios: 999999,
+      maxStorageGB: 999999,
+      maxLicitacoesMes: 999999,
     };
   }
 

@@ -17,6 +17,7 @@ import { AlertModule } from "./alert/alert.module";
 import { AdminModule } from "./admin/admin.module";
 import { EmailModule } from "./email/email.module";
 import { RelatoriosModule } from "./relatorios/relatorios.module";
+import { ComprasnetModule } from "./integracoes/comprasnet/comprasnet.module";
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { RelatoriosModule } from "./relatorios/relatorios.module";
     AdminModule,
     EmailModule,
     RelatoriosModule,
+    ComprasnetModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

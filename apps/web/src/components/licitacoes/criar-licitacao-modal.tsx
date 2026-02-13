@@ -18,15 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, AlertTriangle } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateBid } from "@/hooks/use-licitacoes";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface CriarLicitacaoModalProps {
   onSuccess: () => void;
-  limiteAtingido: boolean;
-  limiteDisponivel?: number;
+  limiteAtingido?: boolean;
 }
 
 const MODALIDADES = [
@@ -52,8 +51,6 @@ const ESTADO_OPERACIONAL = [
 
 export function CriarLicitacaoModal({
   onSuccess,
-  limiteAtingido,
-  limiteDisponivel,
 }: CriarLicitacaoModalProps) {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -118,13 +115,7 @@ export function CriarLicitacaoModal({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
-          disabled={limiteAtingido}
           className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200/50"
-          title={
-            limiteAtingido
-              ? "Limite mensal de licitações atingido"
-              : undefined
-          }
         >
           <Plus className="w-4 h-4 mr-2" />
           Nova Licitação
@@ -134,16 +125,6 @@ export function CriarLicitacaoModal({
         <DialogHeader>
           <DialogTitle>Criar Nova Licitação</DialogTitle>
         </DialogHeader>
-
-        {limiteDisponivel !== undefined && limiteDisponivel <= 5 && (
-          <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span>
-              Restam <strong>{limiteDisponivel}</strong> licitação(ões) no seu
-              limite mensal.
-            </span>
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

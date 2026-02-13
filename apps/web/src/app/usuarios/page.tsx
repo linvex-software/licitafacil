@@ -8,7 +8,6 @@ import {
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/Card";
 import {
   Table,
@@ -18,7 +17,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Progress } from "@/components/ui/progress";
 import { CriarUsuarioModal } from "@/components/usuarios/criar-usuario-modal";
 import { EditarUsuarioModal } from "@/components/usuarios/editar-usuario-modal";
 import { Layout } from "@/components/layout";
@@ -31,7 +29,6 @@ import {
   Edit,
   UserX,
   UserCheck,
-  AlertTriangle,
   Trash2,
 } from "lucide-react";
 
@@ -44,13 +41,6 @@ interface Usuario {
   createdAt: string;
   updatedAt: string;
   ativo: boolean;
-}
-
-interface Limite {
-  atual: number;
-  limite: number;
-  disponivel: number;
-  percentual: number;
 }
 
 const roleLabel: Record<string, string> = {
@@ -68,7 +58,6 @@ const roleBadgeClass: Record<string, string> = {
 export default function UsuariosPage() {
   const { user, isLoading: authLoading } = useAuth();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [limite, setLimite] = useState<Limite | null>(null);
   const [busca, setBusca] = useState("");
   const [loading, setLoading] = useState(true);
   const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(
@@ -78,15 +67,11 @@ export default function UsuariosPage() {
   const carregarDados = useCallback(async () => {
     setLoading(true);
     try {
-      const [usuariosRes, limiteRes] = await Promise.all([
+      const [usuariosRes] = await Promise.all([
         api.get("/users"),
-        api.get("/users/limite").catch(() => ({ data: null })),
       ]);
 
       setUsuarios(usuariosRes.data);
-      if (limiteRes.data) {
-        setLimite(limiteRes.data);
-      }
     } catch (error: any) {
       console.error("Erro ao carregar usuários:", error);
       toast({
@@ -162,12 +147,6 @@ export default function UsuariosPage() {
 
   const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
 
-  const progressClass =
-    (limite?.percentual ?? 0) >= 90
-      ? "[&>div]:bg-red-500"
-      : (limite?.percentual ?? 0) >= 80
-        ? "[&>div]:bg-yellow-500"
-        : "[&>div]:bg-green-500";
 
   if (authLoading || !user) {
     return (
@@ -208,49 +187,10 @@ export default function UsuariosPage() {
           {isAdmin && (
             <CriarUsuarioModal
               onSuccess={carregarDados}
-              limiteAtingido={limite?.disponivel === 0}
+              limiteAtingido={false}
             />
           )}
         </div>
-
-        {/* Card de Limite */}
-        {limite && isAdmin && (
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium">
-                  Limite de Usuários
-                </CardTitle>
-                <span className="text-2xl font-bold">
-                  {limite.atual} / {limite.limite}
-                </span>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Progress
-                value={Math.min(limite.percentual, 100)}
-                className={`h-3 ${progressClass}`}
-              />
-              <p className="text-xs text-muted-foreground mt-2">
-                {limite.disponivel > 0
-                  ? `${limite.disponivel} vaga${limite.disponivel !== 1 ? "s" : ""} disponível${limite.disponivel !== 1 ? "is" : ""}`
-                  : ""}
-              </p>
-              {limite.percentual >= 90 && limite.disponivel > 0 && (
-                <p className="text-xs text-yellow-600 font-medium mt-1 flex items-center gap-1">
-                  <AlertTriangle className="h-3 w-3" />
-                  Limite quase atingido! Considere fazer upgrade do plano.
-                </p>
-              )}
-              {limite.disponivel === 0 && (
-                <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
-                  <AlertTriangle className="h-3 w-3" />
-                  Limite atingido. Não é possível criar mais usuários.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        )}
 
         {/* Busca + Tabela */}
         <Card>
@@ -339,15 +279,11 @@ export default function UsuariosPage() {
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => toggleAtivo(usuario)}
-                                  disabled={
-                                    !usuario.ativo && limite?.disponivel === 0
-                                  }
+                                  disabled={false}
                                   title={
-                                    !usuario.ativo && limite?.disponivel === 0
-                                      ? "Limite atingido. Não é possível reativar."
-                                      : usuario.ativo
-                                        ? "Desativar"
-                                        : "Reativar"
+                                    usuario.ativo
+                                      ? "Desativar"
+                                      : "Reativar"
                                   }
                                 >
                                   {usuario.ativo ? (

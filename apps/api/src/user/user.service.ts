@@ -290,24 +290,19 @@ export class UserService {
   }
 
   /**
-   * Retorna informações de limite de usuários da empresa
+   * Retorna informações de uso de usuários da empresa.
+   * Plano único high-ticket — sem restrições de limite.
    */
   async obterLimite(empresaId: string) {
-    const config = await this.prisma.clienteConfig.findUnique({
-      where: { empresaId },
-    });
-
-    const maxUsuarios = config?.maxUsuarios ?? 999999;
-
     const usuariosAtivos = await this.prisma.user.count({
       where: { empresaId, deletedAt: null },
     });
 
     return {
       atual: usuariosAtivos,
-      limite: maxUsuarios,
-      disponivel: Math.max(0, maxUsuarios - usuariosAtivos),
-      percentual: maxUsuarios > 0 ? (usuariosAtivos / maxUsuarios) * 100 : 0,
+      limite: 999999,
+      disponivel: 999999,
+      percentual: 0,
     };
   }
 
