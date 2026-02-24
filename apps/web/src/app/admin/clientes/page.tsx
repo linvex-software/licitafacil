@@ -150,21 +150,21 @@ export default function PainelAdminClientes() {
 
   const badgeStatusVariant = (status: string) => {
     const variants: Record<string, string> = {
-      ATIVO: "bg-green-100 text-green-800 border-green-200",
-      SUSPENSO: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      CANCELADO: "bg-red-100 text-red-800 border-red-200",
-      TRIAL: "bg-blue-100 text-blue-800 border-blue-200",
+      ATIVO: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 border-green-200 dark:border-green-800",
+      SUSPENSO: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800",
+      CANCELADO: "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 border-red-200 dark:border-red-800",
+      TRIAL: "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 border-blue-200 dark:border-blue-800",
     };
-    return variants[status] || "bg-gray-100 text-gray-800";
+    return variants[status] || "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300";
   };
 
   const badgePlanoVariant = (plano: string) => {
     const variants: Record<string, string> = {
-      STARTER: "bg-gray-100 text-gray-700 border-gray-200",
-      PROFESSIONAL: "bg-purple-100 text-purple-700 border-purple-200",
-      ENTERPRISE: "bg-indigo-100 text-indigo-700 border-indigo-200",
+      STARTER: "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700",
+      PROFESSIONAL: "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800",
+      ENTERPRISE: "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800",
     };
-    return variants[plano] || "bg-gray-100 text-gray-800";
+    return variants[plano] || "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300";
   };
 
   // Enquanto verifica auth ou se não é SUPER_ADMIN

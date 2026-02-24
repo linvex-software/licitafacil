@@ -157,9 +157,9 @@ export function PrazosPageClient({ bidId }: PrazosPageClientProps) {
 
   if (loading) {
     return (
-      <Card className="shadow-sm border-slate-200">
+      <Card className="shadow-sm border-gray-200 dark:border-gray-700">
         <CardContent className="py-16">
-          <div className="flex flex-col items-center justify-center gap-3 text-slate-500">
+          <div className="flex flex-col items-center justify-center gap-3 text-gray-500 dark:text-gray-400">
             <div className="w-8 h-8 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
             <span>Carregando prazos...</span>
           </div>
@@ -170,11 +170,11 @@ export function PrazosPageClient({ bidId }: PrazosPageClientProps) {
 
   if (error) {
     return (
-      <Card className="shadow-sm border-slate-200 border-red-200 bg-red-50/50">
+      <Card className="shadow-sm border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/50">
         <CardContent className="py-12">
-          <div className="text-center text-red-700 font-medium">{error}</div>
+          <div className="text-center text-red-700 dark:text-red-400 font-medium">{error}</div>
           <div className="text-center mt-4">
-            <Button variant="outline" onClick={loadPrazos} className="border-red-200 hover:bg-red-50">
+            <Button variant="outline" onClick={loadPrazos} className="border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950">
               Tentar novamente
             </Button>
           </div>
@@ -192,16 +192,16 @@ export function PrazosPageClient({ bidId }: PrazosPageClientProps) {
         </Button>
       </div>
 
-      <Card className="shadow-sm border-slate-200">
+      <Card className="shadow-sm border-gray-200 dark:border-gray-700">
         <CardContent className="pt-6">
           {prazos.length === 0 ? (
             <div className="text-center py-16 px-4">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-slate-100 text-slate-400 mb-4">
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 mb-4">
                 <Calendar className="w-7 h-7" />
               </div>
-              <p className="text-slate-600 font-medium mb-1">Nenhum prazo cadastrado</p>
-              <p className="text-sm text-slate-500 mb-6">Clique em &quot;Novo prazo&quot; para adicionar datas importantes desta licitação.</p>
-              <Button onClick={openCreate} variant="outline" className="border-emerald-500/50 text-emerald-700 hover:bg-emerald-50">
+              <p className="text-gray-600 dark:text-gray-400 font-medium mb-1">Nenhum prazo cadastrado</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Clique em &quot;Novo prazo&quot; para adicionar datas importantes desta licitação.</p>
+              <Button onClick={openCreate} variant="outline" className="border-emerald-500/50 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950">
                 <Plus className="w-4 h-4 mr-2" />
                 Adicionar primeiro prazo
               </Button>
@@ -211,31 +211,30 @@ export function PrazosPageClient({ bidId }: PrazosPageClientProps) {
               {prazos.map((p) => (
                 <li
                   key={p.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50/50 hover:border-slate-300 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-heading font-medium text-slate-900">{p.titulo}</span>
+                      <span className="font-heading font-medium text-gray-900 dark:text-gray-100">{p.titulo}</span>
                       <span
-                        className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                          (p.diasRestantes ?? 0) < 0
-                            ? "bg-red-100 text-red-800"
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-full ${(p.diasRestantes ?? 0) < 0
+                            ? "bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-400"
                             : (p.diasRestantes ?? 0) === 0
-                              ? "bg-amber-100 text-amber-800"
-                              : "bg-emerald-100 text-emerald-800"
-                        }`}
+                              ? "bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-400"
+                              : "bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-400"
+                          }`}
                       >
                         {formatDiasRestantes(p.diasRestantes)}
                       </span>
                     </div>
-                    <div className="flex items-center gap-4 mt-1.5 text-sm text-slate-500">
+                    <div className="flex items-center gap-4 mt-1.5 text-sm text-gray-500 dark:text-gray-400">
                       <span className="flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-slate-400" />
+                        <Clock className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
                         {formatDataPrazo(p.dataPrazo)}
                       </span>
                     </div>
                     {p.descricao && (
-                      <p className="mt-2 text-sm text-slate-500">{p.descricao}</p>
+                      <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{p.descricao}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
@@ -244,7 +243,7 @@ export function PrazosPageClient({ bidId }: PrazosPageClientProps) {
                       size="icon"
                       onClick={() => openEdit(p)}
                       aria-label="Editar prazo"
-                      className="text-slate-500 hover:text-emerald-600 hover:bg-emerald-50"
+                      className="text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950"
                     >
                       <Pencil className="w-4 h-4" />
                     </Button>
@@ -254,7 +253,7 @@ export function PrazosPageClient({ bidId }: PrazosPageClientProps) {
                       onClick={() => handleDelete(p.id)}
                       disabled={deletingId === p.id}
                       aria-label="Remover prazo"
-                      className="text-slate-500 hover:text-red-600 hover:bg-red-50"
+                      className="text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -275,38 +274,38 @@ export function PrazosPageClient({ bidId }: PrazosPageClientProps) {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="titulo" className="text-slate-700">Título</Label>
+              <Label htmlFor="titulo" className="text-gray-700 dark:text-gray-300">Título</Label>
               <Input
                 id="titulo"
                 value={formTitulo}
                 onChange={(e) => setFormTitulo(e.target.value)}
                 placeholder="Ex: Entrega de propostas"
-                className="border-slate-200 focus-visible:ring-emerald-500"
+                className="border-gray-200 dark:border-gray-700"
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="dataPrazo" className="text-slate-700">Data e hora</Label>
+              <Label htmlFor="dataPrazo" className="text-gray-700 dark:text-gray-300">Data e hora</Label>
               <Input
                 id="dataPrazo"
                 type="datetime-local"
                 value={formDataPrazo}
                 onChange={(e) => setFormDataPrazo(e.target.value)}
-                className="border-slate-200 focus-visible:ring-emerald-500"
+                className="border-gray-200 dark:border-gray-700"
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="descricao" className="text-slate-700">Descrição (opcional)</Label>
+              <Label htmlFor="descricao" className="text-gray-700 dark:text-gray-300">Descrição (opcional)</Label>
               <Input
                 id="descricao"
                 value={formDescricao}
                 onChange={(e) => setFormDescricao(e.target.value)}
                 placeholder="Observações"
-                className="border-slate-200 focus-visible:ring-emerald-500"
+                className="border-gray-200 dark:border-gray-700"
               />
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setModalOpen(false)} disabled={submitting} className="border-slate-200">
+            <Button variant="outline" onClick={() => setModalOpen(false)} disabled={submitting} className="border-gray-200 dark:border-gray-700">
               Cancelar
             </Button>
             <Button onClick={handleSubmit} disabled={submitting} className="bg-emerald-600 hover:bg-emerald-700">

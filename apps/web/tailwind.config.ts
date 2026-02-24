@@ -1,6 +1,8 @@
 import type { Config } from "tailwindcss";
+import colors from "tailwindcss/colors";
 
 const config: Config = {
+  darkMode: "class",
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -9,10 +11,11 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-sans)", "ui-sans-serif", "system-ui"],
-        heading: ["var(--font-heading)", "ui-serif", "Georgia"],
+        sans: ["Inter", "var(--font-sans)", "ui-sans-serif", "system-ui"],
+        heading: ["Inter", "var(--font-heading)", "ui-sans-serif", "system-ui"],
       },
       colors: {
+        gray: { ...colors.zinc },
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {

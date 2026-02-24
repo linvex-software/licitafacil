@@ -187,7 +187,7 @@ export default function ComprasnetPage() {
               <Globe className="w-6 h-6" />
               Integração PNCP
             </h1>
-            <p className="text-gray-500 mt-1">
+            <p className="text-gray-500 dark:text-gray-400 mt-1">
               Importe licitações do Portal Nacional de Contratações Públicas
             </p>
           </div>
@@ -236,7 +236,7 @@ export default function ComprasnetPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Info box */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex gap-2 text-sm text-blue-700">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex gap-2 text-sm text-blue-700 dark:bg-blue-950/50 dark:border-blue-900 dark:text-blue-300">
                   <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <div>
                     <strong>Busca via API pública do PNCP.</strong> Informe o
@@ -259,7 +259,7 @@ export default function ComprasnetPage() {
                       }
                       maxLength={14}
                     />
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                       14 dígitos, sem pontuação (opcional)
                     </p>
                   </div>
@@ -352,7 +352,7 @@ export default function ComprasnetPage() {
                       setFiltros({ ...filtros, keywords: e.target.value })
                     }
                   />
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                     Filtra resultados pelo objeto. Separe por vírgula.
                   </p>
                 </div>
@@ -457,7 +457,7 @@ export default function ComprasnetPage() {
                         {resultados.map((lic, index) => (
                           <tr
                             key={index}
-                            className="border-b hover:bg-gray-50"
+                            className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                           >
                             <td className="p-2">
                               <Checkbox

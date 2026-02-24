@@ -21,10 +21,10 @@ export default function DocumentosPage() {
     <Layout>
       <div className="mx-auto">
         <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-heading font-bold text-slate-900 mb-2">
+          <h1 className="text-2xl md:text-3xl font-heading font-bold text-gray-900 dark:text-gray-100 mb-2">
             Documentos da empresa
           </h1>
-          <p className="text-slate-600">
+          <p className="text-gray-600 dark:text-gray-400">
             Todos os documentos da empresa. Você pode filtrar por categoria, buscar por nome e enviar novos documentos.
           </p>
         </div>

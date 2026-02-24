@@ -94,9 +94,9 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
 
   if (loading) {
     return (
-      <Card className="shadow-sm border-slate-200">
+      <Card className="shadow-sm border-gray-200 dark:border-gray-700">
         <CardContent className="py-16">
-          <div className="flex flex-col items-center justify-center gap-3 text-slate-500">
+          <div className="flex flex-col items-center justify-center gap-3 text-gray-500 dark:text-gray-400">
             <div className="w-8 h-8 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
             <span>Carregando checklist...</span>
           </div>
@@ -107,11 +107,11 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
 
   if (error && items.length === 0) {
     return (
-      <Card className="shadow-sm border-slate-200 border-red-200 bg-red-50/50">
+      <Card className="shadow-sm border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/50">
         <CardContent className="py-12">
           <div className="text-center">
-            <p className="text-red-700 font-medium mb-4">{error}</p>
-            <Button variant="outline" onClick={loadItems} className="border-red-200 hover:bg-red-50">
+            <p className="text-red-700 dark:text-red-400 font-medium mb-4">{error}</p>
+            <Button variant="outline" onClick={loadItems} className="border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950">
               Tentar novamente
             </Button>
           </div>
@@ -134,25 +134,25 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
       )}
 
       {/* Resumo */}
-      <Card className="shadow-sm border-slate-200">
+      <Card className="shadow-sm border-gray-200 dark:border-gray-700">
         <CardContent className="py-6">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600">
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                 <ListChecks className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-sm text-slate-500 font-medium">Progresso do checklist</p>
-                <p className="text-xl font-heading font-bold text-slate-900 mt-0.5">
+                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Progresso do checklist</p>
+                <p className="text-xl font-heading font-bold text-gray-900 dark:text-gray-100 mt-0.5">
                   {completedCount} de {totalCount} itens concluídos
                 </p>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-3xl font-heading font-bold text-emerald-600">{progress}%</p>
+              <p className="text-3xl font-heading font-bold text-emerald-600 dark:text-emerald-400">{progress}%</p>
             </div>
           </div>
-          <div className="mt-4 w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+          <div className="mt-4 w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2.5 overflow-hidden">
             <div
               className="bg-emerald-500 h-2.5 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
@@ -163,14 +163,14 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
 
       {/* Lista de itens */}
       {items.length === 0 ? (
-        <Card className="shadow-sm border-slate-200">
+        <Card className="shadow-sm border-gray-200 dark:border-gray-700">
           <CardContent className="py-16 px-4">
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-slate-100 text-slate-400 mb-4">
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 mb-4">
                 <ListChecks className="w-7 h-7" />
               </div>
-              <p className="text-slate-600 font-medium mb-1">Nenhum item de checklist</p>
-              <p className="text-sm text-slate-500">
+              <p className="text-gray-600 dark:text-gray-300 font-medium mb-1">Nenhum item de checklist</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Os itens do checklist são criados a partir dos templates. Não há itens cadastrados para esta licitação.
               </p>
             </div>
@@ -185,9 +185,8 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
             return (
               <Card
                 key={item.id}
-                className={`shadow-sm border-slate-200 transition-colors ${
-                  item.concluido ? "border-emerald-200 bg-emerald-50/50" : "hover:border-slate-300"
-                }`}
+                className={`shadow-sm border-gray-200 dark:border-gray-700 transition-colors ${item.concluido ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20" : "hover:border-gray-300 dark:hover:border-gray-600"
+                  }`}
               >
                 <CardContent className="py-4">
                   <div className="flex items-start gap-4">
@@ -211,29 +210,27 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 flex-wrap">
                         <h3
-                          className={`font-heading font-medium ${
-                            item.concluido ? "text-slate-500 line-through" : "text-slate-900"
-                          }`}
+                          className={`font-heading font-medium ${item.concluido ? "text-gray-500 dark:text-gray-400 line-through" : "text-gray-900 dark:text-gray-100"
+                            }`}
                         >
                           {item.titulo}
                         </h3>
                         {item.exigeEvidencia && (
                           <span
-                            className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${
-                              item.evidenciaId
-                                ? "bg-emerald-100 text-emerald-800"
-                                : "bg-amber-100 text-amber-800"
-                            }`}
+                            className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${item.evidenciaId
+                                ? "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-400"
+                                : "bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-400"
+                              }`}
                           >
                             {item.evidenciaId ? "Evidência OK" : "Exige evidência"}
                           </span>
                         )}
                       </div>
                       {item.descricao && (
-                        <p className="text-sm text-slate-500 mt-1">{item.descricao}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{item.descricao}</p>
                       )}
                       {item.concluido && item.concluidoEm && (
-                        <p className="text-xs text-slate-500 mt-2">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                           Concluído em {formatDate(item.concluidoEm)}
                         </p>
                       )}
