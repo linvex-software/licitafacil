@@ -11,8 +11,17 @@ export class ComprasnetCronService {
   // Todo dia às 7h
   @Cron("0 7 * * *")
   async executarBuscasAutomaticas(): Promise<void> {
-    this.logger.log("Cron ComprasNet iniciado (7h)");
-    await this.comprasnetService.executarBuscasAutomaticas();
-    this.logger.log("Cron ComprasNet finalizado");
+    const inicio = Date.now();
+    this.logger.log("⏰ Cron ComprasNet iniciado às 7h");
+
+    try {
+      await this.comprasnetService.executarBuscasAutomaticas();
+      const tempoDecorrido = ((Date.now() - inicio) / 1000).toFixed(1);
+      this.logger.log(`✅ Cron ComprasNet finalizado em ${tempoDecorrido}s`);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      this.logger.error(`❌ Erro no cron ComprasNet: ${msg}`);
+      // Não quebrar - registrar erro mas continuar
+    }
   }
 }

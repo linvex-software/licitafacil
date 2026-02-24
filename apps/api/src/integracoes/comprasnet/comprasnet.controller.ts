@@ -7,6 +7,7 @@ import {
   Param,
   Request,
   UseGuards,
+  Logger,
 } from "@nestjs/common";
 import { JwtAuthGuard } from "../../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
@@ -19,6 +20,8 @@ import type { FiltrosBusca } from "./comprasnet-scraper.service";
 @Controller("integracoes/comprasnet")
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ComprasnetController {
+  private readonly logger = new Logger(ComprasnetController.name);
+
   constructor(
     private comprasnetService: ComprasnetService,
     private comprasnetCronService: ComprasnetCronService,
@@ -81,9 +84,13 @@ export class ComprasnetController {
 
   // Endpoint para testar cron manualmente
   @Post("test-cron")
-  @Roles(UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   async testCron() {
+    this.logger.log("🧪 Disparando cron manualmente para teste...");
     await this.comprasnetCronService.executarBuscasAutomaticas();
-    return { success: true };
+    return {
+      success: true,
+      message: "Cron executado com sucesso. Verifique os logs e emails.",
+    };
   }
 }

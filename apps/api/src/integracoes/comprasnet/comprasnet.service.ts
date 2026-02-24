@@ -165,6 +165,8 @@ export class ComprasnetService {
 
   async executarBuscasAutomaticas(): Promise<void> {
     this.logger.log("Executando buscas automáticas do ComprasNet...");
+    let totalImportadas = 0;
+    let totalDuplicadas = 0;
 
     const buscas = await this.prisma.buscaSalva.findMany({
       where: { ativa: true, autoImportar: true, deletedAt: null },
@@ -190,6 +192,8 @@ export class ComprasnetService {
           busca.empresaId,
           resultados,
         );
+        totalImportadas += importadas;
+        totalDuplicadas += duplicadas;
 
         // Atualizar última execução
         await this.prisma.buscaSalva.update({
@@ -239,5 +243,12 @@ export class ComprasnetService {
         // Continuar para próxima busca - não quebrar o cron
       }
     }
+
+    this.logger.log(`
+📊 RESUMO DO CRON:
+- Buscas executadas: ${buscas.length}
+- Total importadas: ${totalImportadas}
+- Total duplicadas: ${totalDuplicadas}
+`);
   }
 }

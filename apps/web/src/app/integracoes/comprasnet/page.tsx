@@ -23,11 +23,13 @@ import {
   BookmarkPlus,
   Globe,
   Info,
+  RefreshCw,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { SalvarBuscaModal } from "@/components/integracoes/salvar-busca-modal";
 import { BuscasSalvasPanel } from "@/components/integracoes/buscas-salvas-panel";
+import { useAuth } from "@/contexts/auth-context";
 
 interface ResultadoBusca {
   numero: string;
@@ -56,8 +58,10 @@ const UFS = [
 
 export default function ComprasnetPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [buscando, setBuscando] = useState(false);
   const [importando, setImportando] = useState(false);
+  const [testandoCron, setTestandoCron] = useState(false);
   const [resultados, setResultados] = useState<ResultadoBusca[]>([]);
   const [selecionadas, setSelecionadas] = useState<Set<number>>(new Set());
   const [salvarModalOpen, setSalvarModalOpen] = useState(false);
@@ -129,13 +133,23 @@ export default function ComprasnetPage() {
 
       const { importadas, duplicadas } = response.data;
 
-      toast({
-        title: `${importadas} licitações importadas!`,
-        description:
-          duplicadas > 0
-            ? `${duplicadas} já existiam e foram ignoradas.`
-            : undefined,
-      });
+      if (importadas === 0 && duplicadas > 0) {
+        toast({
+          title: "📋 Nenhuma licitação nova",
+          description: `${duplicadas} ${duplicadas === 1 ? "já existia" : "já existiam"} no sistema.`,
+          variant: "default",
+        });
+      } else if (importadas > 0 && duplicadas === 0) {
+        toast({
+          title: `✅ ${importadas} ${importadas === 1 ? "licitação importada" : "licitações importadas"}!`,
+          description: "Acesse a página de licitações para visualizar.",
+        });
+      } else if (importadas > 0 && duplicadas > 0) {
+        toast({
+          title: `✅ ${importadas} ${importadas === 1 ? "licitação importada" : "licitações importadas"}!`,
+          description: `${duplicadas} ${duplicadas === 1 ? "já existia" : "já existiam"} e ${duplicadas === 1 ? "foi ignorada" : "foram ignoradas"}.`,
+        });
+      }
 
       setSelecionadas(new Set());
     } catch {
@@ -177,6 +191,37 @@ export default function ComprasnetPage() {
               Importe licitações do Portal Nacional de Contratações Públicas
             </p>
           </div>
+          {user?.role === "SUPER_ADMIN" && (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={testandoCron}
+              onClick={async () => {
+                try {
+                  setTestandoCron(true);
+                  await api.post("/integracoes/comprasnet/test-cron");
+                  toast({
+                    title: "✅ Cron executado!",
+                    description: "Verifique os logs do backend e emails.",
+                  });
+                } catch {
+                  toast({
+                    title: "Erro ao executar cron",
+                    variant: "destructive",
+                  });
+                } finally {
+                  setTestandoCron(false);
+                }
+              }}
+            >
+              {testandoCron ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4 mr-2" />
+              )}
+              Testar Cron
+            </Button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -470,21 +515,21 @@ export default function ComprasnetPage() {
           {/* Buscas Salvas */}
           <div>
             <BuscasSalvasPanel
-              onExecutar={(f) => {
+              onExecutar={(filtrosSalvos) => {
                 setFiltros({
-                  cnpj: f.cnpj || f.uasg || "",
-                  uf: f.uf || "",
-                  modalidade: f.modalidade || "6",
-                  dataInicio: f.dataInicio || "",
-                  dataFim: f.dataFim || "",
-                  keywords: f.keywords || "",
+                  cnpj: filtrosSalvos.cnpj || filtrosSalvos.uasg || "",
+                  uf: filtrosSalvos.uf || "",
+                  modalidade: filtrosSalvos.modalidade || "",
+                  dataInicio: filtrosSalvos.dataInicio || "",
+                  dataFim: filtrosSalvos.dataFim || "",
+                  keywords: filtrosSalvos.keywords || "",
                 });
                 setResultados([]);
                 setSelecionadas(new Set());
                 window.scrollTo({ top: 0, behavior: "smooth" });
                 toast({
-                  title: "Filtros carregados!",
-                  description: "Clique em Buscar para executar.",
+                  title: "✅ Filtros carregados!",
+                  description: 'Clique em "Buscar" para executar a busca.',
                 });
               }}
             />
