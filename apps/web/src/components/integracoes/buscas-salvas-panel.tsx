@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/Badge";
-import { Bookmark, Play, Trash2, RefreshCw } from "lucide-react";
+import { Bookmark, Play, Trash2, RefreshCw, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
@@ -35,6 +35,7 @@ export function BuscasSalvasPanel({ onExecutar }: BuscasSalvasPanelProps) {
   const { toast } = useToast();
   const [buscas, setBuscas] = useState<BuscaSalva[]>([]);
   const [loading, setLoading] = useState(true);
+  const [executando, setExecutando] = useState<string | null>(null);
 
   useEffect(() => {
     carregarBuscas();
@@ -124,9 +125,18 @@ export function BuscasSalvasPanel({ onExecutar }: BuscasSalvasPanelProps) {
                     size="sm"
                     variant="outline"
                     className="flex-1 text-xs"
-                    onClick={() => onExecutar(busca.filtros)}
+                    onClick={() => {
+                      setExecutando(busca.id);
+                      onExecutar(busca.filtros);
+                      setTimeout(() => setExecutando(null), 500);
+                    }}
+                    disabled={executando === busca.id}
                   >
-                    <Play className="w-3 h-3 mr-1" />
+                    {executando === busca.id ? (
+                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                    ) : (
+                      <Play className="w-3 h-3 mr-1" />
+                    )}
                     Executar
                   </Button>
                   <Button
