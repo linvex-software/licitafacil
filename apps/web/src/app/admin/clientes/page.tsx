@@ -24,6 +24,7 @@ import { CriarClienteModal } from "@/components/admin/criar-cliente-modal";
 import { api } from "@/lib/api";
 import { formatCurrency, formatCNPJ, formatDate } from "@/lib/utils";
 import { Layout } from "@/components/layout";
+import { PageHeader } from "@/components/ui/page-header";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "@/hooks/use-toast";
 
@@ -191,21 +192,21 @@ export default function PainelAdminClientes() {
   return (
     <Layout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Gerenciar Clientes
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Painel administrativo B2B — Limvex Licitação
-            </p>
-          </div>
-          <Button onClick={() => setModalAberto(true)} size="lg">
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Cliente
-          </Button>
-        </div>
+        <PageHeader
+          breadcrumb={[
+            { label: "Configurações", href: "/configuracoes" },
+            { label: "Administração", href: "/admin/clientes" },
+            { label: "Clientes" },
+          ]}
+          title="Gerenciar Clientes"
+          subtitle="Painel administrativo B2B — Limvex Licitação"
+          actions={
+            <Button onClick={() => setModalAberto(true)} size="lg">
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Cliente
+            </Button>
+          }
+        />
 
         {/* Cards de Estatísticas */}
         {estatisticas && (

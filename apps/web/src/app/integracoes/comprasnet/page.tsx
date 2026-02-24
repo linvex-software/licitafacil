@@ -21,7 +21,6 @@ import {
   ExternalLink,
   Loader2,
   BookmarkPlus,
-  Globe,
   Info,
   RefreshCw,
 } from "lucide-react";
@@ -30,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { SalvarBuscaModal } from "@/components/integracoes/salvar-busca-modal";
 import { BuscasSalvasPanel } from "@/components/integracoes/buscas-salvas-panel";
 import { useAuth } from "@/contexts/auth-context";
+import { PageHeader } from "@/components/ui/page-header";
 
 interface ResultadoBusca {
   numero: string;
@@ -180,49 +180,47 @@ export default function ComprasnetPage() {
   return (
     <Layout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Globe className="w-6 h-6" />
-              Integração PNCP
-            </h1>
-            <p className="text-gray-500 mt-1">
-              Importe licitações do Portal Nacional de Contratações Públicas
-            </p>
-          </div>
-          {user?.role === "SUPER_ADMIN" && (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={testandoCron}
-              onClick={async () => {
-                try {
-                  setTestandoCron(true);
-                  await api.post("/integracoes/comprasnet/test-cron");
-                  toast({
-                    title: "✅ Cron executado!",
-                    description: "Verifique os logs do backend e emails.",
-                  });
-                } catch {
-                  toast({
-                    title: "Erro ao executar cron",
-                    variant: "destructive",
-                  });
-                } finally {
-                  setTestandoCron(false);
-                }
-              }}
-            >
-              {testandoCron ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <RefreshCw className="w-4 h-4 mr-2" />
-              )}
-              Testar Cron
-            </Button>
-          )}
-        </div>
+        <PageHeader
+          breadcrumb={[
+            { label: "Integrações", href: "/" },
+            { label: "Buscas" },
+          ]}
+          title="Integração PNCP"
+          subtitle="Importe licitações do Portal Nacional de Contratações Públicas"
+          actions={
+            user?.role === "SUPER_ADMIN" ? (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={testandoCron}
+                onClick={async () => {
+                  try {
+                    setTestandoCron(true);
+                    await api.post("/integracoes/comprasnet/test-cron");
+                    toast({
+                      title: "✅ Cron executado!",
+                      description: "Verifique os logs do backend e emails.",
+                    });
+                  } catch {
+                    toast({
+                      title: "Erro ao executar cron",
+                      variant: "destructive",
+                    });
+                  } finally {
+                    setTestandoCron(false);
+                  }
+                }}
+              >
+                {testandoCron ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                )}
+                Testar Cron
+              </Button>
+            ) : undefined
+          }
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Formulário de Busca */}

@@ -3,8 +3,8 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Licitafacil - Gestão de Licitações",
-  description: "Sistema profissional de gestão de licitações",
+  title: "Limvex | Plataforma Enterprise de Licitações",
+  description: "Gestão profissional de licitações públicas",
 };
 
 export const viewport: Viewport = {
@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
       <body className="antialiased font-sans">
         <Providers>
           {children}

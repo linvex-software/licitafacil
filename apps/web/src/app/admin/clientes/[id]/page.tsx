@@ -10,11 +10,12 @@ import { LimiteProgress } from "@/components/admin/limite-progress";
 import { TabelaPagamentos } from "@/components/admin/tabela-pagamentos";
 import { CriarPagamentoModal } from "@/components/admin/criar-pagamento-modal";
 import { Layout } from "@/components/layout";
+import { PageHeader } from "@/components/ui/page-header";
 import { useAuth } from "@/contexts/auth-context";
 import { api } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
-import { ArrowLeft, Building2, FileText, CreditCard } from "lucide-react";
+import { ArrowLeft, FileText, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 
@@ -133,34 +134,36 @@ export default function ClienteDetalhesPage() {
   return (
     <Layout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push("/admin/clientes")}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <Building2 className="h-8 w-8" />
-              {empresaNome || "Cliente"}
-            </h1>
-            {contrato && (
-              <p className="text-muted-foreground mt-1">
-                Plano {contrato.planoNome} &middot;{" "}
-                <Badge
-                  variant="outline"
-                  className={statusContratoVariant[contrato.status] || ""}
-                >
-                  {contrato.status}
-                </Badge>
-              </p>
-            )}
+        <PageHeader
+          breadcrumb={[
+            { label: "Configurações", href: "/configuracoes" },
+            { label: "Administração", href: "/admin/clientes" },
+            { label: "Clientes", href: "/admin/clientes" },
+            { label: empresaNome || "Cliente" },
+          ]}
+          title={empresaNome || "Cliente"}
+          subtitle={contrato ? `Plano ${contrato.planoNome}` : "Detalhes do cliente"}
+          actions={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push("/admin/clientes")}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Voltar
+            </Button>
+          }
+        />
+        {contrato && (
+          <div className="-mt-3">
+            <Badge
+              variant="outline"
+              className={statusContratoVariant[contrato.status] || ""}
+            >
+              {contrato.status}
+            </Badge>
           </div>
-        </div>
+        )}
 
         {/* Tabs */}
         <Tabs defaultValue="resumo" className="w-full">

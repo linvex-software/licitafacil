@@ -4,6 +4,7 @@ import { Layout } from "@/components/layout";
 import { DocumentsList } from "@/components/DocumentsList";
 import { DocumentUpload } from "@/components/DocumentUpload";
 import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default function DocumentosPage() {
   const { toast } = useToast();
@@ -20,18 +21,17 @@ export default function DocumentosPage() {
   return (
     <Layout>
       <div className="mx-auto">
-        <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-heading font-bold text-slate-900 mb-2">
-            Documentos da empresa
-          </h1>
-          <p className="text-slate-600">
-            Todos os documentos da empresa. Você pode filtrar por categoria, buscar por nome e enviar novos documentos.
-          </p>
-        </div>
-
-        <div className="mb-6 flex justify-end">
-          <DocumentUpload onUploadSuccess={handleUploadSuccess} onError={handleError} />
-        </div>
+        <PageHeader
+          breadcrumb={[
+            { label: "Gestão", href: "/" },
+            { label: "Biblioteca" },
+          ]}
+          title="Biblioteca de Documentos"
+          subtitle="Todos os documentos da empresa. Você pode filtrar por categoria, buscar por nome e enviar novos documentos."
+          actions={
+            <DocumentUpload onUploadSuccess={handleUploadSuccess} onError={handleError} />
+          }
+        />
 
         <DocumentsList onError={handleError} />
       </div>

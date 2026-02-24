@@ -20,11 +20,11 @@ import {
 import { CriarUsuarioModal } from "@/components/usuarios/criar-usuario-modal";
 import { EditarUsuarioModal } from "@/components/usuarios/editar-usuario-modal";
 import { Layout } from "@/components/layout";
+import { PageHeader } from "@/components/ui/page-header";
 import { useAuth } from "@/contexts/auth-context";
 import { api } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 import {
-  Users,
   Search,
   Edit,
   UserX,
@@ -173,24 +173,22 @@ export default function UsuariosPage() {
   return (
     <Layout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <Users className="h-8 w-8" />
-              Usuários
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Gerencie os usuários da sua empresa
-            </p>
-          </div>
-          {isAdmin && (
-            <CriarUsuarioModal
-              onSuccess={carregarDados}
-              limiteAtingido={false}
-            />
-          )}
-        </div>
+        <PageHeader
+          breadcrumb={[
+            { label: "Configurações", href: "/configuracoes" },
+            { label: "Equipe" },
+          ]}
+          title="Equipe"
+          subtitle="Gerencie os usuários da sua empresa"
+          actions={
+            isAdmin ? (
+              <CriarUsuarioModal
+                onSuccess={carregarDados}
+                limiteAtingido={false}
+              />
+            ) : undefined
+          }
+        />
 
         {/* Busca + Tabela */}
         <Card>

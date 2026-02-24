@@ -13,9 +13,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Bell, FileText, Clock, AlertTriangle } from "lucide-react";
+import { FileText, Clock, AlertTriangle } from "lucide-react";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/ui/page-header";
 
 interface NotificacoesConfig {
   receberEmails: boolean;
@@ -84,15 +85,14 @@ export default function NotificacoesPage() {
   return (
     <Layout>
       <div className="max-w-2xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Bell className="h-6 w-6" />
-            Configurações de Notificações
-          </h1>
-          <p className="text-slate-500 mt-1">
-            Controle quais alertas você deseja receber por email.
-          </p>
-        </div>
+        <PageHeader
+          breadcrumb={[
+            { label: "Configurações", href: "/configuracoes" },
+            { label: "Notificações" },
+          ]}
+          title="Configurações de Notificações"
+          subtitle="Controle quais alertas você deseja receber por email."
+        />
 
         <Card>
           <CardHeader>

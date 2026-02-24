@@ -24,6 +24,7 @@ import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { AnalisarEditalModal } from "@/components/licitacoes/analisar-edital-modal";
 import type { AnalisarEditalResponse } from "@/hooks/use-analisar-edital";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default function LicitacaoDetailPage() {
   const params = useParams();
@@ -132,43 +133,33 @@ export default function LicitacaoDetailPage() {
   return (
     <Layout>
       <div className=" mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <Link href="/licitacoes">
-            <Button variant="ghost" className="pl-0 text-slate-500 hover:text-slate-900 hover:bg-transparent mb-4">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar para Lista
-            </Button>
-          </Link>
-
-          <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <StatusBadge status={licitacao.operationalState === 'OK' ? 'aberta' : 'vencida'} />
-                <span className="text-sm font-mono text-slate-400">ID: {licitacao.id.substring(0, 8)}</span>
-              </div>
-              <h1 className="text-2xl md:text-3xl font-heading font-bold text-slate-900 max-w-3xl leading-tight">
-                {licitacao.title}
-              </h1>
-              <div className="flex items-center gap-2 mt-4 text-slate-600">
-                <Building2 className="w-4 h-4" />
-                <span className="font-medium">{licitacao.agency}</span>
-              </div>
-            </div>
-
+        <PageHeader
+          breadcrumb={[
+            { label: "Gestão", href: "/" },
+            { label: "Processos", href: "/licitacoes" },
+            { label: licitacao.id.substring(0, 8) },
+          ]}
+          title={licitacao.title}
+          subtitle={licitacao.agency}
+          actions={
             <div className="flex gap-2 flex-wrap">
+              <Link href="/licitacoes">
+                <Button variant="outline">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar para Lista
+                </Button>
+              </Link>
               <AnalisarEditalModal
                 bidId={id}
                 onAplicar={handleAplicarAnalise}
               />
               <Button
                 size="lg"
-                variant={licitacao.operationalState === 'OK' ? "outline" : "destructive"}
+                variant={licitacao.operationalState === "OK" ? "outline" : "destructive"}
                 onClick={handleToggleRisk}
                 disabled={isPending}
-                className="shadow-lg"
               >
-                {licitacao.operationalState === 'OK' ? (
+                {licitacao.operationalState === "OK" ? (
                   <>
                     <AlertTriangle className="w-4 h-4 mr-2" />
                     Sinalizar Risco
@@ -181,7 +172,15 @@ export default function LicitacaoDetailPage() {
                 )}
               </Button>
             </div>
-          </div>
+          }
+        />
+        <div className="-mt-3 mb-8 flex items-center gap-3">
+          <StatusBadge status={licitacao.operationalState === "OK" ? "aberta" : "vencida"} />
+          <span className="text-sm font-mono text-slate-400">ID: {licitacao.id.substring(0, 8)}</span>
+          <span className="text-sm text-slate-500 flex items-center gap-1">
+            <Building2 className="w-4 h-4" />
+            {licitacao.agency}
+          </span>
         </div>
 
         {/* Info Grid */}

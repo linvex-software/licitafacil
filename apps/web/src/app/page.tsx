@@ -5,6 +5,7 @@ import { MetricsCard } from "@/components/metrics-card";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { PageHeader } from "@/components/ui/page-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useLicitacoes } from "@/hooks/use-licitacoes";
 import { useQuery } from "@tanstack/react-query";
@@ -48,20 +49,19 @@ export default function DashboardPage() {
 
   return (
     <Layout>
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-heading font-bold text-slate-900">Dashboard</h1>
-          <p className="text-slate-500 mt-1">Visão geral das suas atividades e oportunidades.</p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline">Exportar Relatório</Button>
-          <Link href="/licitacoes">
-            <Button className="bg-slate-900 hover:bg-slate-800 text-white">
-              Nova Busca
-            </Button>
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        breadcrumb={[{ label: "Geral" }]}
+        title="Visão Geral"
+        subtitle="Visão geral das suas atividades e oportunidades."
+        actions={
+          <>
+            <Button variant="outline">Exportar Relatório</Button>
+            <Link href="/licitacoes">
+              <Button>Nova Busca</Button>
+            </Link>
+          </>
+        }
+      />
 
       {/* Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

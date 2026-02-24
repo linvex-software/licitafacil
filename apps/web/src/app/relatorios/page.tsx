@@ -46,6 +46,7 @@ import {
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { EnviarEmailModal } from "@/components/relatorios/enviar-email-modal";
+import { PageHeader } from "@/components/ui/page-header";
 
 const CORES_STATUS: Record<string, string> = {
   VENCIDA: "#16a34a",
@@ -129,17 +130,14 @@ export default function RelatoriosPage() {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <FileText className="w-6 h-6" />
-              Relatórios Gerenciais
-            </h1>
-            <p className="text-gray-500 mt-1">
-              Exporte relatórios executivos em PDF para apresentar à diretoria
-            </p>
-          </div>
-        </div>
+        <PageHeader
+          breadcrumb={[
+            { label: "Gestão", href: "/" },
+            { label: "Análises" },
+          ]}
+          title="Relatórios Gerenciais"
+          subtitle="Exporte relatórios executivos em PDF para apresentar à diretoria"
+        />
 
         {/* Filtros */}
         <Card>

@@ -48,6 +48,7 @@ import {
 import { useState, useEffect } from "react";
 import { MetricsCard } from "@/components/metrics-card";
 import { Badge } from "@/components/ui/Badge";
+import { PageHeader } from "@/components/ui/page-header";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -116,42 +117,30 @@ export default function LicitacoesListPage() {
     return (
         <Layout>
             <div className="flex flex-col gap-8">
-                {/* Header Section */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold py-0.5">
-                                Gerenciamento
-                            </Badge>
-                            <span className="text-slate-300">•</span>
-                            <span className="text-xs text-slate-500 font-medium flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                Atualizado às {lastSync}
-                            </span>
-                        </div>
-                        <h1 className="text-3xl font-heading font-extrabold text-slate-900 tracking-tight">Licitações em Andamento
-                        </h1>
-                        <p className="text-slate-500 mt-1 max-w-2xl">Acompanhe editais ativos, prazos críticos e o status das suas participações</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <Button variant="outline" className="border-slate-200 text-slate-600 hover:bg-slate-50">
-                            <Download className="w-4 h-4 mr-2" />
-                            Exportar
-                        </Button>
-                        <Button
-                            variant="outline"
-                            className="border-slate-200 text-slate-600 hover:bg-slate-50"
-                            onClick={handleSync}
-                        >
-                            <RefreshCcw className="w-4 h-4 mr-2" />
-                            Sincronizar
-                        </Button>
-                        <CriarLicitacaoModal
-                            onSuccess={handleLicitacaoCriada}
-                            limiteAtingido={false}
-                        />
-                    </div>
-                </div>
+                <PageHeader
+                    breadcrumb={[
+                        { label: "Gestão", href: "/" },
+                        { label: "Processos" },
+                    ]}
+                    title="Processos Licitatórios"
+                    subtitle={`Acompanhe editais ativos, prazos críticos e o status das suas participações${lastSync ? ` • Atualizado às ${lastSync}` : ""}`}
+                    actions={
+                        <>
+                            <Button variant="outline">
+                                <Download className="w-4 h-4 mr-2" />
+                                Exportar
+                            </Button>
+                            <Button variant="outline" onClick={handleSync}>
+                                <RefreshCcw className="w-4 h-4 mr-2" />
+                                Sincronizar
+                            </Button>
+                            <CriarLicitacaoModal
+                                onSuccess={handleLicitacaoCriada}
+                                limiteAtingido={false}
+                            />
+                        </>
+                    }
+                />
 
                 {/* KPI Overview */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

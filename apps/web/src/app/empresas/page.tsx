@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Building2 } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default function EmpresasPage() {
     const { data: _empresa, isLoading } = useQuery({
@@ -22,10 +23,14 @@ export default function EmpresasPage() {
     return (
         <Layout>
             <div className="flex flex-col gap-6">
-                <div>
-                    <h1 className="text-3xl font-heading font-bold text-slate-900">Empresas</h1>
-                    <p className="text-slate-500 mt-1">Gestão das empresas e unidades do grupo.</p>
-                </div>
+                <PageHeader
+                    breadcrumb={[
+                        { label: "Configurações", href: "/configuracoes" },
+                        { label: "Empresas" },
+                    ]}
+                    title="Empresas"
+                    subtitle="Gestão das empresas e unidades do grupo."
+                />
 
                 <Card>
                     <CardHeader>
