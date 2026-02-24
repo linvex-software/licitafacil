@@ -176,7 +176,7 @@ export default function UsuariosPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
               <Users className="h-8 w-8" />
               Usuários
             </h1>
@@ -249,14 +249,14 @@ export default function UsuariosPage() {
                         {usuario.ativo ? (
                           <Badge
                             variant="outline"
-                            className="bg-green-100 text-green-800 border-green-200"
+                            className="bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800"
                           >
                             Ativo
                           </Badge>
                         ) : (
                           <Badge
                             variant="outline"
-                            className="bg-red-100 text-red-800 border-red-200"
+                            className="bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800"
                           >
                             Inativo
                           </Badge>
@@ -296,7 +296,7 @@ export default function UsuariosPage() {
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => deletarPermanente(usuario)}
-                                  className="hover:bg-red-50"
+                                  className="hover:bg-red-50 dark:hover:bg-red-950/50"
                                   title="Excluir permanentemente (irreversível)"
                                 >
                                   <Trash2 className="h-4 w-4 text-red-400" />

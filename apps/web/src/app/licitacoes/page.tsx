@@ -120,27 +120,27 @@ export default function LicitacoesListPage() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold py-0.5">
+                            <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 font-semibold py-0.5">
                                 Gerenciamento
                             </Badge>
-                            <span className="text-slate-300">•</span>
-                            <span className="text-xs text-slate-500 font-medium flex items-center gap-1">
+                            <span className="text-gray-300 dark:text-gray-600">•</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
                                 Atualizado às {lastSync}
                             </span>
                         </div>
-                        <h1 className="text-3xl font-heading font-extrabold text-slate-900 tracking-tight">Licitações em Andamento
+                        <h1 className="text-3xl font-heading font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">Licitações em Andamento
                         </h1>
-                        <p className="text-slate-500 mt-1 max-w-2xl">Acompanhe editais ativos, prazos críticos e o status das suas participações</p>
+                        <p className="text-gray-500 dark:text-gray-400 mt-1 max-w-2xl">Acompanhe editais ativos, prazos críticos e o status das suas participações</p>
                     </div>
                     <div className="flex items-center gap-3">
-                        <Button variant="outline" className="border-slate-200 text-slate-600 hover:bg-slate-50">
+                        <Button variant="outline" className="border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800">
                             <Download className="w-4 h-4 mr-2" />
                             Exportar
                         </Button>
                         <Button
                             variant="outline"
-                            className="border-slate-200 text-slate-600 hover:bg-slate-50"
+                            className="border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
                             onClick={handleSync}
                         >
                             <RefreshCcw className="w-4 h-4 mr-2" />
@@ -187,9 +187,9 @@ export default function LicitacoesListPage() {
 
                 {/* Filter Corporate Bar */}
                 <div className="flex flex-col gap-4">
-                    <div className="bg-white p-2 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row gap-2 items-stretch lg:items-center">
+                    <div className="bg-white dark:bg-gray-900 p-2 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col lg:flex-row gap-2 items-stretch lg:items-center">
                         <div className="relative flex-1">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
                             <Input
                                 placeholder="Filtrar por edital, órgão, modalidade ou objeto..."
                                 className="pl-11 h-12 border-transparent bg-transparent focus-visible:ring-0 text-sm"
@@ -201,16 +201,16 @@ export default function LicitacoesListPage() {
                             />
                         </div>
 
-                        <div className="h-8 w-px bg-slate-200 hidden lg:block mx-1" />
+                        <div className="h-8 w-px bg-gray-200 dark:bg-gray-700 hidden lg:block mx-1" />
 
                         <div className="flex flex-wrap gap-2 p-1">
                             <Select value={statusFilter} onValueChange={(val) => {
                                 setStatusFilter(val);
                                 setPage(1);
                             }}>
-                                <SelectTrigger className="h-10 lg:w-[160px] border-transparent hover:bg-slate-50 transition-colors bg-white">
+                                <SelectTrigger className="h-10 lg:w-[160px] border-transparent hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors bg-transparent">
                                     <div className="flex items-center">
-                                        <Filter className="w-4 h-4 mr-2 text-slate-400" />
+                                        <Filter className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
                                         <SelectValue placeholder="Status" />
                                     </div>
                                 </SelectTrigger>
@@ -221,13 +221,13 @@ export default function LicitacoesListPage() {
                                 </SelectContent>
                             </Select>
 
-                            <Button variant="ghost" className="h-10 border-transparent text-slate-600 hover:bg-slate-50">
-                                <Calendar className="w-4 h-4 mr-2 text-slate-400" />
+                            <Button variant="ghost" className="h-10 border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800">
+                                <Calendar className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
                                 Período
                             </Button>
 
-                            <Button variant="ghost" className="h-10 border-transparent text-slate-600 hover:bg-slate-50">
-                                <SlidersHorizontal className="w-4 h-4 mr-2 text-slate-400" />
+                            <Button variant="ghost" className="h-10 border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800">
+                                <SlidersHorizontal className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
                                 Filtros Avançados
                             </Button>
                         </div>
@@ -235,29 +235,29 @@ export default function LicitacoesListPage() {
 
                     <div className="flex items-center justify-between px-2">
                         <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Visualização:</span>
-                            <div className="flex items-center bg-slate-100 p-1 rounded-lg">
-                                <Button variant="ghost" size="icon" className="h-7 w-7 bg-white shadow-sm text-emerald-600 hover:text-emerald-700">
+                            <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Visualização:</span>
+                            <div className="flex items-center bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                                <Button variant="ghost" size="icon" className="h-7 w-7 bg-white dark:bg-gray-700 shadow-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700">
                                     <List className="w-4 h-4" />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-500 hover:text-slate-700">
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
                                     <LayoutGrid className="w-4 h-4" />
                                 </Button>
                             </div>
                         </div>
-                        <div className="text-xs text-slate-500 font-medium">
-                            Mostrando <span className="text-slate-900 font-bold">{licitacoes.length}</span> de <span className="text-slate-900 font-bold">{response?.total || 0}</span> resultados
+                        <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                            Mostrando <span className="text-gray-900 dark:text-gray-100 font-bold">{licitacoes.length}</span> de <span className="text-gray-900 dark:text-gray-100 font-bold">{response?.total || 0}</span> resultados
                         </div>
                     </div>
                 </div>
 
                 {/* Data Table */}
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden w-full transition-all">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden w-full transition-all">
                     <Table>
-                        <TableHeader className="bg-slate-50/50 border-b border-slate-200 sticky top-0 z-10">
-                            <TableRow className="hover:bg-transparent">
+                        <TableHeader className="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
+                            <TableRow className="hover:bg-transparent dark:hover:bg-transparent">
                                 <TableHead className="w-[50px]">
-                                    <Checkbox className="border-slate-300" />
+                                    <Checkbox className="border-gray-300 dark:border-gray-600" />
                                 </TableHead>
                                 <TableHead className="min-w-[300px] py-4">
                                     <div className="flex items-center gap-2 cursor-pointer group hover:text-slate-900">
@@ -275,27 +275,27 @@ export default function LicitacoesListPage() {
                             {isLoading ? (
                                 [1, 2, 3, 4, 5, 6].map((i) => (
                                     <TableRow key={i}>
-                                        <TableCell><div className="h-4 w-4 bg-slate-100 rounded animate-pulse" /></TableCell>
+                                        <TableCell><div className="h-4 w-4 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" /></TableCell>
                                         <TableCell>
-                                            <div className="h-5 w-64 bg-slate-100 rounded animate-pulse mb-2" />
-                                            <div className="h-3 w-40 bg-slate-100 rounded animate-pulse" />
+                                            <div className="h-5 w-64 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-2" />
+                                            <div className="h-3 w-40 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
                                         </TableCell>
-                                        <TableCell><div className="h-4 w-24 bg-slate-100 rounded animate-pulse" /></TableCell>
-                                        <TableCell><div className="h-4 w-20 bg-slate-100 rounded animate-pulse" /></TableCell>
-                                        <TableCell><div className="h-7 w-24 bg-slate-100 rounded-full animate-pulse" /></TableCell>
-                                        <TableCell><div className="h-10 w-28 bg-slate-100 rounded-lg ml-auto animate-pulse" /></TableCell>
+                                        <TableCell><div className="h-4 w-24 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" /></TableCell>
+                                        <TableCell><div className="h-4 w-20 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" /></TableCell>
+                                        <TableCell><div className="h-7 w-24 bg-gray-100 dark:bg-gray-800 rounded-full animate-pulse" /></TableCell>
+                                        <TableCell><div className="h-10 w-28 bg-gray-100 dark:bg-gray-800 rounded-lg ml-auto animate-pulse" /></TableCell>
                                     </TableRow>
                                 ))
                             ) : licitacoes.length === 0 ? (
-                                <TableRow className="hover:bg-transparent">
+                                <TableRow className="hover:bg-transparent dark:hover:bg-transparent">
                                     <TableCell colSpan={6} className="text-center py-20">
-                                        <div className="flex flex-col items-center justify-center text-slate-500">
-                                            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-                                                <Search className="w-8 h-8 text-slate-300" />
+                                        <div className="flex flex-col items-center justify-center text-gray-500 dark:text-gray-400">
+                                            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                                                <Search className="w-8 h-8 text-gray-300 dark:text-gray-600" />
                                             </div>
-                                            <p className="font-bold text-lg text-slate-900">Nenhuma licitação encontrada</p>
+                                            <p className="font-bold text-lg text-gray-900 dark:text-gray-100">Nenhuma licitação encontrada</p>
                                             <p className="text-sm max-w-xs mx-auto mt-1">Não encontramos processos com os filtros atuais. Tente mudar os termos de busca.</p>
-                                            <Button variant="outline" className="mt-6 border-slate-200" onClick={() => { setSearchTerm(""); setStatusFilter("all"); }}>
+                                            <Button variant="outline" className="mt-6 border-gray-200 dark:border-gray-700" onClick={() => { setSearchTerm(""); setStatusFilter("all"); }}>
                                                 Limpar todos os filtros
                                             </Button>
                                         </div>
@@ -305,22 +305,22 @@ export default function LicitacoesListPage() {
                                 licitacoes.map((item) => (
                                     <TableRow
                                         key={item.id}
-                                        className="group hover:bg-slate-50/80 transition-all cursor-pointer border-slate-100"
+                                        className="group hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-all cursor-pointer border-gray-100 dark:border-gray-800"
                                     >
                                         <TableCell onClick={(e) => e.stopPropagation()}>
-                                            <Checkbox className="border-slate-200 group-hover:border-slate-400" />
+                                            <Checkbox className="border-gray-200 dark:border-gray-600 group-hover:border-gray-400" />
                                         </TableCell>
                                         <TableCell className="py-4">
                                             <Link href={`/licitacoes/${item.id}`} className="block">
-                                                <div className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors uppercase text-sm tracking-tight">{item.title}</div>
-                                                <div className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1.5">
-                                                    <span className="bg-slate-100 px-1.5 py-0.5 rounded uppercase">{item.agency.slice(0, 3)}</span>
+                                                <div className="font-bold text-gray-900 dark:text-gray-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors uppercase text-sm tracking-tight">{item.title}</div>
+                                                <div className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-1 flex items-center gap-1.5">
+                                                    <span className="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded uppercase">{item.agency.slice(0, 3)}</span>
                                                     <span className="truncate max-w-[250px]">{item.agency}</span>
                                                 </div>
                                             </Link>
                                         </TableCell>
                                         <TableCell>
-                                            <Badge variant="secondary" className="bg-slate-100 text-slate-600 border-transparent font-semibold capitalize">
+                                            <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-transparent font-semibold capitalize">
                                                 {item.modality.replace('_', ' ')}
                                             </Badge>
                                         </TableCell>
@@ -330,7 +330,7 @@ export default function LicitacoesListPage() {
                                                     <TooltipTrigger asChild>
                                                         <div className="flex items-center gap-2">
                                                             <div className={`w-2 h-2 rounded-full ${item.legalStatus === 'Apta' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                                                            <span className="font-semibold text-slate-700 text-xs">
+                                                            <span className="font-semibold text-gray-700 dark:text-gray-300 text-xs">
                                                                 {item.legalStatus}
                                                             </span>
                                                         </div>
@@ -356,13 +356,13 @@ export default function LicitacoesListPage() {
                                         <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex justify-end items-center gap-2">
                                                 <Link href={`/licitacoes/${item.id}`}>
-                                                    <Button variant="outline" size="sm" className="h-9 font-semibold border-slate-200 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50/50 group-hover:bg-white">
+                                                    <Button variant="outline" size="sm" className="h-9 font-semibold border-gray-200 dark:border-gray-700 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 dark:bg-gray-900">
                                                         Acessar Processo
                                                     </Button>
                                                 </Link>
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-slate-600">
+                                                        <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
                                                             <MoreHorizontal className="w-4 h-4" />
                                                         </Button>
                                                     </DropdownMenuTrigger>
@@ -397,13 +397,13 @@ export default function LicitacoesListPage() {
                     </Table>
 
                     {/* Pagination */}
-                    <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-white">
+                    <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between bg-white dark:bg-gray-900">
                         <div className="flex items-center gap-4">
-                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                Página <span className="text-slate-900">{page}</span> de <span className="text-slate-900">{totalPages}</span>
+                            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Página <span className="text-gray-900 dark:text-gray-100">{page}</span> de <span className="text-gray-900 dark:text-gray-100">{totalPages}</span>
                             </p>
-                            <div className="h-4 w-px bg-slate-200" />
-                            <p className="text-xs text-slate-400 font-medium italic">
+                            <div className="h-4 w-px bg-gray-200 dark:bg-gray-700" />
+                            <p className="text-xs text-gray-400 dark:text-gray-500 font-medium italic">
                                 Sincronizado agora há pouco
                             </p>
                         </div>
@@ -413,7 +413,7 @@ export default function LicitacoesListPage() {
                                 size="sm"
                                 disabled={page <= 1}
                                 onClick={() => setPage(p => p - 1)}
-                                className="h-9 px-4 border-slate-200 text-slate-600 hover:bg-slate-50"
+                                className="h-9 px-4 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
                             >
                                 <ChevronLeft className="h-4 w-4 mr-2" />
                                 Anterior
@@ -423,7 +423,7 @@ export default function LicitacoesListPage() {
                                 size="sm"
                                 disabled={page >= totalPages}
                                 onClick={() => setPage(p => p + 1)}
-                                className="h-9 px-4 border-slate-200 text-slate-600 hover:bg-slate-50"
+                                className="h-9 px-4 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
                             >
                                 Próxima
                                 <ChevronRight className="h-4 w-4 ml-2" />

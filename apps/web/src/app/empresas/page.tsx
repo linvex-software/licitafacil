@@ -23,8 +23,8 @@ export default function EmpresasPage() {
         <Layout>
             <div className="flex flex-col gap-6">
                 <div>
-                    <h1 className="text-3xl font-heading font-bold text-slate-900">Empresas</h1>
-                    <p className="text-slate-500 mt-1">Gestão das empresas e unidades do grupo.</p>
+                    <h1 className="text-3xl font-heading font-bold text-gray-900 dark:text-gray-100">Empresas</h1>
+                    <p className="text-gray-500 dark:text-gray-400 mt-1">Gestão das empresas e unidades do grupo.</p>
                 </div>
 
                 <Card>
@@ -52,7 +52,7 @@ export default function EmpresasPage() {
                                     <TableRow>
                                         <TableCell className="font-medium">Empresa de Teste DEV</TableCell>
                                         <TableCell><span className="text-emerald-600 font-medium">Ativa</span></TableCell>
-                                        <TableCell className="text-slate-400 font-mono text-xs">00000000-0000-0000-0000-000000000001</TableCell>
+                                        <TableCell className="text-gray-400 dark:text-gray-500 font-mono text-xs">00000000-0000-0000-0000-000000000001</TableCell>
                                     </TableRow>
                                 )}
                             </TableBody>

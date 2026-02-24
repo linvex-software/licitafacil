@@ -84,18 +84,18 @@ export default function LoginPage() {
       </div>
 
       {/* Right Side: Login Form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-slate-50 md:bg-white">
+      <div className="flex-1 flex items-center justify-center p-8 bg-gray-50 dark:bg-gray-950 md:bg-white md:dark:bg-gray-950">
         <div className="w-full max-w-sm space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
           <div className="md:hidden flex justify-center mb-8">
             <div className="flex items-center gap-2">
               <Gavel className="w-8 h-8 text-emerald-600" />
-              <span className="text-2xl font-heading font-bold text-slate-900">LicitaFácil</span>
+              <span className="text-2xl font-heading font-bold text-gray-900 dark:text-gray-100">LicitaFácil</span>
             </div>
           </div>
 
           <div>
-            <h2 className="text-3xl font-heading font-bold text-slate-900">Bem-vindo de volta</h2>
-            <p className="text-slate-500 mt-2">Acesse sua conta para gerenciar seus processos.</p>
+            <h2 className="text-3xl font-heading font-bold text-gray-900 dark:text-gray-100">Bem-vindo de volta</h2>
+            <p className="text-gray-500 dark:text-gray-400 mt-2">Acesse sua conta para gerenciar seus processos.</p>
           </div>
 
           <Form {...form}>
@@ -105,12 +105,12 @@ export default function LoginPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem className="space-y-1.5">
-                    <FormLabel className="text-slate-700 font-semibold">E-mail</FormLabel>
+                    <FormLabel className="text-gray-700 dark:text-gray-300 font-semibold">E-mail</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="nome@empresa.com.br"
                         {...field}
-                        className="h-12 border-slate-200 bg-slate-50/50 focus:bg-white transition-all focus:ring-emerald-500"
+                        className="h-12 border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 focus:bg-white dark:focus:bg-gray-800 transition-all"
                       />
                     </FormControl>
                     <FormMessage />
@@ -123,7 +123,7 @@ export default function LoginPage() {
                 render={({ field }) => (
                   <FormItem className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <FormLabel className="text-slate-700 font-semibold">Senha</FormLabel>
+                      <FormLabel className="text-gray-700 dark:text-gray-300 font-semibold">Senha</FormLabel>
                       <button type="button" className="text-xs font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-wider transition-colors">Esqueceu a senha?</button>
                     </div>
                     <FormControl>
@@ -131,7 +131,7 @@ export default function LoginPage() {
                         type="password"
                         placeholder="••••••••"
                         {...field}
-                        className="h-12 border-slate-200 bg-slate-50/50 focus:bg-white transition-all focus:ring-emerald-500"
+                        className="h-12 border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 focus:bg-white dark:focus:bg-gray-800 transition-all"
                       />
                     </FormControl>
                     <FormMessage />
@@ -140,7 +140,7 @@ export default function LoginPage() {
               />
               <Button
                 type="submit"
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white h-12 text-base font-bold transition-all shadow-lg active:scale-[0.98]"
+                className="w-full bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-white text-white dark:text-gray-900 h-12 text-base font-bold transition-all shadow-lg active:scale-[0.98]"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
@@ -156,8 +156,8 @@ export default function LoginPage() {
           </Form>
 
           <div className="pt-4 text-center">
-            <p className="text-sm text-slate-500">
-              Ainda não tem acesso? <button className="text-emerald-600 font-bold hover:underline">Entre em contato</button>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Ainda não tem acesso? <button className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">Entre em contato</button>
             </p>
           </div>
         </div>

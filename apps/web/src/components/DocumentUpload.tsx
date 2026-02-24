@@ -131,40 +131,40 @@ export function DocumentUpload({ bidId, onUploadSuccess, onError }: DocumentUplo
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4 py-2">
             <div className="grid gap-2">
-              <Label className="text-slate-700">Arquivo *</Label>
+              <Label className="text-gray-700 dark:text-gray-300">Arquivo *</Label>
               <input
                 type="file"
                 onChange={handleFileChange}
                 accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,application/pdf,image/jpeg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 disabled={isUploading}
-                className="block w-full text-sm text-slate-900 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer disabled:opacity-50"
+                className="block w-full text-sm text-gray-900 dark:text-gray-100 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 dark:file:bg-emerald-950/50 file:text-emerald-700 dark:file:text-emerald-400 hover:file:bg-emerald-100 dark:hover:file:bg-emerald-900/50 cursor-pointer disabled:opacity-50"
               />
               {errors.file && <p className="text-sm text-red-600">{errors.file}</p>}
               {selectedFile && (
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
                 </p>
               )}
             </div>
             <div className="grid gap-2">
-              <Label className="text-slate-700">Nome do Documento *</Label>
+              <Label className="text-gray-700 dark:text-gray-300">Nome do Documento *</Label>
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                 disabled={isUploading}
                 maxLength={255}
                 placeholder="Ex: Edital 001/2026"
-                className="border-slate-200 focus-visible:ring-emerald-500"
+                className="border-gray-200 dark:border-gray-700 focus-visible:ring-emerald-500"
               />
               {errors.name && <p className="text-sm text-red-600">{errors.name}</p>}
             </div>
             <div className="grid gap-2">
-              <Label className="text-slate-700">Categoria *</Label>
+              <Label className="text-gray-700 dark:text-gray-300">Categoria *</Label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value as any }))}
                 disabled={isUploading}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               >
                 {Object.entries(DocumentCategory).map(([key, value]) => (
                   <option key={key} value={value}>
@@ -174,7 +174,7 @@ export function DocumentUpload({ bidId, onUploadSuccess, onError }: DocumentUplo
               </select>
             </div>
             <DialogFooter className="gap-2 sm:gap-0 pt-4">
-              <Button type="button" variant="outline" onClick={handleClose} disabled={isUploading} className="border-slate-200">
+              <Button type="button" variant="outline" onClick={handleClose} disabled={isUploading} className="border-gray-200 dark:border-gray-700">
                 Cancelar
               </Button>
               <Button type="submit" disabled={isUploading} className="bg-emerald-600 hover:bg-emerald-700">

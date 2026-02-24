@@ -135,7 +135,7 @@ export default function RelatoriosPage() {
               <FileText className="w-6 h-6" />
               Relatórios Gerenciais
             </h1>
-            <p className="text-gray-500 mt-1">
+            <p className="text-gray-500 dark:text-gray-400 mt-1">
               Exporte relatórios executivos em PDF para apresentar à diretoria
             </p>
           </div>
@@ -230,10 +230,10 @@ export default function RelatoriosPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card>
                 <CardContent className="pt-6 text-center">
-                  <div className="text-3xl font-bold text-gray-900">
+                  <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                     {dados.metricas.total}
                   </div>
-                  <div className="text-sm text-gray-500 mt-1 flex items-center justify-center gap-1">
+                  <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center justify-center gap-1">
                     <FileText className="w-4 h-4" /> Total de Licitações
                   </div>
                 </CardContent>
@@ -243,7 +243,7 @@ export default function RelatoriosPage() {
                   <div className="text-3xl font-bold text-green-600">
                     {dados.metricas.ganhas}
                   </div>
-                  <div className="text-sm text-gray-500 mt-1 flex items-center justify-center gap-1">
+                  <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center justify-center gap-1">
                     <Trophy className="w-4 h-4" /> Licitações Vencidas
                   </div>
                 </CardContent>
@@ -253,7 +253,7 @@ export default function RelatoriosPage() {
                   <div className="text-3xl font-bold text-blue-600">
                     {dados.metricas.taxaSucesso}%
                   </div>
-                  <div className="text-sm text-gray-500 mt-1 flex items-center justify-center gap-1">
+                  <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center justify-center gap-1">
                     <Target className="w-4 h-4" /> Taxa de Sucesso
                   </div>
                 </CardContent>
@@ -263,7 +263,7 @@ export default function RelatoriosPage() {
                   <div className="text-3xl font-bold text-amber-600">
                     {dados.metricas.emAndamento}
                   </div>
-                  <div className="text-sm text-gray-500 mt-1 flex items-center justify-center gap-1">
+                  <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center justify-center gap-1">
                     <Activity className="w-4 h-4" /> Em Andamento
                   </div>
                 </CardContent>
@@ -382,7 +382,7 @@ export default function RelatoriosPage() {
                     </thead>
                     <tbody>
                       {dados.licitacoes.map((l: any) => (
-                        <tr key={l.id} className="border-b hover:bg-gray-50">
+                        <tr key={l.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
                           <td className="p-2 max-w-xs truncate">{l.titulo}</td>
                           <td className="p-2 text-xs">
                             {l.modalidade?.replace(/_/g, " ")}
