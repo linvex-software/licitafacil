@@ -150,6 +150,74 @@ export async function atualizarStatusPeticao(id: string, status: StatusPeticao):
   return data;
 }
 
+// --- Análise de Mercado (PNCP) ---
+export interface HistoricoCompraItem {
+  data: string;
+  objeto: string;
+  vencedor: string;
+  valor: number;
+  modalidade: string;
+  numeroContrato: string;
+}
+
+export interface HistoricoComprasResponse {
+  itens: HistoricoCompraItem[];
+  porMes: { mes: string; valorTotal: number }[];
+  mensagem?: string;
+}
+
+export interface ConcorrentesResponse {
+  taxaSucesso: number;
+  totalVencidas: number;
+  valorTotalGanho: number;
+  modalidades: { modalidade: string; quantidade: number }[];
+  licitacoes: { data: string; objeto: string; orgao: string; valor: number }[];
+  mensagem?: string;
+}
+
+export interface ProdutoAnaliseItem {
+  produto: string;
+  marca: string;
+  vezesHomologado: number;
+  precoMedio: number;
+  precoMinimo: number;
+  precoMaximo: number;
+}
+
+export interface ProdutosResponse {
+  itens: ProdutoAnaliseItem[];
+  mensagem?: string;
+}
+
+export async function getHistoricoCompras(
+  cnpj: string,
+  meses: number
+): Promise<HistoricoComprasResponse> {
+  const cnpjLimpo = cnpj.replace(/[./-]/g, "");
+  const { data } = await api.get("/analise/historico-compras", {
+    params: { cnpj: cnpjLimpo, meses },
+    timeout: 90000,
+  });
+  return data;
+}
+
+export async function getConcorrentes(cnpj: string): Promise<ConcorrentesResponse> {
+  const cnpjLimpo = cnpj.replace(/[./-]/g, "");
+  const { data } = await api.get("/analise/concorrentes", {
+    params: { cnpj: cnpjLimpo },
+    timeout: 60000,
+  });
+  return data;
+}
+
+export async function getProdutos(categoria: string): Promise<ProdutosResponse> {
+  const { data } = await api.get("/analise/produtos", {
+    params: { categoria },
+    timeout: 30000,
+  });
+  return data;
+}
+
 // --- Documentos ---
 export interface FetchDocumentsParams {
   page?: number;
