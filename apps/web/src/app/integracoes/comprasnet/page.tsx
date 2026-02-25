@@ -537,12 +537,13 @@ export default function ComprasnetPage() {
         </div>
       </div>
 
-      {salvarModalOpen && (
-        <SalvarBuscaModal
-          filtros={filtros}
-          onClose={() => setSalvarModalOpen(false)}
-        />
-      )}
+      <SalvarBuscaModal
+        open={salvarModalOpen}
+        onOpenChange={setSalvarModalOpen}
+        filtrosAtuais={filtros}
+        totalResultados={resultados.length}
+        origemBusca="COMPRASNET"
+      />
     </Layout>
   );
 }

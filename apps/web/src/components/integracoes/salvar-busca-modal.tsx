@@ -16,18 +16,20 @@ import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
 interface SalvarBuscaModalProps {
-  filtros: {
-    cnpj?: string;
-    uf?: string;
-    modalidade?: string;
-    dataInicio?: string;
-    dataFim?: string;
-    keywords?: string;
-  };
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  filtrosAtuais: any;
+  totalResultados: number;
+  origemBusca?: "PNCP" | "COMPRASNET" | "DIARIOS_OFICIAIS";
 }
 
-export function SalvarBuscaModal({ filtros, onClose }: SalvarBuscaModalProps) {
+export function SalvarBuscaModal({
+  open,
+  onOpenChange,
+  filtrosAtuais,
+  totalResultados,
+  origemBusca = "COMPRASNET",
+}: SalvarBuscaModalProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [nome, setNome] = useState("");
@@ -38,14 +40,17 @@ export function SalvarBuscaModal({ filtros, onClose }: SalvarBuscaModalProps) {
     setLoading(true);
 
     try {
+      // Diferencia o endpoint caso a funcionalidade final de salvamento mude, 
+      // ou envia uma origin tag no payload
       await api.post("/integracoes/comprasnet/buscas-salvas", {
         nome,
-        filtros,
+        filtros: filtrosAtuais,
         autoImportar,
+        origem: origemBusca
       });
 
       toast({ title: "Busca salva com sucesso!" });
-      onClose();
+      onOpenChange(false);
     } catch {
       toast({ title: "Erro ao salvar busca", variant: "destructive" });
     } finally {
@@ -54,7 +59,7 @@ export function SalvarBuscaModal({ filtros, onClose }: SalvarBuscaModalProps) {
   }
 
   return (
-    <Dialog open onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -84,20 +89,26 @@ export function SalvarBuscaModal({ filtros, onClose }: SalvarBuscaModalProps) {
           </div>
 
           <div className="bg-gray-50 p-3 rounded text-xs text-gray-600 space-y-0.5">
-            <p>
+            <p className="flex justify-between items-center mb-1">
               <strong>Filtros salvos:</strong>
+              <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">
+                {totalResultados} {totalResultados === 1 ? 'resultado atual' : 'resultados atuais'}
+              </span>
             </p>
-            {filtros.cnpj && <p>CNPJ: {filtros.cnpj}</p>}
-            {filtros.uf && <p>UF: {filtros.uf}</p>}
-            {filtros.modalidade && filtros.modalidade !== "0" && (
-              <p>Modalidade: código {filtros.modalidade}</p>
+            {filtrosAtuais?.cnpj && <p>CNPJ: {filtrosAtuais.cnpj}</p>}
+            {filtrosAtuais?.uf && <p>UF: {filtrosAtuais.uf}</p>}
+            {filtrosAtuais?.municipio && <p>Município: {filtrosAtuais.municipio}</p>}
+            {filtrosAtuais?.modalidade && filtrosAtuais.modalidade !== "0" && (
+              <p>Modalidade: código {filtrosAtuais.modalidade}</p>
             )}
-            {filtros.keywords && <p>Keywords: {filtros.keywords}</p>}
-            {!filtros.cnpj && !filtros.uf && <p>Busca geral (sem filtro de órgão/UF)</p>}
+            {filtrosAtuais?.keywords && (
+              <p>Keywords: {Array.isArray(filtrosAtuais.keywords) ? filtrosAtuais.keywords.join(', ') : filtrosAtuais.keywords}</p>
+            )}
+            {!filtrosAtuais?.cnpj && !filtrosAtuais?.uf && <p>Busca geral (sem filtro de UF/Órgão)</p>}
           </div>
 
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose} className="flex-1">
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
               Cancelar
             </Button>
             <Button

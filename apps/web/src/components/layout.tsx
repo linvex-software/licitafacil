@@ -8,7 +8,7 @@ import {
     Globe, ShieldCheck, ChevronDown, ClipboardList,
     Compass, Scale, LineChart, Swords, Briefcase,
     Newspaper, Building2, Search as SearchIcon, Zap,
-    FileQuestion, Flag, Repeat,
+    FileQuestion, Flag, Repeat, BookOpen,
     TrendingUp, History, Tag as TagIcon,
     Kanban, Target, CalendarDays,
 } from "lucide-react";
@@ -53,9 +53,10 @@ const navGroups: NavGroup[] = [
                 label: "Oportunidades", icon: Compass, href: "/oportunidades",
                 subItems: [
                     { label: "Encontrar", href: "/oportunidades", icon: SearchIcon },
+                    { label: "Diários Oficiais", href: "/integracoes/diarios", icon: BookOpen },
+                    { label: "Pesquisas rápida", href: "/oportunidades/pesquisas-rapida", icon: Zap },
                     { label: "Meus Jornais", href: "/oportunidades/jornais", icon: Newspaper },
                     { label: "Órgãos", href: "/oportunidades/orgaos", icon: Building2 },
-                    { label: "Pesquisas rápida", href: "/oportunidades/pesquisas-rapida", icon: Zap },
                 ]
             },
             {
