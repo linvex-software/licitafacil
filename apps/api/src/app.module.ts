@@ -19,6 +19,7 @@ import { EmailModule } from "./email/email.module";
 import { RelatoriosModule } from "./relatorios/relatorios.module";
 import { ComprasnetModule } from "./integracoes/comprasnet/comprasnet.module";
 import { DiariosModule } from "./integracoes/diarios/diarios.module";
+import { JuridicoModule } from "./juridico/juridico.module";
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { DiariosModule } from "./integracoes/diarios/diarios.module";
     RelatoriosModule,
     ComprasnetModule,
     DiariosModule,
+    JuridicoModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],
