@@ -6,7 +6,7 @@ import {
     LayoutDashboard, Gavel, Settings,
     User, LogOut, Menu, FileText, BarChart3,
     Globe, ShieldCheck, ChevronDown, ClipboardList,
-    Compass, Scale, LineChart, Swords, Briefcase,
+    Compass, Scale, BarChart2, Swords, Briefcase,
     Newspaper, Building2, Search as SearchIcon, Zap,
     FileQuestion, Flag, Repeat, BookOpen,
     TrendingUp, History, Tag as TagIcon,
@@ -70,12 +70,11 @@ const navGroups: NavGroup[] = [
                 ]
             },
             {
-                label: "Análise", icon: LineChart, href: "/analise",
+                label: "Análise", icon: BarChart2, href: "/analise",
                 subItems: [
-                    { label: "Análise de mercado", href: "/analise/mercado", icon: LineChart },
-                    { label: "Histórico de compras", href: "/analise/historico", icon: History },
-                    { label: "Análise de empresas", href: "/analise/empresas", icon: Building2 },
-                    { label: "Produtos e marcas", href: "/analise/produtos-marcas", icon: TagIcon },
+                    { label: "Histórico de Compras", href: "/analise/historico-compras", icon: History },
+                    { label: "Concorrentes", href: "/analise/concorrentes", icon: Building2 },
+                    { label: "Produtos", href: "/analise/produtos", icon: TagIcon },
                 ]
             },
             {

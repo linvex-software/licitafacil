@@ -46,6 +46,13 @@ interface FiltrosDiario {
     keywords: string;
 }
 
+interface FiltrosBuscaSalva {
+    uf?: string;
+    dataInicio?: string;
+    dataFim?: string;
+    keywords?: string;
+}
+
 const UFS = [
     "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA",
     "MG", "MS", "MT", "PA", "PB", "PE", "PI", "PR", "RJ", "RN",
@@ -321,16 +328,15 @@ export default function DiariosPage() {
                     {/* Painel lateral: Buscas Salvas e Status */}
                     <div className="space-y-6">
                         <BuscasSalvasPanel
-                            origemBusca="DIARIOS_OFICIAIS"
-                            onAplicarBusca={(f) => {
+                            onExecutar={(f: FiltrosBuscaSalva) => {
                                 setFiltros({
                                     uf: f.uf || "SP",
-                                    municipio: f.municipio || "",
+                                    municipio: filtros.municipio || "",
                                     dataInicio: f.dataInicio || "",
                                     dataFim: f.dataFim || "",
-                                    keywords: (f.keywords || []).join(', '),
+                                    keywords: f.keywords || "",
                                 });
-                                toast({ title: "Filtros aplicados", description: `A busca "${f.nome}" foi carregada no formulário.` });
+                                toast({ title: "Filtros aplicados", description: "A busca salva foi carregada no formulário." });
                             }}
                         />
                     </div>
