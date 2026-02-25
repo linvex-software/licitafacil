@@ -18,6 +18,7 @@ import { AdminModule } from "./admin/admin.module";
 import { EmailModule } from "./email/email.module";
 import { RelatoriosModule } from "./relatorios/relatorios.module";
 import { ComprasnetModule } from "./integracoes/comprasnet/comprasnet.module";
+import { DiariosModule } from "./integracoes/diarios/diarios.module";
 
 @Module({
   imports: [
@@ -37,9 +38,10 @@ import { ComprasnetModule } from "./integracoes/comprasnet/comprasnet.module";
     EmailModule,
     RelatoriosModule,
     ComprasnetModule,
+    DiariosModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
 

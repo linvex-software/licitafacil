@@ -549,3 +549,19 @@ model EditalAnalise {
   @@index([bidId])
   @@map("edital_analises")
 }
+
+// Entidade DiarioOficial (Registro de fontes e varreduras de Diários Oficiais)
+model DiarioOficial {
+  id                  String    @id @default(uuid())
+  estado              String    // UF (ex: "SP", "RJ")
+  municipio           String?   // Nome do município (nulo se for diário estadual)
+  url                 String    // URL base ou do portal específico
+  ultimaSincronizacao DateTime? // Data e hora da última varredura bem-sucedida pelo Cron
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime? // Soft delete
+
+  @@index([estado, municipio])
+  @@index([deletedAt])
+  @@map("diarios_oficiais")
+}
