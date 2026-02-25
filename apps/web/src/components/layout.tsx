@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
     LayoutDashboard, Gavel, Settings,
     User, LogOut, Menu, FileText, BarChart3,
-    Globe, ShieldCheck, ChevronDown,
+    Globe, ShieldCheck, ChevronDown, ClipboardList,
     Compass, Scale, LineChart, Swords, Briefcase,
     Newspaper, Building2, Search as SearchIcon, Zap,
     FileQuestion, Flag, Repeat,
@@ -36,8 +36,14 @@ const navGroups: NavGroup[] = [
         group: "Principal",
         items: [
             { label: "Dashboard", icon: LayoutDashboard, href: "/" },
-            { label: "Licitações", icon: Gavel, href: "/licitacoes" },
-            { label: "Documentos", icon: FileText, href: "/documentos" },
+            {
+                label: "Gestão", icon: ClipboardList, href: "/licitacoes",
+                subItems: [
+                    { label: "Minhas Licitações", href: "/licitacoes", icon: Gavel },
+                    { label: "Documentos", href: "/documentos", icon: FileText },
+                    { label: "Relatórios", href: "/relatorios", icon: BarChart3 },
+                ]
+            },
         ]
     },
     {
@@ -89,10 +95,7 @@ const navGroups: NavGroup[] = [
     },
     {
         group: "Outros",
-        items: [
-            { label: "Relatórios", icon: BarChart3, href: "/relatorios" },
-            { label: "Análises", icon: LineChart, href: "/analises" },
-        ]
+        items: []
     },
 ];
 
@@ -274,7 +277,9 @@ export function Layout({ children }: {
                 <nav className="hidden lg:flex items-center justify-center gap-0.5 flex-1">
                     {/* Simple items */}
                     {principalItems.map(item => (
-                        <NavLink key={item.href} item={item} pathname={pathname} />
+                        item.subItems
+                            ? <NavDropdown key={item.label} item={item} pathname={pathname} />
+                            : <NavLink key={item.href} item={item} pathname={pathname} />
                     ))}
 
                     {/* Divider */}
@@ -282,7 +287,7 @@ export function Layout({ children }: {
 
                     {/* Module items with dropdowns */}
                     {moduleItems.map(item => (
-                        <NavDropdown key={item.href} item={item} pathname={pathname} />
+                        <NavDropdown key={item.label} item={item} pathname={pathname} />
                     ))}
 
                     {/* Divider */}
@@ -290,7 +295,9 @@ export function Layout({ children }: {
 
                     {/* Other items */}
                     {outrosItems.map(item => (
-                        <NavLink key={item.href} item={item} pathname={pathname} />
+                        item.subItems
+                            ? <NavDropdown key={item.label} item={item} pathname={pathname} />
+                            : <NavLink key={item.href} item={item} pathname={pathname} />
                     ))}
 
                     {/* Admin */}
