@@ -150,6 +150,45 @@ export async function atualizarStatusPeticao(id: string, status: StatusPeticao):
   return data;
 }
 
+// --- Disputa (simulador de lance) ---
+export interface SimularLanceInput {
+  valorInicial: number;
+  percentualDesconto: number;
+  numConcorrentes?: number;
+  bidId?: string;
+}
+
+export interface SimulacaoResult {
+  lanceSugerido: number;
+  lanceMinimo: number;
+  lanceAgressivo: number;
+  economia: number;
+  percentualEconomia: number;
+}
+
+export interface SimulacaoDisputa {
+  id: string;
+  empresaId: string;
+  bidId: string | null;
+  valorInicial: number;
+  percentualDesconto: number;
+  numConcorrentes: number;
+  lanceSugerido: number;
+  lanceMinimo: number;
+  lanceAgressivo: number;
+  createdAt: string;
+}
+
+export async function simularLance(dados: SimularLanceInput): Promise<SimulacaoResult> {
+  const { data } = await api.post("/disputa/simular", dados);
+  return data;
+}
+
+export async function getHistoricoSimulacoes(bidId: string): Promise<SimulacaoDisputa[]> {
+  const { data } = await api.get(`/disputa/historico/${bidId}`);
+  return data;
+}
+
 // --- Análise de Mercado (PNCP) ---
 export interface HistoricoCompraItem {
   data: string;
