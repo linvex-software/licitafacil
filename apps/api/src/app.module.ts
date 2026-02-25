@@ -21,6 +21,7 @@ import { ComprasnetModule } from "./integracoes/comprasnet/comprasnet.module";
 import { DiariosModule } from "./integracoes/diarios/diarios.module";
 import { JuridicoModule } from "./juridico/juridico.module";
 import { AnaliseModule } from "./analise/analise.module";
+import { DisputaModule } from "./disputa/disputa.module";
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { AnaliseModule } from "./analise/analise.module";
     DiariosModule,
     JuridicoModule,
     AnaliseModule,
+    DisputaModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

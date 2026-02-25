@@ -46,6 +46,8 @@ model Empresa {
   buscasSalvas       BuscaSalva[]
   // Relacionamento: Uma empresa tem muitas petições jurídicas
   peticoes           Peticao[]
+  // Relacionamento: Uma empresa tem muitas simulações de disputa
+  simulacoes         SimulacaoDisputa[]
 
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("empresas")
@@ -149,6 +151,8 @@ model Bid {
   editalAnalises  EditalAnalise[]
   // Relacionamento: Uma licitação pode ter várias petições jurídicas
   peticoes        Peticao[]
+  // Relacionamento: Uma licitação pode ter várias simulações de disputa
+  simulacoes      SimulacaoDisputa[]
 
   @@index([empresaId])
   @@index([empresaId, operationalState]) // Consultas por empresa e estado operacional
@@ -216,6 +220,25 @@ model Peticao {
   @@index([empresaId, bidId])
   @@index([empresaId, deletedAt])
   @@map("peticoes")
+}
+
+model SimulacaoDisputa {
+  id                 String   @id @default(cuid())
+  empresaId          String
+  bidId              String?
+  valorInicial       Float
+  percentualDesconto Float
+  numConcorrentes    Int
+  lanceSugerido      Float
+  lanceMinimo        Float
+  lanceAgressivo     Float
+  createdAt          DateTime @default(now())
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  bid     Bid?    @relation(fields: [bidId], references: [id], onDelete: SetNull)
+
+  @@index([empresaId, bidId, createdAt(sort: Desc)])
+  @@map("simulacoes_disputa")
 }
 
 // Entidade Document (Documento)
