@@ -93,6 +93,63 @@ export async function deletePrazo(id: string) {
   return data;
 }
 
+// --- Jurídico (petições) ---
+export type TipoPeticao =
+  | "IMPUGNACAO"
+  | "ESCLARECIMENTO"
+  | "INTENCAO_RECURSO"
+  | "RECURSO"
+  | "CONTRA_RAZAO";
+
+export type StatusPeticao = "RASCUNHO" | "ENVIADO";
+
+export interface Peticao {
+  id: string;
+  empresaId: string;
+  bidId: string;
+  tipo: TipoPeticao;
+  conteudo: string | null;
+  nomeArquivo: string | null;
+  dataEnvio: string | null;
+  status: StatusPeticao;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GerarPeticaoBody {
+  bidId: string;
+  tipo: TipoPeticao;
+  conteudo: string;
+  cnpj?: string;
+  endereco?: string;
+  cidade?: string;
+}
+
+export async function gerarPeticaoDocx(body: GerarPeticaoBody): Promise<{ blob: Blob; fileName: string }> {
+  const response = await api.post("/juridico/peticoes/gerar", body, {
+    responseType: "arraybuffer",
+  });
+  const blob = new Blob([response.data], {
+    type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  });
+
+  const header = response.headers["content-disposition"] as string | undefined;
+  const match = header?.match(/filename="([^"]+)"/);
+  const fileName = match?.[1] || `peticao_${body.tipo}.docx`;
+
+  return { blob, fileName };
+}
+
+export async function listarPeticoesByBid(bidId: string): Promise<Peticao[]> {
+  const { data } = await api.get(`/juridico/peticoes/${bidId}`);
+  return data;
+}
+
+export async function atualizarStatusPeticao(id: string, status: StatusPeticao): Promise<Peticao> {
+  const { data } = await api.put(`/juridico/peticoes/${id}/status`, { status });
+  return data;
+}
+
 // --- Documentos ---
 export interface FetchDocumentsParams {
   page?: number;

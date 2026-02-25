@@ -558,6 +558,61 @@ export class PrismaTenantService {
             return query(args);
           },
         },
+        peticao: {
+          async findMany({ args, query }) {
+            args.where = addTenantAndSoftDeleteFilter(args?.where);
+            return query(args);
+          },
+          async findFirst({ args, query }) {
+            args.where = addTenantAndSoftDeleteFilter(args?.where);
+            return query(args);
+          },
+          async findUnique({ args, query }) {
+            const result = await query(args);
+            if (!result || result.empresaId !== empresaId || result.deletedAt !== null) {
+              return null;
+            }
+            return result;
+          },
+          async create({ args, query }) {
+            if (args?.data) {
+              const data = args.data as any;
+              if (!data.empresaId) {
+                data.empresaId = empresaId;
+              }
+              data.deletedAt = null;
+              if (data.empresa) delete data.empresa;
+              if (data.bid) delete data.bid;
+              args.data = data;
+            }
+            return query(args);
+          },
+          async update({ args, query }) {
+            const result = await query(args);
+            if (!result || result.empresaId !== empresaId || result.deletedAt !== null) {
+              return null;
+            }
+            return result;
+          },
+          async updateMany({ args, query }) {
+            args.where = addTenantAndSoftDeleteFilter(args?.where);
+            return query(args);
+          },
+          async delete({ args: _args, query: _query }) {
+            throw new Error(
+              "Hard delete não é permitido. Use SoftDeleteService para realizar soft delete.",
+            );
+          },
+          async deleteMany({ args: _args, query: _query }) {
+            throw new Error(
+              "Hard delete não é permitido. Use SoftDeleteService para realizar soft delete.",
+            );
+          },
+          async count({ args, query }) {
+            args.where = addTenantAndSoftDeleteFilter(args?.where);
+            return query(args);
+          },
+        },
         alert: {
           async findMany({ args, query }) {
             args.where = addTenantAndSoftDeleteFilter(args?.where);

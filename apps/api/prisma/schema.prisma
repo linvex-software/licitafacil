@@ -44,6 +44,8 @@ model Empresa {
   editalAnalises     EditalAnalise[]
   // Relacionamento: Uma empresa tem muitas buscas salvas (ComprasNet)
   buscasSalvas       BuscaSalva[]
+  // Relacionamento: Uma empresa tem muitas petições jurídicas
+  peticoes           Peticao[]
 
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("empresas")
@@ -145,6 +147,8 @@ model Bid {
   prazos          Prazo[]
   // Relacionamento: Uma licitação pode ter várias análises de edital
   editalAnalises  EditalAnalise[]
+  // Relacionamento: Uma licitação pode ter várias petições jurídicas
+  peticoes        Peticao[]
 
   @@index([empresaId])
   @@index([empresaId, operationalState]) // Consultas por empresa e estado operacional
@@ -178,6 +182,40 @@ model AuditLog {
   @@index([empresaId, resourceType, resourceId]) // Consultas por recurso
   @@index([userId]) // Consultas por usuário
   @@map("audit_logs")
+}
+
+enum TipoPeticao {
+  IMPUGNACAO
+  ESCLARECIMENTO
+  INTENCAO_RECURSO
+  RECURSO
+  CONTRA_RAZAO
+}
+
+enum StatusPeticao {
+  RASCUNHO
+  ENVIADO
+}
+
+model Peticao {
+  id         String        @id @default(cuid())
+  empresaId  String
+  bidId      String
+  tipo       TipoPeticao
+  conteudo   String?       @db.Text
+  nomeArquivo String?
+  dataEnvio  DateTime?
+  status     StatusPeticao @default(RASCUNHO)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  deletedAt  DateTime?
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  bid    Bid      @relation(fields: [bidId], references: [id], onDelete: Cascade)
+
+  @@index([empresaId, bidId])
+  @@index([empresaId, deletedAt])
+  @@map("peticoes")
 }
 
 // Entidade Document (Documento)
