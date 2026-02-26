@@ -20,6 +20,7 @@ import {
   ChevronRight,
   Scale,
   Swords,
+  MessageCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -242,7 +243,7 @@ export default function LicitacaoDetailPage() {
         </div>
 
         {/* Ações da licitação: Prazos, Checklist */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <Link href={`/licitacoes/${id}/prazos`}>
             <Card className="shadow-sm border-gray-200 dark:border-gray-700 hover:border-emerald-500/50 hover:shadow-md transition-all cursor-pointer group h-full">
               <CardContent className="pt-6 pb-6 flex items-center justify-between">
@@ -301,6 +302,22 @@ export default function LicitacaoDetailPage() {
                   <div>
                     <h3 className="font-heading font-semibold text-gray-900 dark:text-gray-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">Disputa</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Simule lances e acompanhe o histórico da disputa</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-emerald-500 shrink-0" />
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href={`/licitacoes/${id}/perguntas`}>
+            <Card className="shadow-sm border-gray-200 dark:border-gray-700 hover:border-emerald-500/50 hover:shadow-md transition-all cursor-pointer group h-full">
+              <CardContent className="pt-6 pb-6 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500/20 transition-colors">
+                    <MessageCircle className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-semibold text-gray-900 dark:text-gray-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">Perguntas</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Faça perguntas sobre o edital usando IA</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-emerald-500 shrink-0" />

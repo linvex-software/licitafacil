@@ -42,6 +42,13 @@ import {
   UserRole,
 } from "@licitafacil/shared";
 import type { Request } from "express";
+import { ChatPerguntaDto } from "./dto/chat-pergunta.dto";
+
+interface AuthenticatedRequest extends Request {
+  user?: {
+    empresaId?: string;
+  };
+}
 
 /**
  * Controller para gerenciar licitações
@@ -568,5 +575,37 @@ export class BidController {
     pdf: Express.Multer.File,
   ) {
     return this.bidService.analisarEdital(id, empresaId, pdf);
+  }
+
+  @Post(":id/chat")
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  async chat(
+    @Param("id") id: string,
+    @Body() dto: ChatPerguntaDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const empresaId = req.user?.empresaId;
+    if (!empresaId) {
+      throw new BadRequestException("Empresa não identificada no token");
+    }
+
+    return this.bidService.chatComEdital(id, dto.pergunta, empresaId);
+  }
+
+  @Get(":id/chat/historico")
+  @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  async chatHistorico(
+    @Param("id") id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const empresaId = req.user?.empresaId;
+    if (!empresaId) {
+      throw new BadRequestException("Empresa não identificada no token");
+    }
+
+    return this.bidService.getChatHistorico(id, empresaId);
   }
 }

@@ -48,6 +48,8 @@ model Empresa {
   peticoes           Peticao[]
   // Relacionamento: Uma empresa tem muitas simulações de disputa
   simulacoes         SimulacaoDisputa[]
+  // Relacionamento: Uma empresa tem muitos históricos de chat com edital
+  chatHistoricos     ChatHistorico[]
 
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("empresas")
@@ -153,6 +155,8 @@ model Bid {
   peticoes        Peticao[]
   // Relacionamento: Uma licitação pode ter várias simulações de disputa
   simulacoes      SimulacaoDisputa[]
+  // Relacionamento: Uma licitação pode ter vários históricos de chat com edital
+  chatHistoricos  ChatHistorico[]
 
   @@index([empresaId])
   @@index([empresaId, operationalState]) // Consultas por empresa e estado operacional
@@ -239,6 +243,21 @@ model SimulacaoDisputa {
 
   @@index([empresaId, bidId, createdAt(sort: Desc)])
   @@map("simulacoes_disputa")
+}
+
+model ChatHistorico {
+  id        String   @id @default(cuid())
+  empresaId String
+  bidId     String
+  pergunta  String   @db.Text
+  resposta  String   @db.Text
+  createdAt DateTime @default(now())
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  bid     Bid     @relation(fields: [bidId], references: [id], onDelete: Cascade)
+
+  @@index([empresaId, bidId])
+  @@map("chat_historicos")
 }
 
 // Entidade Document (Documento)
