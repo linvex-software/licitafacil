@@ -10,7 +10,7 @@ import {
     Newspaper, Building2, Search as SearchIcon, Zap,
     FileQuestion, Flag, Repeat, BookOpen,
     TrendingUp, History, Tag as TagIcon,
-    Target, CalendarDays,
+    Target, CalendarDays, Users,
 } from "lucide-react";
 import { AlertsDropdown } from "@/components/AlertsDropdown";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -170,6 +170,8 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
 
 /* ─── Mobile sidebar content ─────────────────────────────── */
 function MobileSidebarContent({ pathname, user, logout }: { pathname: string; user: any; logout: () => void }) {
+    const isEmpresaAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
+
     return (
         <div className="flex flex-col h-full bg-white dark:bg-gray-900">
             <div className="px-4 py-4 border-b border-gray-100 dark:border-gray-800">
@@ -220,6 +222,16 @@ function MobileSidebarContent({ pathname, user, logout }: { pathname: string; us
                         })}
                     </div>
                 ))}
+                {isEmpresaAdmin && (
+                    <div className="mb-3">
+                        <p className="section-label px-2 mb-1">Equipe</p>
+                        <Link href="/usuarios"
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-950 hover:text-blue-700 dark:hover:text-blue-300">
+                            <Users className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                            Usuários
+                        </Link>
+                    </div>
+                )}
                 {user?.role === "SUPER_ADMIN" && (
                     <div className="mb-3">
                         <p className="section-label px-2 mb-1 text-amber-600">Admin</p>
@@ -249,6 +261,7 @@ export function Layout({ children, fullWidth = false }: {
     const pathname = usePathname();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const { user, logout } = useAuth();
+    const isEmpresaAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
 
     /* Flatten all groups into topbar-ready structure */
     const principalItems = navGroups.find(g => g.group === "Principal")?.items ?? [];
@@ -299,6 +312,13 @@ export function Layout({ children, fullWidth = false }: {
                             ? <NavDropdown key={item.label} item={item} pathname={pathname} />
                             : <NavLink key={item.href} item={item} pathname={pathname} />
                     ))}
+
+                    {isEmpresaAdmin && (
+                        <NavLink
+                            item={{ label: "Usuários", icon: Users, href: "/usuarios" }}
+                            pathname={pathname}
+                        />
+                    )}
 
                     {/* Admin */}
                     {user?.role === "SUPER_ADMIN" && (

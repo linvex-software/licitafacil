@@ -22,13 +22,12 @@ import { EditarUsuarioModal } from "@/components/usuarios/editar-usuario-modal";
 import { Layout } from "@/components/layout";
 import { useAuth } from "@/contexts/auth-context";
 import { api } from "@/lib/api";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "@/hooks/use-toast";
 import {
   Users,
   Search,
   Edit,
-  UserX,
-  UserCheck,
   Trash2,
 } from "lucide-react";
 
@@ -41,6 +40,13 @@ interface Usuario {
   createdAt: string;
   updatedAt: string;
   ativo: boolean;
+}
+
+interface LimiteUsuarios {
+  atual: number;
+  limite: number;
+  disponivel: number;
+  percentual: number;
 }
 
 const roleLabel: Record<string, string> = {
@@ -60,6 +66,7 @@ export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [busca, setBusca] = useState("");
   const [loading, setLoading] = useState(true);
+  const [limiteUsuarios, setLimiteUsuarios] = useState<LimiteUsuarios | null>(null);
   const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(
     null,
   );
@@ -67,11 +74,13 @@ export default function UsuariosPage() {
   const carregarDados = useCallback(async () => {
     setLoading(true);
     try {
-      const [usuariosRes] = await Promise.all([
+      const [usuariosRes, limiteRes] = await Promise.all([
         api.get("/users"),
+        api.get("/users/limite"),
       ]);
 
       setUsuarios(usuariosRes.data);
+      setLimiteUsuarios(limiteRes.data);
     } catch (error: any) {
       console.error("Erro ao carregar usuários:", error);
       toast({
@@ -89,32 +98,6 @@ export default function UsuariosPage() {
       carregarDados();
     }
   }, [carregarDados, user, authLoading]);
-
-  async function toggleAtivo(usuario: Usuario) {
-    try {
-      if (usuario.ativo) {
-        await api.delete(`/users/${usuario.id}`);
-        toast({
-          title: "Usuário desativado",
-          description: `${usuario.name} foi desativado.`,
-        });
-      } else {
-        await api.post(`/users/${usuario.id}/reativar`);
-        toast({
-          title: "Usuário reativado",
-          description: `${usuario.name} foi reativado.`,
-        });
-      }
-      carregarDados();
-    } catch (error: any) {
-      toast({
-        title: "Erro",
-        description:
-          error.response?.data?.message || "Erro ao atualizar usuário.",
-        variant: "destructive",
-      });
-    }
-  }
 
   async function deletarPermanente(usuario: Usuario) {
     const confirma = window.confirm(
@@ -146,6 +129,10 @@ export default function UsuariosPage() {
   );
 
   const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
+  const limite = limiteUsuarios?.limite ?? 30;
+  const totalUsuariosCriados = limiteUsuarios?.atual ?? usuarios.length;
+  const percentualUso = limiteUsuarios?.percentual ?? Math.min(Math.round((totalUsuariosCriados / limite) * 100), 100);
+  const limiteAtingido = totalUsuariosCriados >= limite;
 
 
   if (authLoading || !user) {
@@ -187,10 +174,29 @@ export default function UsuariosPage() {
           {isAdmin && (
             <CriarUsuarioModal
               onSuccess={carregarDados}
-              limiteAtingido={false}
+              limiteAtingido={limiteAtingido}
             />
           )}
         </div>
+
+        <Card>
+          <CardContent className="pt-6 space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium text-gray-900 dark:text-gray-100">
+                Uso de usuários
+              </span>
+              <span className="text-muted-foreground">
+                {totalUsuariosCriados} de {limite}
+              </span>
+            </div>
+            <Progress value={totalUsuariosCriados} max={limite} />
+            <p className="text-xs text-muted-foreground">
+              {limiteAtingido
+                ? "Limite de 30 usuários atingido. Para aumentar, será necessário ajuste personalizado."
+                : `${percentualUso}% do limite utilizado.`}
+            </p>
+          </CardContent>
+        </Card>
 
         {/* Busca + Tabela */}
         <Card>
@@ -273,36 +279,21 @@ export default function UsuariosPage() {
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
-                            {usuario.id !== user?.id && (
-                              <>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => toggleAtivo(usuario)}
-                                  disabled={false}
-                                  title={
-                                    usuario.ativo
-                                      ? "Desativar"
-                                      : "Reativar"
-                                  }
-                                >
-                                  {usuario.ativo ? (
-                                    <UserX className="h-4 w-4 text-red-500" />
-                                  ) : (
-                                    <UserCheck className="h-4 w-4 text-green-500" />
-                                  )}
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => deletarPermanente(usuario)}
-                                  className="hover:bg-red-50 dark:hover:bg-red-950/50"
-                                  title="Excluir permanentemente (irreversível)"
-                                >
-                                  <Trash2 className="h-4 w-4 text-red-400" />
-                                </Button>
-                              </>
-                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deletarPermanente(usuario)}
+                              disabled={usuario.id === user?.id}
+                              className="hover:bg-red-50 dark:hover:bg-red-950/50 text-red-600 dark:text-red-400 disabled:opacity-50"
+                              title={
+                                usuario.id === user?.id
+                                  ? "Você não pode remover sua própria conta"
+                                  : "Remover permanentemente (irreversível)"
+                              }
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Remover
+                            </Button>
                           </div>
                         </TableCell>
                       )}

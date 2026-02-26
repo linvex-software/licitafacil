@@ -9,6 +9,8 @@ import { PrismaTenantService } from "../prisma/prisma-tenant.service";
 import { type CreateUserInput, type User, UserRole } from "@licitafacil/shared";
 import * as bcrypt from "bcrypt";
 
+const MAX_USERS_PER_EMPRESA = 30;
+
 @Injectable()
 export class UserService {
   constructor(
@@ -138,6 +140,16 @@ export class UserService {
     empresaId: string,
     data: { email: string; password: string; name: string; role?: string },
   ): Promise<User> {
+    const totalUsuariosCriados = await this.prisma.user.count({
+      where: { empresaId },
+    });
+
+    if (totalUsuariosCriados >= MAX_USERS_PER_EMPRESA) {
+      throw new ForbiddenException(
+        `Limite de ${MAX_USERS_PER_EMPRESA} usuários atingido para esta empresa`,
+      );
+    }
+
     // Verificar se email já existe
     const existingUser = await this.prisma.user.findUnique({
       where: { email: data.email },
@@ -291,18 +303,23 @@ export class UserService {
 
   /**
    * Retorna informações de uso de usuários da empresa.
-   * Plano único high-ticket — sem restrições de limite.
+   * Limite fixo de 30 usuários por empresa.
    */
   async obterLimite(empresaId: string) {
-    const usuariosAtivos = await this.prisma.user.count({
-      where: { empresaId, deletedAt: null },
+    const usuariosCriados = await this.prisma.user.count({
+      where: { empresaId },
     });
 
+    const percentual = Math.min(
+      Math.round((usuariosCriados / MAX_USERS_PER_EMPRESA) * 100),
+      100,
+    );
+
     return {
-      atual: usuariosAtivos,
-      limite: 999999,
-      disponivel: 999999,
-      percentual: 0,
+      atual: usuariosCriados,
+      limite: MAX_USERS_PER_EMPRESA,
+      disponivel: Math.max(MAX_USERS_PER_EMPRESA - usuariosCriados, 0),
+      percentual,
     };
   }
 
