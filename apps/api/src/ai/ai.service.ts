@@ -163,6 +163,49 @@ export class AiService {
     }
   }
 
+  async chatComEdital(analiseJson: string, pergunta: string): Promise<string> {
+    const prompt = `SISTEMA:
+Você é um assistente especializado em licitações públicas brasileiras,
+com profundo conhecimento da Lei 14.133/2021, Lei 8.666/93 e demais
+normas de contratação pública.
+Sua função é responder perguntas sobre o edital analisado abaixo.
+REGRAS OBRIGATÓRIAS:
+
+Responda APENAS com base nas informações presentes na análise do edital
+Se a informação não estiver na análise, diga claramente:
+"Esta informação não consta na análise do edital disponível."
+Seja objetivo e direto — máximo 3 parágrafos por resposta
+Use linguagem clara, sem jargões desnecessários
+Nunca invente valores, datas ou requisitos
+
+ANÁLISE DO EDITAL:
+${analiseJson}
+PERGUNTA DO USUÁRIO:
+${pergunta}`;
+
+    this.logger.log("Chamando OpenAI GPT-4o para chat com edital...");
+    const completion = await this.openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      temperature: 0.1,
+      max_tokens: 1024,
+    });
+
+    const resposta = completion.choices[0].message.content?.trim();
+    if (!resposta) {
+      throw new InternalServerErrorException(
+        "IA não retornou resposta para a pergunta",
+      );
+    }
+
+    return resposta;
+  }
+
   private truncarTexto(texto: string, maxCaracteres: number): string {
     if (texto.length <= maxCaracteres) {
       return texto;

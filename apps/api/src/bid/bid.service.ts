@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { PrismaTenantService } from "../prisma/prisma-tenant.service";
 import { AiService } from "../ai/ai.service";
@@ -341,5 +341,69 @@ export class BidService {
     );
 
     return resultado;
+  }
+
+  async chatComEdital(bidId: string, pergunta: string, empresaId: string) {
+    const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
+
+    await this.findOne(bidId, empresaId);
+
+    const editalAnalise = await prismaWithTenant.editalAnalise.findFirst({
+      where: { bidId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (
+      !editalAnalise ||
+      editalAnalise.status !== "CONCLUIDA" ||
+      !editalAnalise.resultado
+    ) {
+      throw new BadRequestException("ANALISE_NAO_ENCONTRADA");
+    }
+
+    const analiseJson = JSON.stringify(editalAnalise.resultado);
+    const resposta = await this.aiService.chatComEdital(analiseJson, pergunta);
+
+    const chat = await prismaWithTenant.chatHistorico.create({
+      data: {
+        empresaId,
+        bidId,
+        pergunta,
+        resposta,
+      },
+    });
+
+    return {
+      resposta: chat.resposta,
+      pergunta: chat.pergunta,
+      createdAt: chat.createdAt,
+    };
+  }
+
+  async getChatHistorico(bidId: string, empresaId: string) {
+    const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
+
+    await this.findOne(bidId, empresaId);
+
+    const editalAnalise = await prismaWithTenant.editalAnalise.findFirst({
+      where: { bidId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (
+      !editalAnalise ||
+      editalAnalise.status !== "CONCLUIDA" ||
+      !editalAnalise.resultado
+    ) {
+      throw new BadRequestException("ANALISE_NAO_ENCONTRADA");
+    }
+
+    const historicoDesc = await prismaWithTenant.chatHistorico.findMany({
+      where: { bidId },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
+
+    return historicoDesc.reverse();
   }
 }

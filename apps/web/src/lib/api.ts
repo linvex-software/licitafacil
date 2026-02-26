@@ -208,6 +208,30 @@ export async function getHistoricoSimulacoes(bidId: string): Promise<SimulacaoDi
   return data;
 }
 
+// --- Chat com Edital ---
+export interface ChatResposta {
+  resposta: string;
+  pergunta: string;
+  createdAt: string;
+}
+
+export interface ChatMensagem {
+  id: string;
+  pergunta: string;
+  resposta: string;
+  createdAt: string;
+}
+
+export async function chatComEdital(bidId: string, pergunta: string): Promise<ChatResposta> {
+  const { data } = await api.post(`/bids/${bidId}/chat`, { pergunta });
+  return data;
+}
+
+export async function getChatHistorico(bidId: string): Promise<ChatMensagem[]> {
+  const { data } = await api.get(`/bids/${bidId}/chat/historico`);
+  return data;
+}
+
 // --- Análise de Mercado (PNCP) ---
 export interface HistoricoCompraItem {
   data: string;
