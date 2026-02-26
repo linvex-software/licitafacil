@@ -36,6 +36,7 @@ import {
   updateBidSchema,
   markBidAtRiskSchema,
   clearBidRiskSchema,
+  moverColunaBidSchema,
   type Bid,
   type User,
   UserRole,
@@ -57,7 +58,7 @@ export class BidController {
     private readonly documentService: DocumentService,
     private readonly softDeleteService: SoftDeleteService,
     private readonly auditLogService: AuditLogService,
-  ) {}
+  ) { }
 
   /**
    * Cria uma nova licitação
@@ -112,6 +113,8 @@ export class BidController {
     @Query("legalStatus") legalStatus?: string,
     @Query("operationalState") operationalState?: string,
     @Query("search") search?: string,
+    @Query("startDate") startDate?: string,
+    @Query("endDate") endDate?: string,
   ) {
     return this.bidService.findAll({
       empresaId,
@@ -121,6 +124,8 @@ export class BidController {
       legalStatus,
       operationalState,
       search,
+      startDate,
+      endDate,
     });
   }
 
@@ -250,6 +255,32 @@ export class BidController {
     }
 
     return this.bidService.update(id, result.data, empresaId);
+  }
+
+  /**
+   * Move a licitação no funil Kanban
+   * PATCH /bids/:id/mover-coluna
+   * 
+   * Permissão: ADMIN e COLABORADOR
+   */
+  @Patch(":id/mover-coluna")
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  async moverColuna(
+    @Param("id") id: string,
+    @Body() body: unknown,
+    @Tenant() empresaId: string,
+    @CurrentUser() user: User,
+  ): Promise<Bid> {
+    const result = moverColunaBidSchema.safeParse(body);
+
+    if (!result.success) {
+      throw new BadRequestException({
+        message: "Dados inválidos: coluna não permitida",
+        errors: result.error.errors,
+      });
+    }
+
+    return this.bidService.moverColuna(id, empresaId, user.id, result.data.coluna);
   }
 
   /**

@@ -15,6 +15,8 @@ export interface ListBidsFilters {
   legalStatus?: string;
   operationalState?: string;
   search?: string; // Busca por título ou órgão
+  startDate?: string;
+  endDate?: string;
   page?: number;
   limit?: number;
 }
@@ -25,7 +27,7 @@ export class BidService {
     private readonly prisma: PrismaService,
     private readonly prismaTenant: PrismaTenantService,
     private readonly aiService: AiService,
-  ) {}
+  ) { }
 
   /**
    * Cria uma nova licitação
@@ -79,6 +81,14 @@ export class BidService {
         { title: { contains: filters.search, mode: "insensitive" } },
         { agency: { contains: filters.search, mode: "insensitive" } },
       ];
+    }
+
+    // Filtro por período (data de criação)
+    if (filters.startDate || filters.endDate) {
+      where.createdAt = {
+        ...(filters.startDate && { gte: new Date(filters.startDate) }),
+        ...(filters.endDate && { lte: new Date(filters.endDate) }),
+      };
     }
 
     // Buscar licitações e total
@@ -147,6 +157,51 @@ export class BidService {
         ...(data.operationalState && { operationalState: data.operationalState }),
       },
     });
+
+    return this.mapToBid(updatedBid);
+  }
+
+  /**
+   * Move uma licitação entre as colunas do Funil Kanban atualizando seu legalStatus
+   * e registrando uma auditoria da mudança de coluna
+   */
+  async moverColuna(id: string, empresaId: string, userId: string, targetColumn: string): Promise<Bid> {
+    const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
+
+    const existingBid = await prismaWithTenant.bid.findUnique({
+      where: { id },
+    });
+
+    if (!existingBid) {
+      throw new NotFoundException(`Licitação com ID ${id} não encontrada`);
+    }
+
+    if (existingBid.legalStatus === targetColumn) {
+      return this.mapToBid(existingBid);
+    }
+
+    const previousColumn = existingBid.legalStatus;
+
+    // Utilize Prisma transaction for atomicity: Update status + Audit Log
+    const [updatedBid] = await prismaWithTenant.$transaction([
+      prismaWithTenant.bid.update({
+        where: { id },
+        data: { legalStatus: targetColumn },
+      }),
+      prismaWithTenant.auditLog.create({
+        data: {
+          empresaId,
+          userId,
+          action: "bid.funil.moved",
+          resourceType: "Bid",
+          resourceId: id,
+          metadata: {
+            from: previousColumn,
+            to: targetColumn,
+          },
+        },
+      }),
+    ]);
 
     return this.mapToBid(updatedBid);
   }
