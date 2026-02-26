@@ -93,6 +93,25 @@ export async function deletePrazo(id: string) {
   return data;
 }
 
+export interface EventoAgenda {
+  id: string;
+  data: string;
+  tipo: "PRAZO" | "SESSAO" | "ABERTURA";
+  titulo: string;
+  bidId: string;
+  bid: { numero: string; orgao: string };
+  diasRestantes: number;
+}
+
+export async function getEventosAgenda(
+  mes: string
+): Promise<{ eventos: EventoAgenda[]; message?: string }> {
+  const { data } = await api.get("/negocios/eventos", {
+    params: { mes },
+  });
+  return data;
+}
+
 // --- Jurídico (petições) ---
 export type TipoPeticao =
   | "IMPUGNACAO"

@@ -9,10 +9,8 @@ import {
     PointerSensor,
     useSensor,
     useSensors,
-    DragStartEvent,
-    DragOverEvent,
-    DragEndEvent,
 } from "@dnd-kit/core";
+import type { DragStartEvent, DragOverEvent, DragEndEvent } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { FunilColumn } from "./funil-column";
 import { FunilCard } from "./funil-card";
