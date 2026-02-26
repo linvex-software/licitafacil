@@ -10,7 +10,7 @@ import {
     Newspaper, Building2, Search as SearchIcon, Zap,
     FileQuestion, Flag, Repeat, BookOpen,
     TrendingUp, History, Tag as TagIcon,
-    Kanban, Target, CalendarDays,
+    Target, CalendarDays,
 } from "lucide-react";
 import { AlertsDropdown } from "@/components/AlertsDropdown";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -86,8 +86,7 @@ const navGroups: NavGroup[] = [
             {
                 label: "Negócios", icon: Briefcase, href: "/negocios",
                 subItems: [
-                    { label: "Funil de licitações", href: "/negocios/funil", icon: TrendingUp },
-                    { label: "Quadros(kanban)", href: "/negocios/kanban", icon: Kanban },
+                    { label: "Funil de licitações (Kanban)", href: "/negocios/funil", icon: TrendingUp },
                     { label: "Agenda", href: "/negocios/agenda", icon: CalendarDays },
                 ]
             },
@@ -243,8 +242,9 @@ function MobileSidebarContent({ pathname, user, logout }: { pathname: string; us
 }
 
 /* ─── Layout ─────────────────────────────────────────────── */
-export function Layout({ children }: {
+export function Layout({ children, fullWidth = false }: {
     children: React.ReactNode;
+    fullWidth?: boolean;
 }) {
     const pathname = usePathname();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -359,8 +359,8 @@ export function Layout({ children }: {
             </header>
 
             {/* ── Page content ────────────────────────────────── */}
-            <main className="flex-1 p-5 md:p-7 overflow-y-auto">
-                <div className="mx-auto max-w-screen-xl space-y-6 animate-fade-in">
+            <main className={cn("flex-1 overflow-y-auto", fullWidth ? "p-4" : "p-5 md:p-7")}>
+                <div className={cn("mx-auto space-y-6 animate-fade-in", fullWidth ? "max-w-none px-2" : "max-w-screen-xl")}>
                     {children}
                 </div>
             </main>

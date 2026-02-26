@@ -16,6 +16,7 @@ export const BidModality = {
 export const LegalStatus = {
   ANALISANDO: "ANALISANDO",
   PARTICIPANDO: "PARTICIPANDO",
+  AGUARDANDO_RESULTADO: "AGUARDANDO_RESULTADO",
   DESCARTADA: "DESCARTADA",
   VENCIDA: "VENCIDA",
   PERDIDA: "PERDIDA",
@@ -45,6 +46,7 @@ export const createBidSchema = z.object({
   legalStatus: z.enum([
     LegalStatus.ANALISANDO,
     LegalStatus.PARTICIPANDO,
+    LegalStatus.AGUARDANDO_RESULTADO,
     LegalStatus.DESCARTADA,
     LegalStatus.VENCIDA,
     LegalStatus.PERDIDA,
@@ -71,6 +73,7 @@ export const updateBidSchema = z.object({
     .enum([
       LegalStatus.ANALISANDO,
       LegalStatus.PARTICIPANDO,
+      LegalStatus.AGUARDANDO_RESULTADO,
       LegalStatus.DESCARTADA,
       LegalStatus.VENCIDA,
       LegalStatus.PERDIDA,
@@ -93,6 +96,21 @@ export const markBidAtRiskSchema = z.object({
  */
 export const clearBidRiskSchema = z.object({
   confirmacao: z.literal("CONFIRMO_REMOVER_RISCO"),
+});
+
+/**
+ * Schema de validação para mover uma licitação no funil Kanban
+ */
+export const moverColunaBidSchema = z.object({
+  coluna: z.enum([
+    LegalStatus.ANALISANDO,
+    LegalStatus.PARTICIPANDO,
+    LegalStatus.AGUARDANDO_RESULTADO,
+    LegalStatus.DESCARTADA,
+    LegalStatus.VENCIDA,
+    LegalStatus.PERDIDA,
+    LegalStatus.CANCELADA,
+  ]),
 });
 
 /**
@@ -120,6 +138,7 @@ export type CreateBidInput = z.infer<typeof createBidSchema>;
 export type UpdateBidInput = z.infer<typeof updateBidSchema>;
 export type MarkBidAtRiskInput = z.infer<typeof markBidAtRiskSchema>;
 export type ClearBidRiskInput = z.infer<typeof clearBidRiskSchema>;
+export type MoverColunaBidInput = z.infer<typeof moverColunaBidSchema>;
 export type BidModalityType = keyof typeof BidModality;
 export type LegalStatusType = keyof typeof LegalStatus;
 export type OperationalStateType = keyof typeof OperationalState;
