@@ -29,6 +29,7 @@ interface CriarUsuarioModalProps {
 
 export function CriarUsuarioModal({
   onSuccess,
+  limiteAtingido = false,
 }: CriarUsuarioModalProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -50,6 +51,16 @@ export function CriarUsuarioModal({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    if (limiteAtingido) {
+      toast({
+        title: "Limite atingido",
+        description: "Sua empresa atingiu o limite de 30 usuários.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -79,7 +90,7 @@ export function CriarUsuarioModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button disabled={limiteAtingido} title={limiteAtingido ? "Limite de 30 usuários atingido" : "Criar novo usuário"}>
           <UserPlus className="mr-2 h-4 w-4" />
           Novo Usuário
         </Button>
