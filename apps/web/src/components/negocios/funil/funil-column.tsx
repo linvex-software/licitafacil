@@ -20,9 +20,10 @@ interface FunilColumnProps {
     bids: Bid[];
     titleColor?: string;
     onMove: (bidId: string, column: string) => void | Promise<void>;
+    onOpenDetails?: (bidId: string) => void;
 }
 
-export function FunilColumn({ id, title, bids, onMove, titleColor = "text-gray-700 dark:text-gray-300" }: FunilColumnProps) {
+export function FunilColumn({ id, title, bids, onMove, onOpenDetails, titleColor = "text-gray-700 dark:text-gray-300" }: FunilColumnProps) {
     const { setNodeRef, isOver } = useDroppable({
         id: id,
         data: {
@@ -50,7 +51,7 @@ export function FunilColumn({ id, title, bids, onMove, titleColor = "text-gray-7
                 <SortableContext items={bids.map(b => b.id)} strategy={verticalListSortingStrategy}>
                     <div className="flex flex-col gap-2 min-h-[100px]">
                         {bids.map((bid) => (
-                            <FunilCard key={bid.id} bid={bid} onMove={onMove} />
+                            <FunilCard key={bid.id} bid={bid} onMove={onMove} onOpenDetails={onOpenDetails} />
                         ))}
                     </div>
                 </SortableContext>

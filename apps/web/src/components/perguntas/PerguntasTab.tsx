@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { FileX, Send } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { chatComEdital, getChatHistorico, type ChatMensagem } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 interface PerguntasTabProps {
-  bidId: string;
+  bidId?: string;
+  emModal?: boolean;
 }
 
 interface PerguntaRapida {
@@ -61,7 +63,9 @@ const PERGUNTAS_RAPIDAS: PerguntaRapida[] = [
   },
 ];
 
-export function PerguntasTab({ bidId }: PerguntasTabProps) {
+export function PerguntasTab({ bidId: bidIdProp, emModal = false }: PerguntasTabProps) {
+  const params = useParams<{ id?: string }>();
+  const bidId = bidIdProp || params?.id || "";
   const router = useRouter();
   const { toast } = useToast();
 
@@ -75,6 +79,11 @@ export function PerguntasTab({ bidId }: PerguntasTabProps) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
+    if (!bidId) {
+      setIsLoadingHistorico(false);
+      return;
+    }
+
     const carregarHistorico = async () => {
       setIsLoadingHistorico(true);
       try {
@@ -117,6 +126,15 @@ export function PerguntasTab({ bidId }: PerguntasTabProps) {
 
   const handleEnviarPergunta = async (textoPergunta?: string) => {
     const perguntaFinal = (textoPergunta ?? pergunta).trim();
+    if (!bidId) {
+      toast({
+        title: "Licitação não identificada",
+        description: "Não foi possível identificar a licitação para enviar a pergunta.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (perguntaFinal.length < 3 || isRespondendo || semAnalise) {
       return;
     }
@@ -167,7 +185,12 @@ export function PerguntasTab({ bidId }: PerguntasTabProps) {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)] border border-border rounded-2xl overflow-hidden bg-background">
+    <div
+      className={cn(
+        "flex flex-col border border-border rounded-2xl overflow-hidden bg-background",
+        emModal ? "h-full min-h-[420px]" : "h-[calc(100vh-120px)]",
+      )}
+    >
       <div className="flex items-center gap-3 p-4 border-b border-border">
         <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold">
           L
@@ -303,7 +326,7 @@ export function PerguntasTab({ bidId }: PerguntasTabProps) {
               ajustarAlturaTextarea();
             }}
             disabled={isRespondendo || semAnalise}
-            className="flex-1 resize-none bg-muted rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px] max-h-[120px] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 resize-none bg-muted rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px] max-h-[120px] disabled:opacity-50 disabled:cursor-not-allowed pointer-events-auto"
             placeholder="Pergunte sobre o edital..."
             rows={1}
           />

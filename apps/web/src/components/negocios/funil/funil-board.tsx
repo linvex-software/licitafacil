@@ -28,6 +28,7 @@ interface Bid {
 
 interface FunilBoardProps {
     initialBids: Bid[];
+    onOpenDetails?: (bidId: string) => void;
 }
 
 const COLUMNS = [
@@ -38,7 +39,7 @@ const COLUMNS = [
     { id: "PERDIDA", title: "Perdidas ❌", color: "text-red-700 dark:text-red-400" },
 ];
 
-export function FunilBoard({ initialBids }: FunilBoardProps) {
+export function FunilBoard({ initialBids, onOpenDetails }: FunilBoardProps) {
     const { toast } = useToast();
     const [bids, setBids] = useState<Bid[]>(initialBids);
     const [activeBid, setActiveBid] = useState<Bid | null>(null);
@@ -186,6 +187,7 @@ export function FunilBoard({ initialBids }: FunilBoardProps) {
                         titleColor={col.color}
                         bids={bids.filter((b) => b.legalStatus === col.id)}
                         onMove={handleManualMove}
+                        onOpenDetails={onOpenDetails}
                     />
                 ))}
             </div>

@@ -8,10 +8,11 @@ import { format, getDay, parse, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { Layout } from "@/components/layout";
-import { EventoModal } from "@/components/agenda/EventoModal";
+import { LicitacaoModal } from "@/components/licitacoes/licitacao-modal";
 import { Button } from "@/components/ui/button";
 import { getEventosAgenda, type EventoAgenda } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 const localizer = dateFnsLocalizer({
   format,
@@ -45,12 +46,12 @@ interface CalendarEvent {
 }
 
 export default function AgendaPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const [mesAtual, setMesAtual] = useState(new Date());
   const [eventos, setEventos] = useState<EventoAgenda[]>([]);
   const [loading, setLoading] = useState(false);
-  const [eventoSelecionado, setEventoSelecionado] = useState<EventoAgenda | null>(null);
-  const [modalAberto, setModalAberto] = useState(false);
+  const [modalBidId, setModalBidId] = useState<string | null>(null);
   const [mensagemVazia, setMensagemVazia] = useState("Nenhum evento neste mes");
 
   useEffect(() => {
@@ -177,8 +178,7 @@ export default function AgendaPage() {
                 messages={messages}
                 toolbar={false}
                 onSelectEvent={(evento) => {
-                  setEventoSelecionado((evento as CalendarEvent).resource);
-                  setModalAberto(true);
+                  setModalBidId((evento as CalendarEvent).resource.bidId);
                 }}
                 eventPropGetter={(evento) => getCorEvento(evento as CalendarEvent)}
               />
@@ -187,10 +187,10 @@ export default function AgendaPage() {
         )}
       </div>
 
-      <EventoModal
-        aberto={modalAberto}
-        evento={eventoSelecionado}
-        onFechar={() => setModalAberto(false)}
+      <LicitacaoModal
+        bidId={modalBidId}
+        onFechar={() => setModalBidId(null)}
+        onAbrirPaginaCompleta={(id) => router.push(`/licitacoes/${id}`)}
       />
     </Layout>
   );

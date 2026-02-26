@@ -8,6 +8,8 @@ import { Loader2, TrendingUp, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FunilBoard } from "@/components/negocios/funil/funil-board";
+import { LicitacaoModal } from "@/components/licitacoes/licitacao-modal";
+import { useRouter } from "next/navigation";
 
 interface Bid {
     id: string;
@@ -19,12 +21,14 @@ interface Bid {
 }
 
 export default function FunilPage() {
+    const router = useRouter();
     const { toast } = useToast();
     const [bids, setBids] = useState<Bid[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [modality, setModality] = useState("ALL");
     const [period, setPeriod] = useState("ALL");
+    const [modalBidId, setModalBidId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchBids();
@@ -117,10 +121,16 @@ export default function FunilPage() {
                             <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
                         </div>
                     ) : (
-                        <FunilBoard initialBids={bids} />
+                        <FunilBoard initialBids={bids} onOpenDetails={setModalBidId} />
                     )}
                 </div>
             </div>
+
+            <LicitacaoModal
+                bidId={modalBidId}
+                onFechar={() => setModalBidId(null)}
+                onAbrirPaginaCompleta={(id) => router.push(`/licitacoes/${id}`)}
+            />
         </Layout>
     );
 }

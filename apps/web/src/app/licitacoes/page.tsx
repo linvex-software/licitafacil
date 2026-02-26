@@ -21,9 +21,11 @@ import {
 } from "@/components/ui/table";
 import { useLicitacoes } from "@/hooks/use-licitacoes";
 import { CriarLicitacaoModal } from "@/components/licitacoes/criar-licitacao-modal";
+import { LicitacaoModal } from "@/components/licitacoes/licitacao-modal";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
     Search,
     Filter,
@@ -60,10 +62,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export default function LicitacoesListPage() {
+    const router = useRouter();
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [page, setPage] = useState(1);
     const [lastSync, setLastSync] = useState<string>("");
+    const [modalBidId, setModalBidId] = useState<string | null>(null);
 
     const { toast } = useToast();
 
@@ -306,18 +310,17 @@ export default function LicitacoesListPage() {
                                     <TableRow
                                         key={item.id}
                                         className="group hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-all cursor-pointer border-gray-100 dark:border-gray-800"
+                                        onClick={() => setModalBidId(item.id)}
                                     >
                                         <TableCell onClick={(e) => e.stopPropagation()}>
                                             <Checkbox className="border-gray-200 dark:border-gray-600 group-hover:border-gray-400" />
                                         </TableCell>
                                         <TableCell className="py-4">
-                                            <Link href={`/licitacoes/${item.id}`} className="block">
-                                                <div className="font-bold text-gray-900 dark:text-gray-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors uppercase text-sm tracking-tight">{item.title}</div>
-                                                <div className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-1 flex items-center gap-1.5">
-                                                    <span className="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded uppercase">{item.agency.slice(0, 3)}</span>
-                                                    <span className="truncate max-w-[250px]">{item.agency}</span>
-                                                </div>
-                                            </Link>
+                                            <div className="font-bold text-gray-900 dark:text-gray-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors uppercase text-sm tracking-tight">{item.title}</div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-1 flex items-center gap-1.5">
+                                                <span className="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded uppercase">{item.agency.slice(0, 3)}</span>
+                                                <span className="truncate max-w-[250px]">{item.agency}</span>
+                                            </div>
                                         </TableCell>
                                         <TableCell>
                                             <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-transparent font-semibold capitalize">
@@ -432,6 +435,12 @@ export default function LicitacoesListPage() {
                     </div>
                 </div>
             </div>
+
+            <LicitacaoModal
+                bidId={modalBidId}
+                onFechar={() => setModalBidId(null)}
+                onAbrirPaginaCompleta={(id) => router.push(`/licitacoes/${id}`)}
+            />
         </Layout>
     );
 }

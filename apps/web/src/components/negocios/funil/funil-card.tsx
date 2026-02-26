@@ -29,6 +29,7 @@ interface Bid {
 interface FunilCardProps {
     bid: Bid;
     onMove?: (bidId: string, columnId: string) => void;
+    onOpenDetails?: (bidId: string) => void;
 }
 
 const COLUMNS = [
@@ -39,7 +40,7 @@ const COLUMNS = [
     { id: "PERDIDA", title: "Perdida" },
 ];
 
-export function FunilCard({ bid, onMove }: FunilCardProps) {
+export function FunilCard({ bid, onMove, onOpenDetails }: FunilCardProps) {
     const {
         attributes,
         listeners,
@@ -117,6 +118,27 @@ export function FunilCard({ bid, onMove }: FunilCardProps) {
                     <Building2 className="w-3.5 h-3.5 flex-shrink-0" />
                     <span className="truncate">{bid.agency}</span>
                 </div>
+
+                {onOpenDetails && (
+                    <div
+                        className="mt-3"
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                    >
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="w-full text-xs"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onOpenDetails(bid.id);
+                            }}
+                        >
+                            Ver detalhes
+                        </Button>
+                    </div>
+                )}
             </Card>
         </div>
     );
