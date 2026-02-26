@@ -22,6 +22,7 @@ import { DiariosModule } from "./integracoes/diarios/diarios.module";
 import { JuridicoModule } from "./juridico/juridico.module";
 import { AnaliseModule } from "./analise/analise.module";
 import { DisputaModule } from "./disputa/disputa.module";
+import { NegociosModule } from "./negocios/negocios.module";
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { DisputaModule } from "./disputa/disputa.module";
     JuridicoModule,
     AnaliseModule,
     DisputaModule,
+    NegociosModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],
