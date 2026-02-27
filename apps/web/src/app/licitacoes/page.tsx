@@ -50,6 +50,8 @@ import {
 import { useState, useEffect } from "react";
 import { MetricsCard } from "@/components/metrics-card";
 import { Badge } from "@/components/ui/Badge";
+import { useBidPrediction } from "@/hooks/use-bid-prediction";
+import { PredictionBadge } from "@/components/licitacoes/prediction-badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -60,6 +62,22 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+/**
+ * Célula de predição para cada linha da tabela.
+ * Componente separado para poder usar o hook useBidPrediction por bid.
+ */
+function PredictionCell({ bidId }: { bidId: string }) {
+  const { data: prediction, isLoading } = useBidPrediction(bidId);
+  return (
+    <PredictionBadge
+      prediction={prediction}
+      isLoading={isLoading}
+      size="sm"
+      showLabel={false}
+    />
+  );
+}
 
 export default function LicitacoesListPage() {
     const router = useRouter();
@@ -272,6 +290,7 @@ export default function LicitacoesListPage() {
                                 <TableHead>Modalidade</TableHead>
                                 <TableHead>Status Jurídico</TableHead>
                                 <TableHead>Estado Operacional</TableHead>
+                                <TableHead>Predição IA</TableHead>
                                 <TableHead className="text-right">Ações</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -287,6 +306,7 @@ export default function LicitacoesListPage() {
                                         <TableCell><div className="h-4 w-24 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" /></TableCell>
                                         <TableCell><div className="h-4 w-20 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" /></TableCell>
                                         <TableCell><div className="h-7 w-24 bg-gray-100 dark:bg-gray-800 rounded-full animate-pulse" /></TableCell>
+                                        <TableCell><div className="h-6 w-16 bg-gray-100 dark:bg-gray-800 rounded-full animate-pulse" /></TableCell>
                                         <TableCell><div className="h-10 w-28 bg-gray-100 dark:bg-gray-800 rounded-lg ml-auto animate-pulse" /></TableCell>
                                     </TableRow>
                                 ))
@@ -355,6 +375,11 @@ export default function LicitacoesListPage() {
                                                     </TooltipContent>
                                                 </Tooltip>
                                             </TooltipProvider>
+                                        </TableCell>
+                                        <TableCell onClick={(e) => e.stopPropagation()}>
+                                            <Link href={`/licitacoes/${item.id}`} title="Ver análise preditiva completa">
+                                                <PredictionCell bidId={item.id} />
+                                            </Link>
                                         </TableCell>
                                         <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex justify-end items-center gap-2">

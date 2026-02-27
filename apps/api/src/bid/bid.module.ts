@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { BidController } from "./bid.controller";
 import { BidService } from "./bid.service";
 import { BidRiskService } from "./bid-risk.service";
+import { BidPredictionService } from "./bid-prediction.service";
 import { PrismaModule } from "../prisma/prisma.module";
 import { CommonModule } from "../common/common.module";
 import { AuditLogModule } from "../audit-log/audit-log.module";
@@ -11,7 +12,7 @@ import { AiModule } from "../ai/ai.module";
 @Module({
   imports: [PrismaModule, CommonModule, AuditLogModule, DocumentModule, AiModule],
   controllers: [BidController],
-  providers: [BidService, BidRiskService],
-  exports: [BidService, BidRiskService],
+  providers: [BidService, BidRiskService, BidPredictionService],
+  exports: [BidService, BidRiskService, BidPredictionService],
 })
 export class BidModule {}
