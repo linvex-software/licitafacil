@@ -1,0 +1,9 @@
+.git
+.gitignore
+.md
+.env
+.env.
+apps/web
+apps/web/**
+**/node_modules/.cache
+**/.next
