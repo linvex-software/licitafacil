@@ -235,7 +235,7 @@ export function PredictionModal({
               <div className="mt-4 text-center py-6">
                 <Sparkles className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                  Nenhuma análise realizada ainda. Clique em "Analisar" para obter uma previsão de sucesso baseada em 6 fatores.
+                  Nenhuma análise realizada ainda. Clique em &quot;Analisar&quot; para obter uma previsão de sucesso baseada em 6 fatores.
                 </p>
                 <Button onClick={onAnalisar} disabled={isAnalyzing}>
                   <Sparkles className="w-4 h-4 mr-2" />

@@ -7,7 +7,6 @@ import { fetchDocuments, downloadDocument, deleteDocument } from "@/lib/api";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent } from "@/components/ui/Card";
 import { DocumentVersions } from "./DocumentVersions";
-import { useRef } from "react";
 import { Upload } from "lucide-react";
 
 interface DocumentsListProps {
