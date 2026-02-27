@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react";
 import { Layout } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
@@ -21,12 +22,16 @@ import {
   Scale,
   Swords,
   MessageCircle,
+  Sparkles,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { AnalisarEditalModal } from "@/components/licitacoes/analisar-edital-modal";
 import type { AnalisarEditalResponse } from "@/hooks/use-analisar-edital";
+import { useBidPrediction, useAnalisarProbabilidade } from "@/hooks/use-bid-prediction";
+import { PredictionBadge } from "@/components/licitacoes/prediction-badge";
+import { PredictionModal } from "@/components/licitacoes/prediction-modal";
 
 export default function LicitacaoDetailPage() {
   const params = useParams();
@@ -35,11 +40,32 @@ export default function LicitacaoDetailPage() {
   const { mutateAsync: updateBid, isPending } = useUpdateBid();
   const { toast } = useToast();
 
+  // Análise preditiva
+  const [predictionModalOpen, setPredictionModalOpen] = useState(false);
+  const { data: prediction, isLoading: isPredictionLoading } = useBidPrediction(id);
+  const { mutate: analisarProbabilidade, isPending: isAnalyzing } = useAnalisarProbabilidade();
+
+  const handleAnalisarProbabilidade = () => {
+    analisarProbabilidade(id, {
+      onSuccess: () => {
+        toast({
+          title: "Análise concluída",
+          description: "A probabilidade de sucesso foi calculada com sucesso.",
+        });
+      },
+      onError: (err: any) => {
+        toast({
+          title: "Erro na análise",
+          description: err?.response?.data?.message || "Não foi possível analisar. Tente novamente.",
+          variant: "destructive",
+        });
+      },
+    });
+  };
+
   const handleToggleRisk = async () => {
     if (!licitacao) return;
 
-    // In a real app we'd use the markAtRisk/clearRisk endpoints
-    // For now we use the general patch for simplicity in mapping
     try {
       const newState = licitacao.operationalState === 'OK' ? 'EM_RISCO' : 'OK';
       await updateBid({
@@ -63,16 +89,15 @@ export default function LicitacaoDetailPage() {
   const handleAplicarAnalise = (dados: AnalisarEditalResponse) => {
     if (!licitacao) return;
 
-    // Mapear modalidade da IA para valores aceitos pelo sistema
-    const mapModalidade = (modalidadeIA: string): string | null => {
+    const mapModalidade = (modalidadeIA: string): string => {
       const mapa: Record<string, string> = {
         PREGAO_ELETRONICO: "PREGAO_ELETRONICO",
-        PREGAO_PRESENCIAL: "PREGAO_ELETRONICO", // Mais próximo
+        PREGAO_PRESENCIAL: "PREGAO_ELETRONICO",
         CONCORRENCIA: "CONCORRENCIA",
-        TOMADA_PRECOS: "CONCORRENCIA", // Mais próximo
-        CONVITE: "DISPENSA", // Mais próximo
+        TOMADA_PRECOS: "CONCORRENCIA",
+        CONVITE: "DISPENSA",
         DISPENSA: "DISPENSA",
-        INEXIGIBILIDADE: "DISPENSA", // Mais próximo
+        INEXIGIBILIDADE: "DISPENSA",
       };
       return mapa[modalidadeIA] || "OUTRA";
     };
@@ -110,7 +135,7 @@ export default function LicitacaoDetailPage() {
   if (isLoading) {
     return (
       <Layout>
-        <div className=" mx-auto space-y-6">
+        <div className="mx-auto space-y-6">
           <div className="h-8 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
           <div className="h-64 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />
           <div className="h-32 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />
@@ -134,7 +159,7 @@ export default function LicitacaoDetailPage() {
 
   return (
     <Layout>
-      <div className=" mx-auto">
+      <div className="mx-auto">
         {/* Header */}
         <div className="mb-8">
           <Link href="/licitacoes">
@@ -159,7 +184,21 @@ export default function LicitacaoDetailPage() {
               </div>
             </div>
 
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2 flex-wrap items-center">
+              {/* Badge de probabilidade no header */}
+              <button
+                onClick={() => setPredictionModalOpen(true)}
+                className="focus:outline-none"
+                title="Ver análise preditiva de sucesso"
+              >
+                <PredictionBadge
+                  prediction={prediction}
+                  isLoading={isPredictionLoading}
+                  size="md"
+                  showLabel
+                />
+              </button>
+
               <AnalisarEditalModal
                 bidId={id}
                 onAplicar={handleAplicarAnalise}
@@ -242,7 +281,40 @@ export default function LicitacaoDetailPage() {
           </Card>
         </div>
 
-        {/* Ações da licitação: Prazos, Checklist */}
+        {/* Card de Análise Preditiva */}
+        <Card
+          className="shadow-sm border-gray-200 dark:border-gray-700 hover:border-purple-500/50 hover:shadow-md transition-all cursor-pointer group mb-6"
+          onClick={() => setPredictionModalOpen(true)}
+        >
+          <CardContent className="pt-5 pb-5 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 group-hover:bg-purple-500/20 transition-colors">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-heading font-semibold text-gray-900 dark:text-gray-100 group-hover:text-purple-700 dark:group-hover:text-purple-400">
+                  Análise Preditiva de Sucesso
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {prediction
+                    ? `Score: ${prediction.score}/100 — ${prediction.recomendacao}`
+                    : "Calcule a probabilidade de sucesso com IA (6 fatores)"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <PredictionBadge
+                prediction={prediction}
+                isLoading={isPredictionLoading}
+                size="sm"
+                showLabel={false}
+              />
+              <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-purple-500 shrink-0" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Ações da licitação: Prazos, Checklist, etc. */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <Link href={`/licitacoes/${id}/prazos`}>
             <Card className="shadow-sm border-gray-200 dark:border-gray-700 hover:border-emerald-500/50 hover:shadow-md transition-all cursor-pointer group h-full">
@@ -326,7 +398,7 @@ export default function LicitacaoDetailPage() {
           </Link>
         </div>
 
-        {/* Audit / Info Card */}
+        {/* Alerta de Risco */}
         {licitacao.operationalState === 'EM_RISCO' && (
           <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 mb-8">
             <CardContent className="pt-6">
@@ -348,6 +420,17 @@ export default function LicitacaoDetailPage() {
           </Card>
         )}
       </div>
+
+      {/* Modal de Análise Preditiva */}
+      <PredictionModal
+        open={predictionModalOpen}
+        onClose={() => setPredictionModalOpen(false)}
+        prediction={prediction}
+        isLoading={isPredictionLoading}
+        isAnalyzing={isAnalyzing}
+        onAnalisar={handleAnalisarProbabilidade}
+        bidTitle={licitacao.title}
+      />
     </Layout>
   );
 }

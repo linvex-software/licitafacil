@@ -50,6 +50,8 @@ model Empresa {
   simulacoes         SimulacaoDisputa[]
   // Relacionamento: Uma empresa tem muitos históricos de chat com edital
   chatHistoricos     ChatHistorico[]
+  // Relacionamento: Uma empresa tem muitas análises preditivas de licitações
+  bidPredictions     BidPrediction[]
 
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("empresas")
@@ -157,6 +159,8 @@ model Bid {
   simulacoes      SimulacaoDisputa[]
   // Relacionamento: Uma licitação pode ter vários históricos de chat com edital
   chatHistoricos  ChatHistorico[]
+  // Relacionamento: Uma licitação pode ter várias análises preditivas
+  bidPredictions  BidPrediction[]
 
   @@index([empresaId])
   @@index([empresaId, operationalState]) // Consultas por empresa e estado operacional
@@ -628,6 +632,41 @@ model EditalAnalise {
   @@index([empresaId, createdAt])
   @@index([bidId])
   @@map("edital_analises")
+}
+
+// Entidade BidPrediction (Análise Preditiva de Sucesso em Licitações)
+model BidPrediction {
+  id           String   @id @default(cuid())
+  bidId        String
+  empresaId    String
+
+  // Score final (0-100)
+  score        Float
+  // Recomendação: PARTICIPAR | ANALISAR | DESCARTAR
+  recomendacao String
+
+  // Breakdown dos 6 fatores (JSON)
+  fatores      Json
+
+  // Explicação gerada pela IA
+  explicacao   String?  @db.Text
+  // Recomendações acionáveis geradas pela IA
+  acoes        Json?
+
+  // Rastreamento de uso da IA
+  tokensUsados Int?
+  tempoSegundos Int?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relacionamentos
+  bid          Bid      @relation(fields: [bidId], references: [id], onDelete: Cascade)
+  empresa      Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@index([bidId])
+  @@index([empresaId, createdAt(sort: Desc)])
+  @@map("bid_predictions")
 }
 
 // Entidade DiarioOficial (Registro de fontes e varreduras de Diários Oficiais)

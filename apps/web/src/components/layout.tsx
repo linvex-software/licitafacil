@@ -6,12 +6,12 @@ import {
     LayoutDashboard, Gavel, Settings,
     User, LogOut, Menu, FileText, BarChart3,
     Globe, ShieldCheck, ChevronDown, ClipboardList,
-    Compass, Scale, BarChart2, Swords, Briefcase,
+    Compass, BarChart2, Swords, Briefcase,
     Newspaper, Building2, Search as SearchIcon, Zap,
-    FileQuestion, Flag, Repeat, BookOpen,
     TrendingUp, History, Tag as TagIcon,
-    Target, CalendarDays, Users,
+    CalendarDays, Users,
 } from "lucide-react";
+
 import { AlertsDropdown } from "@/components/AlertsDropdown";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useState, useRef } from "react";
@@ -53,24 +53,14 @@ const navGroups: NavGroup[] = [
                 label: "Oportunidades", icon: Compass, href: "/oportunidades",
                 subItems: [
                     { label: "Encontrar", href: "/oportunidades", icon: SearchIcon },
-                    { label: "Diários Oficiais", href: "/integracoes/diarios", icon: BookOpen },
                     { label: "Pesquisas rápida", href: "/oportunidades/pesquisas-rapida", icon: Zap },
                     { label: "Meus Jornais", href: "/oportunidades/jornais", icon: Newspaper },
                     { label: "Órgãos", href: "/oportunidades/orgaos", icon: Building2 },
                 ]
             },
             {
-                label: "Jurídico", icon: Scale, href: "/juridico",
-                subItems: [
-                    { label: "Impugnação", href: "/juridico/impugnacao", icon: Flag },
-                    { label: "Esclarecimento", href: "/juridico/esclarecimento", icon: FileQuestion },
-                    { label: "Intenção de recurso", href: "/juridico/intencao-recurso", icon: Target },
-                    { label: "Recurso", href: "/juridico/recurso", icon: Repeat },
-                    { label: "Contra-razão", href: "/juridico/contra-razao", icon: Scale },
-                ]
-            },
-            {
                 label: "Análise", icon: BarChart2, href: "/analise",
+
                 subItems: [
                     { label: "Histórico de Compras", href: "/analise/historico-compras", icon: History },
                     { label: "Concorrentes", href: "/analise/concorrentes", icon: Building2 },

@@ -21,6 +21,7 @@ import {
 import { FileInterceptor } from "@nestjs/platform-express";
 import { BidService } from "./bid.service";
 import { BidRiskService } from "./bid-risk.service";
+import { BidPredictionService } from "./bid-prediction.service";
 import { DocumentService } from "../document/document.service";
 import { SoftDeleteService } from "../common/services/soft-delete.service";
 import { AuditLogService } from "../audit-log/audit-log.service";
@@ -62,6 +63,7 @@ export class BidController {
   constructor(
     private readonly bidService: BidService,
     private readonly bidRiskService: BidRiskService,
+    private readonly bidPredictionService: BidPredictionService,
     private readonly documentService: DocumentService,
     private readonly softDeleteService: SoftDeleteService,
     private readonly auditLogService: AuditLogService,
@@ -575,6 +577,43 @@ export class BidController {
     pdf: Express.Multer.File,
   ) {
     return this.bidService.analisarEdital(id, empresaId, pdf);
+  }
+
+  /**
+   * Analisa probabilidade de sucesso de uma licitação com IA
+   * POST /bids/:id/analisar-probabilidade
+   *
+   * Calcula 6 fatores ponderados e retorna score 0-100 com recomendação.
+   * Persiste o resultado para consulta futura sem recalcular.
+   *
+   * Permissão: ADMIN e COLABORADOR
+   */
+  @Post(":id/analisar-probabilidade")
+  @HttpCode(HttpStatus.OK)
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  async analisarProbabilidade(
+    @Param("id") id: string,
+    @Tenant() empresaId: string,
+  ) {
+    return this.bidPredictionService.analisarProbabilidade(id, empresaId);
+  }
+
+  /**
+   * Obtém a análise preditiva mais recente de uma licitação (sem recalcular)
+   * GET /bids/:id/probabilidade
+   *
+   * Retorna null se não houver análise prévia.
+   *
+   * Permissão: ADMIN e COLABORADOR
+   */
+  @Get(":id/probabilidade")
+  @HttpCode(HttpStatus.OK)
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  async obterProbabilidade(
+    @Param("id") id: string,
+    @Tenant() empresaId: string,
+  ) {
+    return this.bidPredictionService.obterPrediction(id, empresaId);
   }
 
   @Post(":id/chat")
