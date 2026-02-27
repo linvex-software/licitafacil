@@ -7,3 +7,4 @@ apps/web
 apps/web/**
 **/node_modules/.cache
 **/.next
+cache bust

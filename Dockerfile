@@ -1,4 +1,5 @@
 FROM node:20-alpine AS builder
+ARG CACHE_BUST=1
 
 WORKDIR /app
 
