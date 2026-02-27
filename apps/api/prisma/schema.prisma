@@ -104,12 +104,12 @@ model User {
   checklistItemsConcluidos  ChecklistItem[]
 
   // Configurações de notificação por email
-  receberEmails        Boolean  @default(true)
-  receberDocVencendo   Boolean  @default(true)
-  receberPrazoCritico  Boolean  @default(true)
-  receberRisco         Boolean  @default(true)
-  frequenciaEmail      String   @default("IMEDIATO") // IMEDIATO | DIARIO | OFF
-  unsubscribeToken     String?  @unique
+  receberEmails       Boolean @default(true)
+  receberDocVencendo  Boolean @default(true)
+  receberPrazoCritico Boolean @default(true)
+  receberRisco        Boolean @default(true)
+  frequenciaEmail     String  @default("IMEDIATO") // IMEDIATO | DIARIO | OFF
+  unsubscribeToken    String? @unique
 
   @@index([email])
   @@index([empresaId])
@@ -144,23 +144,23 @@ model Bid {
   alertaRiscoEnviadoEm DateTime?
 
   // Relacionamento: Uma licitação pertence a uma empresa
-  empresa        Empresa         @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  empresa        Empresa            @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   // Relacionamento: Uma licitação pode ter vários documentos
   documents      Document[]
   // Relacionamento: Uma licitação pode ter vários itens de checklist
   checklistItems ChecklistItem[]
   // Relacionamento: Uma licitação pode ter vários prazos
-  prazos          Prazo[]
+  prazos         Prazo[]
   // Relacionamento: Uma licitação pode ter várias análises de edital
-  editalAnalises  EditalAnalise[]
+  editalAnalises EditalAnalise[]
   // Relacionamento: Uma licitação pode ter várias petições jurídicas
-  peticoes        Peticao[]
+  peticoes       Peticao[]
   // Relacionamento: Uma licitação pode ter várias simulações de disputa
-  simulacoes      SimulacaoDisputa[]
+  simulacoes     SimulacaoDisputa[]
   // Relacionamento: Uma licitação pode ter vários históricos de chat com edital
-  chatHistoricos  ChatHistorico[]
+  chatHistoricos ChatHistorico[]
   // Relacionamento: Uma licitação pode ter várias análises preditivas
-  bidPredictions  BidPrediction[]
+  bidPredictions BidPrediction[]
 
   @@index([empresaId])
   @@index([empresaId, operationalState]) // Consultas por empresa e estado operacional
@@ -210,20 +210,20 @@ enum StatusPeticao {
 }
 
 model Peticao {
-  id         String        @id @default(cuid())
-  empresaId  String
-  bidId      String
-  tipo       TipoPeticao
-  conteudo   String?       @db.Text
+  id          String        @id @default(cuid())
+  empresaId   String
+  bidId       String
+  tipo        TipoPeticao
+  conteudo    String?       @db.Text
   nomeArquivo String?
-  dataEnvio  DateTime?
-  status     StatusPeticao @default(RASCUNHO)
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-  deletedAt  DateTime?
+  dataEnvio   DateTime?
+  status      StatusPeticao @default(RASCUNHO)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
 
   empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  bid    Bid      @relation(fields: [bidId], references: [id], onDelete: Cascade)
+  bid     Bid     @relation(fields: [bidId], references: [id], onDelete: Cascade)
 
   @@index([empresaId, bidId])
   @@index([empresaId, deletedAt])
@@ -264,6 +264,12 @@ model ChatHistorico {
   @@map("chat_historicos")
 }
 
+// Enum de Status do Documento
+enum DocumentStatus {
+  PENDENTE
+  ATIVO
+}
+
 // Entidade Document (Documento)
 model Document {
   id         String    @id @default(uuid())
@@ -278,6 +284,8 @@ model Document {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   deletedAt  DateTime? // Soft delete: quando não null, registro está deletado
+
+  status DocumentStatus @default(ATIVO)
 
   // Campos de alerta de vencimento
   alertaVencimentoEnviado   Boolean   @default(false)
@@ -419,15 +427,15 @@ model ChecklistItem {
 
 // Entidade Prazo (Prazo da licitação)
 model Prazo {
-  id         String    @id @default(uuid())
-  empresaId  String // Multi-tenancy: isolamento por empresa
-  bidId      String // Licitação à qual o prazo pertence
-  titulo     String // Nome do prazo (ex: "Entrega de propostas", "Abertura")
-  dataPrazo  DateTime // Data (e hora) do prazo
-  descricao  String? // Observações opcionais
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  deletedAt  DateTime? // Soft delete: quando não null, registro está deletado
+  id        String    @id @default(uuid())
+  empresaId String // Multi-tenancy: isolamento por empresa
+  bidId     String // Licitação à qual o prazo pertence
+  titulo    String // Nome do prazo (ex: "Entrega de propostas", "Abertura")
+  dataPrazo DateTime // Data (e hora) do prazo
+  descricao String? // Observações opcionais
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete: quando não null, registro está deletado
 
   // Relacionamento: Um prazo pertence a uma empresa
   empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
@@ -445,22 +453,22 @@ model Prazo {
 
 // Entidade Alert (Central de Alertas)
 model Alert {
-  id          String   @id @default(uuid())
-  empresaId   String   // Multi-tenancy
-  title       String
-  message     String
-  type        String?  // Ex: DOCUMENT, BID, SYSTEM, RISK
-  severity    String   // INFO | WARNING | CRITICAL
+  id           String    @id @default(uuid())
+  empresaId    String // Multi-tenancy
+  title        String
+  message      String
+  type         String? // Ex: DOCUMENT, BID, SYSTEM, RISK
+  severity     String // INFO | WARNING | CRITICAL
   resourceType String? // Ex: "Document", "Bid", "Prazo"
-  resourceId  String?  // ID do recurso relacionado
-  metadata    Json?    // Payload opcional
-  status      String   @default("UNSEEN") // UNSEEN | SEEN | RESOLVED
-  createdBy   String?  // userId opcional
-  seenAt      DateTime?
-  resolvedAt  DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deletedAt   DateTime?
+  resourceId   String? // ID do recurso relacionado
+  metadata     Json? // Payload opcional
+  status       String    @default("UNSEEN") // UNSEEN | SEEN | RESOLVED
+  createdBy    String? // userId opcional
+  seenAt       DateTime?
+  resolvedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
 
   // Relacionamento: pertence a uma empresa
   empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
@@ -476,34 +484,34 @@ model Alert {
 // Entidade ClienteConfig (Configuração de billing/plano do cliente B2B)
 // Relação 1:1 com Empresa (tenant)
 model ClienteConfig {
-  id                    String        @id @default(uuid())
-  empresaId             String        @unique // 1:1 com Empresa
-  cnpj                  String        @unique
-  email                 String // Email comercial
-  telefone              String?
-  responsavelComercial  String? // SDR que fechou a venda
+  id                   String  @id @default(uuid())
+  empresaId            String  @unique // 1:1 com Empresa
+  cnpj                 String  @unique
+  email                String // Email comercial
+  telefone             String?
+  responsavelComercial String? // SDR que fechou a venda
 
   // Plano e Billing
-  plano                 PlanoTipo     @default(STARTER)
-  valorSetup            Decimal       @db.Decimal(10, 2)
-  mensalidade           Decimal       @db.Decimal(10, 2)
-  dataInicio            DateTime      @default(now())
-  dataProximaCobranca   DateTime?
-  status                ClienteStatus @default(ATIVO)
+  plano               PlanoTipo     @default(STARTER)
+  valorSetup          Decimal       @db.Decimal(10, 2)
+  mensalidade         Decimal       @db.Decimal(10, 2)
+  dataInicio          DateTime      @default(now())
+  dataProximaCobranca DateTime?
+  status              ClienteStatus @default(ATIVO)
 
   // Limites (plano único high-ticket — sem restrições)
-  maxUsuarios           Int           @default(999999)
-  maxStorageGB          Int           @default(999999)
-  maxLicitacoesMes      Int           @default(999999)
-  maxAnalisesMes        Int           @default(999999)
+  maxUsuarios      Int @default(999999)
+  maxStorageGB     Int @default(999999)
+  maxLicitacoesMes Int @default(999999)
+  maxAnalisesMes   Int @default(999999)
 
   // Metadata
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
-  deletedAt             DateTime? // Soft delete
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete
 
   // Relacionamento: pertence a uma empresa (tenant)
-  empresa               Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
 
   @@index([status])
   @@index([plano])
@@ -529,24 +537,24 @@ enum TipoPagamento {
 // Entidade Contrato (Faturamento do cliente B2B)
 // Relação 1:1 com Empresa (tenant)
 model Contrato {
-  id                String         @id @default(cuid())
-  empresaId         String         @unique
-  empresa           Empresa        @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  empresaId String  @unique
+  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
 
-  planoNome         String         // "Starter", "Professional", "Enterprise"
-  valorSetup        Decimal        @db.Decimal(10, 2)
-  valorMensalidade  Decimal        @db.Decimal(10, 2)
+  planoNome        String // "Starter", "Professional", "Enterprise"
+  valorSetup       Decimal @db.Decimal(10, 2)
+  valorMensalidade Decimal @db.Decimal(10, 2)
 
-  dataInicio        DateTime       @default(now())
+  dataInicio        DateTime @default(now())
   proximoVencimento DateTime
 
-  status            ContratoStatus @default(TRIAL)
-  observacoes       String?
+  status      ContratoStatus @default(TRIAL)
+  observacoes String?
 
-  pagamentos        Pagamento[]
+  pagamentos Pagamento[]
 
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([status])
   @@index([proximoVencimento])
@@ -555,22 +563,22 @@ model Contrato {
 
 // Entidade Pagamento (Registro de pagamento manual)
 model Pagamento {
-  id              String        @id @default(cuid())
-  contratoId      String
-  contrato        Contrato      @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  contratoId String
+  contrato   Contrato @relation(fields: [contratoId], references: [id], onDelete: Cascade)
 
-  tipo            TipoPagamento
-  valor           Decimal       @db.Decimal(10, 2)
+  tipo  TipoPagamento
+  valor Decimal       @db.Decimal(10, 2)
 
-  dataPrevista    DateTime
-  dataPago        DateTime?
+  dataPrevista DateTime
+  dataPago     DateTime?
 
-  metodoPagamento String?       // "Boleto", "PIX", "TED"
+  metodoPagamento String? // "Boleto", "PIX", "TED"
   comprovanteUrl  String?
   observacoes     String?
 
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([contratoId])
   @@index([dataPrevista])
@@ -592,7 +600,7 @@ model BuscaSalva {
   deletedAt       DateTime?
 
   // Relacionamento: Uma busca salva pertence a uma empresa
-  empresa         Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
 
   @@index([empresaId, ativa])
   @@index([empresaId, deletedAt])
@@ -608,26 +616,26 @@ enum AnaliseStatus {
 
 // Entidade EditalAnalise (Log de análises de edital com IA)
 model EditalAnalise {
-  id            String        @id @default(cuid())
-  bidId         String
-  empresaId     String
+  id        String @id @default(cuid())
+  bidId     String
+  empresaId String
 
-  pdfUrl        String?       // URL do PDF analisado
-  pdfTamanhoMB  Float?        // Tamanho em MB
+  pdfUrl       String? // URL do PDF analisado
+  pdfTamanhoMB Float? // Tamanho em MB
 
-  resultado     Json?         // JSON retornado pela IA
-  tokensUsados  Int?          // Total de tokens consumidos
-  tempoSegundos Int?          // Tempo de processamento
+  resultado     Json? // JSON retornado pela IA
+  tokensUsados  Int? // Total de tokens consumidos
+  tempoSegundos Int? // Tempo de processamento
 
-  status        AnaliseStatus @default(PROCESSANDO)
-  erroMensagem  String?       @db.Text
+  status       AnaliseStatus @default(PROCESSANDO)
+  erroMensagem String?       @db.Text
 
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  bid           Bid           @relation(fields: [bidId], references: [id], onDelete: Cascade)
-  empresa       Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  bid     Bid     @relation(fields: [bidId], references: [id], onDelete: Cascade)
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
 
   @@index([empresaId, createdAt])
   @@index([bidId])
@@ -636,9 +644,9 @@ model EditalAnalise {
 
 // Entidade BidPrediction (Análise Preditiva de Sucesso em Licitações)
 model BidPrediction {
-  id           String   @id @default(cuid())
-  bidId        String
-  empresaId    String
+  id        String @id @default(cuid())
+  bidId     String
+  empresaId String
 
   // Score final (0-100)
   score        Float
@@ -646,23 +654,23 @@ model BidPrediction {
   recomendacao String
 
   // Breakdown dos 6 fatores (JSON)
-  fatores      Json
+  fatores Json
 
   // Explicação gerada pela IA
-  explicacao   String?  @db.Text
+  explicacao String? @db.Text
   // Recomendações acionáveis geradas pela IA
-  acoes        Json?
+  acoes      Json?
 
   // Rastreamento de uso da IA
-  tokensUsados Int?
+  tokensUsados  Int?
   tempoSegundos Int?
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  bid          Bid      @relation(fields: [bidId], references: [id], onDelete: Cascade)
-  empresa      Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  bid     Bid     @relation(fields: [bidId], references: [id], onDelete: Cascade)
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
 
   @@index([bidId])
   @@index([empresaId, createdAt(sort: Desc)])
@@ -672,9 +680,9 @@ model BidPrediction {
 // Entidade DiarioOficial (Registro de fontes e varreduras de Diários Oficiais)
 model DiarioOficial {
   id                  String    @id @default(uuid())
-  estado              String    // UF (ex: "SP", "RJ")
-  municipio           String?   // Nome do município (nulo se for diário estadual)
-  url                 String    // URL base ou do portal específico
+  estado              String // UF (ex: "SP", "RJ")
+  municipio           String? // Nome do município (nulo se for diário estadual)
+  url                 String // URL base ou do portal específico
   ultimaSincronizacao DateTime? // Data e hora da última varredura bem-sucedida pelo Cron
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt

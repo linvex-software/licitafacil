@@ -139,6 +139,38 @@ export class DocumentService {
   }
 
   /**
+   * Cria um documento virtual "PENDENTE" (sem arquivo associado).
+   * Utilizado na auto-importação da análise de edital.
+   */
+  async createPendente(
+    name: string,
+    category: string,
+    bidId: string,
+    empresaId: string,
+    userId: string,
+  ): Promise<Document> {
+    const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
+
+    const document = await prismaWithTenant.document.create({
+      data: {
+        name,
+        filename: "pendente",
+        mimeType: "application/octet-stream",
+        size: 0,
+        category,
+        url: "pendente",
+        uploadedBy: userId,
+        empresaId,
+        bidId,
+        status: "PENDENTE",
+        doesExpire: false,
+      },
+    });
+
+    return this.mapToDocument(document as any);
+  }
+
+  /**
    * Cria um novo documento via upload
    * Se documentId for fornecido, cria uma nova versão do documento existente
    */
@@ -860,6 +892,7 @@ export class DocumentService {
     uploadedBy: string;
     createdAt: Date;
     updatedAt: Date;
+    status?: string | any;
     doesExpire?: boolean;
     issuedAt?: Date | null;
     expiresAt?: Date | null;
@@ -892,6 +925,7 @@ export class DocumentService {
       uploadedBy: doc.uploadedBy,
       createdAt: doc.createdAt.toISOString(),
       updatedAt: doc.updatedAt.toISOString(),
+      status: (doc.status as any) ?? "ATIVO",
       // Campos de validade
       doesExpire: doc.doesExpire ?? false,
       issuedAt: doc.issuedAt?.toISOString() ?? null,

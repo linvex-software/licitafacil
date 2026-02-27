@@ -2,10 +2,10 @@
 
 import { cn } from "@/lib/utils";
 import { TrendingUp, TrendingDown, Minus, Loader2 } from "lucide-react";
-import type { BidPredictionResult } from "@/hooks/use-bid-prediction";
+import type { BidPrediction } from "@/lib/api";
 
 interface PredictionBadgeProps {
-  prediction: BidPredictionResult | null | undefined;
+  prediction: BidPrediction | null | undefined;
   isLoading?: boolean;
   size?: "sm" | "md";
   showLabel?: boolean;

@@ -7,11 +7,15 @@ import { fetchDocuments, downloadDocument, deleteDocument } from "@/lib/api";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent } from "@/components/ui/Card";
 import { DocumentVersions } from "./DocumentVersions";
+import { useRef } from "react";
+import { Upload } from "lucide-react";
 
 interface DocumentsListProps {
   /** Quando não informado, lista todos os documentos da empresa (incluindo os vinculados a licitações). */
   bidId?: string;
   onError: (error: string) => void;
+  /** Passado do componente pai para abrir o modal de upload real ou para gerenciar uploads via input local */
+  onUploadRequest?: (documentId: string, category: string) => void;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -57,7 +61,7 @@ function formatDate(dateString: string): string {
   });
 }
 
-export function DocumentsList({ bidId, onError }: DocumentsListProps) {
+export function DocumentsList({ bidId, onError, onUploadRequest }: DocumentsListProps) {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -222,20 +226,40 @@ export function DocumentsList({ bidId, onError }: DocumentsListProps) {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <button
-                        onClick={() => handleDownload(doc)}
-                        className="px-3 py-1.5 text-sm bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 rounded-lg font-medium transition-colors"
-                      >
-                        Download
-                      </button>
-                      <button
-                        onClick={() =>
-                          setExpandedDocument(expandedDocument === doc.id ? null : doc.id)
-                        }
-                        className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors"
-                      >
-                        {expandedDocument === doc.id ? "Ocultar versões" : "Versões"}
-                      </button>
+                      {(doc as any).status === "PENDENTE" ? (
+                        <>
+                          <Badge variant="outline" className="border-orange-500 text-orange-600 dark:border-orange-400 dark:text-orange-400 mr-2">
+                            Pendente
+                          </Badge>
+                          <button
+                            onClick={() => onUploadRequest?.(doc.id, doc.category)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-orange-50 dark:bg-orange-950/50 hover:bg-orange-100 dark:hover:bg-orange-900/50 text-orange-700 dark:text-orange-400 rounded-lg font-medium transition-colors"
+                          >
+                            <Upload className="w-4 h-4" />
+                            Fazer Upload
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => handleDownload(doc)}
+                          className="px-3 py-1.5 text-sm bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 rounded-lg font-medium transition-colors"
+                        >
+                          Download
+                        </button>
+                      )}
+
+                      {/* Oculta botão de Versões caso esteja pendente */}
+                      {(doc as any).status !== "PENDENTE" && (
+                        <button
+                          onClick={() =>
+                            setExpandedDocument(expandedDocument === doc.id ? null : doc.id)
+                          }
+                          className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors"
+                        >
+                          {expandedDocument === doc.id ? "Ocultar versões" : "Versões"}
+                        </button>
+                      )}
+
                       <button
                         onClick={() => handleDelete(doc.id)}
                         disabled={isDeleting === doc.id}

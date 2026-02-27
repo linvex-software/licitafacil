@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PredictionScoreBar } from "./prediction-badge";
-import type { BidPredictionResult, FatorAnalise } from "@/hooks/use-bid-prediction";
+import type { BidPrediction, FatorAnalise } from "@/lib/api";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Configurações visuais
@@ -150,7 +150,7 @@ function FatorCard({ fator }: { fator: FatorAnalise }) {
 interface PredictionModalProps {
   open: boolean;
   onClose: () => void;
-  prediction: BidPredictionResult | null | undefined;
+  prediction: BidPrediction | null | undefined;
   isLoading?: boolean;
   isAnalyzing?: boolean;
   onAnalisar: () => void;

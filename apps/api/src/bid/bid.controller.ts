@@ -647,4 +647,26 @@ export class BidController {
 
     return this.bidService.getChatHistorico(id, empresaId);
   }
+
+  @Post(":id/importar-documentos-analise")
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  @Audit({ action: "bid.import_documents", resourceType: "Bid" })
+  async importarDocumentosAnalise(
+    @Param("id") id: string,
+    @Tenant() empresaId: string,
+    @CurrentUser() user: User,
+  ) {
+    return this.bidService.importarDocumentosAnalise(id, empresaId, user.id);
+  }
+
+  @Post(":id/gerar-checklist-analise")
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  @Audit({ action: "bid.generate_checklist", resourceType: "Bid" })
+  async gerarChecklistAnalise(
+    @Param("id") id: string,
+    @Tenant() empresaId: string,
+    @CurrentUser() user: User,
+  ) {
+    return this.bidService.gerarChecklistAnalise(id, empresaId, user.id);
+  }
 }

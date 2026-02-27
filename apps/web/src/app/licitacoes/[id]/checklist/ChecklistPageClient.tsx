@@ -7,6 +7,7 @@ import {
   fetchChecklistItems,
   markChecklistItemCompleted,
   markChecklistItemIncomplete,
+  gerarChecklistAnalise,
 } from "@/lib/api";
 import type { LicitacaoChecklistItem } from "@licitafacil/shared";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +28,7 @@ function formatDate(dateString: string | null): string {
 export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
   const [items, setItems] = useState<LicitacaoChecklistItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
@@ -89,6 +91,22 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
         next.delete(item.id);
         return next;
       });
+    }
+  };
+
+  const handleGerarIA = async () => {
+    try {
+      setIsGenerating(true);
+      setError(null);
+      await gerarChecklistAnalise(licitacaoId);
+      toast({ title: "Checklist importado com sucesso!" });
+      await loadItems();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Erro ao importar checklist";
+      setError(errorMessage);
+      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -161,6 +179,23 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
         </CardContent>
       </Card>
 
+      {/* Ações / Botões */}
+      <div className="flex justify-end mb-4">
+        <Button
+          variant="outline"
+          onClick={handleGerarIA}
+          disabled={isGenerating}
+          className="gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400 dark:hover:bg-purple-950/50"
+        >
+          {isGenerating ? (
+            <div className="w-4 h-4 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+          ) : (
+            <span className="text-lg leading-none">✨</span>
+          )}
+          Gerar a partir da Análise IA
+        </Button>
+      </div>
+
       {/* Lista de itens */}
       {items.length === 0 ? (
         <Card className="shadow-sm border-gray-200 dark:border-gray-700">
@@ -171,7 +206,7 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
               </div>
               <p className="text-gray-600 dark:text-gray-300 font-medium mb-1">Nenhum item de checklist</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Os itens do checklist são criados a partir dos templates. Não há itens cadastrados para esta licitação.
+                Os itens do checklist podem ser criados a partir dos templates ou extraídos do edital através da Inteligência Artificial. Não há itens cadastrados para esta licitação.
               </p>
             </div>
           </CardContent>
@@ -218,8 +253,8 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
                         {item.exigeEvidencia && (
                           <span
                             className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${item.evidenciaId
-                                ? "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-400"
-                                : "bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-400"
+                              ? "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-400"
+                              : "bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-400"
                               }`}
                           >
                             {item.evidenciaId ? "Evidência OK" : "Exige evidência"}

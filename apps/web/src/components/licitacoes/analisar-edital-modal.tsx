@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { importarDocumentosAnalise } from "@/lib/api";
+import { toast } from "sonner";
 import { UploadPdfDropzone } from "./upload-pdf-dropzone";
 import {
   useAnalisarEdital,
@@ -25,7 +27,7 @@ import {
 
 interface AnalisarEditalModalProps {
   bidId: string;
-  onAplicar: (dados: AnalisarEditalResponse) => void;
+  onAplicar: (resultado: AnalisarEditalResponse) => void;
 }
 
 export function AnalisarEditalModal({
@@ -46,15 +48,24 @@ export function AnalisarEditalModal({
     analisar(
       { bidId, pdf: arquivo },
       {
-        onSuccess: (data) => {
+        onSuccess: (data: AnalisarEditalResponse) => {
           setResultado(data);
         },
       },
     );
   }
 
-  function handleAplicar() {
+  async function handleAplicar() {
     if (resultado) {
+      try {
+        // Gatilho para o backend importar os documentos pendentes
+        await importarDocumentosAnalise(bidId);
+        toast.success("Documentos pendentes identificados com sucesso.");
+      } catch (error) {
+        console.error("Erro ao importar documentos da análise", error);
+        toast.error("Ocorreu um erro ao importar documentos exigidos.");
+      }
+
       onAplicar(resultado);
       setOpen(false);
       setArquivo(null);
@@ -196,7 +207,7 @@ export function AnalisarEditalModal({
               <TabsContent value="prazos">
                 <div className="space-y-3">
                   {resultado.prazos?.length > 0 ? (
-                    resultado.prazos.map((prazo, idx) => (
+                    resultado.prazos.map((prazo: any, idx: number) => (
                       <div
                         key={idx}
                         className="border rounded-lg p-4 hover:bg-slate-50"
@@ -206,8 +217,8 @@ export function AnalisarEditalModal({
                           <span className="text-sm font-medium text-blue-600">
                             {prazo.data
                               ? new Date(
-                                  prazo.data + "T00:00:00",
-                                ).toLocaleDateString("pt-BR")
+                                prazo.data + "T00:00:00",
+                              ).toLocaleDateString("pt-BR")
                               : "-"}
                           </span>
                         </div>
@@ -227,17 +238,16 @@ export function AnalisarEditalModal({
               <TabsContent value="documentos">
                 <div className="space-y-2">
                   {resultado.documentos?.length > 0 ? (
-                    resultado.documentos.map((doc, idx) => (
+                    resultado.documentos.map((doc: any, idx: number) => (
                       <div
                         key={idx}
                         className="flex items-center gap-3 border rounded-lg p-3 hover:bg-slate-50"
                       >
                         <CheckSquare
-                          className={`w-5 h-5 ${
-                            doc.obrigatorio
-                              ? "text-red-500"
-                              : "text-slate-400"
-                          }`}
+                          className={`w-5 h-5 ${doc.obrigatorio
+                            ? "text-red-500"
+                            : "text-slate-400"
+                            }`}
                         />
                         <div className="flex-1">
                           <p className="font-medium">{doc.nome}</p>
