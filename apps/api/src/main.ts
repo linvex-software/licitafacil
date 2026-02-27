@@ -22,10 +22,16 @@ async function bootstrap() {
   // WebSocket: Socket.IO (single server, sem Redis)
   app.useWebSocketAdapter(new IoAdapter(app));
 
-  // Enable CORS for development
+  const envOrigins = (process.env.FRONTEND_URL || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: ["http://localhost:3000", "http://localhost:3002"],
+    origin: [...envOrigins, "http://localhost:3000", "http://localhost:3002"],
     credentials: true,
+    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   });
 
   // Get port from environment or default to 3001
