@@ -19,7 +19,7 @@ export default function DocumentosPage() {
 
   return (
     <Layout>
-      <div className="mx-auto">
+      <div className="mx-auto w-full">
         <div className="mb-8">
           <h1 className="text-2xl md:text-3xl font-heading font-bold text-gray-900 dark:text-gray-100 mb-2">
             Documentos da empresa
@@ -29,7 +29,7 @@ export default function DocumentosPage() {
           </p>
         </div>
 
-        <div className="mb-6 flex justify-end">
+        <div className="mb-6 flex flex-col sm:flex-row gap-3 sm:justify-end">
           <DocumentUpload onUploadSuccess={handleUploadSuccess} onError={handleError} />
         </div>
 

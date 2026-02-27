@@ -224,7 +224,7 @@ export function DocumentsList({ bidId, onError, onUploadRequest }: DocumentsList
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-shrink-0">
                       {(doc as any).status === "PENDENTE" ? (
                         <>
                           <Badge variant="outline" className="border-orange-500 text-orange-600 dark:border-orange-400 dark:text-orange-400 mr-2">

@@ -129,7 +129,7 @@ export default function RelatoriosPage() {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <FileText className="w-6 h-6" />
@@ -147,7 +147,7 @@ export default function RelatoriosPage() {
             <CardTitle>Filtros do Relatório</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <Label>Período</Label>
                 <Select
@@ -227,7 +227,7 @@ export default function RelatoriosPage() {
         {dados && (
           <>
             {/* Cards de Métricas */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>
                 <CardContent className="pt-6 text-center">
                   <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">
@@ -369,8 +369,8 @@ export default function RelatoriosPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <div className="overflow-x-auto w-full">
+                  <table className="min-w-full text-sm">
                     <thead>
                       <tr className="border-b">
                         <th className="text-left p-2">Objeto</th>
@@ -412,7 +412,7 @@ export default function RelatoriosPage() {
             </Card>
 
             {/* Botões de Ação */}
-            <div className="flex gap-3 justify-end">
+            <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
               <Button
                 variant="outline"
                 onClick={() => setEmailModalOpen(true)}

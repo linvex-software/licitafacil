@@ -1,9 +1,10 @@
 import { NestFactory } from "@nestjs/core";
-import { ValidationPipe } from "@nestjs/common";
+import { ValidationPipe, Logger } from "@nestjs/common";
 import { AppModule } from "./app.module";
 import { IoAdapter } from "@nestjs/platform-socket.io";
 
 async function bootstrap() {
+  const logger = new Logger("Bootstrap");
   const app = await NestFactory.create(AppModule);
 
   // Validação global de DTOs (class-validator)
@@ -31,9 +32,9 @@ async function bootstrap() {
   const port = process.env.PORT || 3001;
 
   await app.listen(port);
-  console.log(`🚀 API running on http://localhost:${port}`);
-  console.log(`📊 Health check: http://localhost:${port}/health`);
-  console.log(`🔔 Alerts WebSocket: namespace /alerts-ws`);
+  logger.log(`API running on http://localhost:${port}`);
+  logger.log(`Health check: http://localhost:${port}/health`);
+  logger.log("Alerts WebSocket: namespace /alerts-ws");
 }
 
 bootstrap();

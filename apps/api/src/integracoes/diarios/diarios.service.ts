@@ -43,9 +43,8 @@ export class DiariosService {
                 resultados = await this.scrapeDomg(filters);
                 break;
             default:
-                this.logger.warn(`Scraper real para UF ${filters.uf} ainda não mapeado. Retornando fallback genérico para demonstração.`);
-                // Retorna um fallback genérico para permitir o teste de ponta a ponta na UI para qualquer UF
-                resultados = this.getGenericFallback(filters.uf, filters.municipio);
+                this.logger.warn(`Scraper real para UF ${filters.uf} ainda não mapeado. Retornando lista vazia.`);
+                resultados = [];
                 break;
         }
 
@@ -105,7 +104,7 @@ export class DiariosService {
     }
 
     /**
-     * MOCK-REAL: Scraper V1 - Diário Oficial do Estado de São Paulo (DOSP)
+     * Scraper V1 - Diário Oficial do Estado de São Paulo (DOSP)
      * Utilizando o portal da Imprensa Oficial SP
      */
     private async scrapeDosp(_filters: BuscarDiariosDto): Promise<ScrapedLicitacao[]> {
@@ -148,52 +147,21 @@ export class DiariosService {
                 }
             });
 
-            // Fallback caso a query retorne vazio (ex: IPs bloqueados por anti-bot, ou estrutura de paginação diferente)
-            // Em desenvolvimento retornamos o Mock se a extração falhar para que a UI ainda seja útil
             if (resultados.length === 0) {
-                this.logger.warn('Nenhum resultado extraído do HTML do DOSP. Retornando itens de fallback.');
-                return this.getMockFallbackDosp();
+                this.logger.warn("Nenhum resultado extraído do HTML do DOSP. Retornando lista vazia.");
+                return [];
             }
 
             return resultados;
         } catch (error) {
             this.logger.error('Erro ao realizar scraping no DOSP:', error);
-            // Fallback para não quebrar a demonstração
-            return this.getMockFallbackDosp();
+            this.logger.warn("Falha no scraping do DOSP. Retornando lista vazia.");
+            return [];
         }
     }
 
-    private getMockFallbackDosp(): ScrapedLicitacao[] {
-        return [
-            {
-                orgao: 'Prefeitura Municipal de São Paulo',
-                objeto: 'Aquisição de equipamentos de informática para a rede educacional municipal conforme edital 023/2026',
-                dataPublicacao: new Date().toISOString(),
-                linkPdf: 'https://www.imprensaoficial.com.br/DO/GatewayPDF.aspx?edicao=20260225&pagina=12',
-                uf: 'SP',
-                municipio: 'São Paulo',
-                modalidadeNome: 'Pregão Eletrônico',
-            },
-            {
-                orgao: 'SABESP - Cia de Saneamento Básico SP',
-                objeto: 'Contratação de empresa de engenharia para expansão da rede de esgoto na região metropolitana',
-                dataPublicacao: new Date().toISOString(),
-                linkPdf: 'https://www.imprensaoficial.com.br/DO/GatewayPDF.aspx?edicao=20260225&pagina=45',
-                uf: 'SP',
-            },
-            {
-                orgao: 'Secretaria da Saúde - Estado de São Paulo',
-                objeto: 'Registro de preços para aquisição de medicamentos de alto custo sob demanda judicial',
-                dataPublicacao: new Date().toISOString(),
-                linkPdf: 'https://www.imprensaoficial.com.br/DO/GatewayPDF.aspx?edicao=20260225&pagina=80',
-                uf: 'SP',
-                modalidadeNome: 'Concorrência',
-            }
-        ];
-    }
-
     /**
-     * MOCK-REAL: Scraper V1 - Diário Oficial do Estado do Rio de Janeiro (DORJ)
+     * Scraper V1 - Diário Oficial do Estado do Rio de Janeiro (DORJ)
      */
     private async scrapeDorj(_filters: BuscarDiariosDto): Promise<ScrapedLicitacao[]> {
         this.logger.log('Executando scraper DORJ...');
@@ -214,7 +182,7 @@ export class DiariosService {
                 resultados.push({
                     orgao: titulo || 'Governo do Estado do Rio de Janeiro',
                     objeto: resumo,
-                    dataPublicacao: new Date().toISOString(), // Fallback
+                    dataPublicacao: new Date().toISOString(),
                     linkPdf: link.startsWith('http') ? link : `https://www.ioerj.com.br${link}`,
                     uf: 'RJ',
                 });
@@ -226,29 +194,12 @@ export class DiariosService {
             this.logger.error('Erro ao realizar scraping no DORJ:', error);
         }
 
-        // Caso falhe ou venha vazio, retorna um mock de dados do RJ
-        return [
-            {
-                orgao: 'CEDAE - Companhia Estadual de Águas',
-                objeto: 'Manutenção preventiva nas estações de tratamento de água de Guandu.',
-                dataPublicacao: new Date().toISOString(),
-                linkPdf: 'https://www.gov.br/mgi/pt-br/centrais-de-conteudo/publicacoes/guia-de-licitacoes.pdf',
-                uf: 'RJ',
-                modalidadeNome: 'Pregão Eletrônico',
-            },
-            {
-                orgao: 'Prefeitura do Rio de Janeiro',
-                objeto: 'Revitalização asfáltica das avenidas da zona sul carioca. Edital SME009/2026',
-                dataPublicacao: new Date().toISOString(),
-                linkPdf: 'https://www.gov.br/mgi/pt-br/centrais-de-conteudo/publicacoes/guia-de-licitacoes.pdf',
-                uf: 'RJ',
-                municipio: 'Rio de Janeiro'
-            }
-        ];
+        this.logger.warn("Scraping DORJ sem resultado. Retornando lista vazia.");
+        return [];
     }
 
     /**
-     * MOCK-REAL: Scraper V1 - Diário Oficial do Estado de Minas Gerais (DOMG)
+     * Scraper V1 - Diário Oficial do Estado de Minas Gerais (DOMG)
      */
     private async scrapeDomg(_filters: BuscarDiariosDto): Promise<ScrapedLicitacao[]> {
         this.logger.log('Executando scraper DOMG...');
@@ -280,66 +231,8 @@ export class DiariosService {
             this.logger.error('Erro ao realizar scraping no DOMG:', error);
         }
 
-        // Mock fallback de dados para MG
-        return [
-            {
-                orgao: 'CEMIG',
-                objeto: 'Aquisição de transformadores de distribuição para áreas rurais de MG - Pregão 500/2026',
-                dataPublicacao: new Date().toISOString(),
-                linkPdf: 'https://www.gov.br/mgi/pt-br/centrais-de-conteudo/publicacoes/guia-de-licitacoes.pdf',
-                uf: 'MG',
-                modalidadeNome: 'Pregão Eletrônico',
-            },
-            {
-                orgao: 'Prefeitura de Belo Horizonte',
-                objeto: 'Contratação de serviços de limpeza urbana, coleta e destinação de resíduos sólidos',
-                dataPublicacao: new Date().toISOString(),
-                linkPdf: 'https://www.gov.br/mgi/pt-br/centrais-de-conteudo/publicacoes/guia-de-licitacoes.pdf',
-                uf: 'MG',
-                municipio: 'Belo Horizonte'
-            },
-            {
-                orgao: 'Polícia Militar de Minas Gerais - PMMG',
-                objeto: 'Licitação para renovação da frota de viaturas de patrulhamento ostensivo.',
-                dataPublicacao: new Date().toISOString(),
-                linkPdf: 'https://www.gov.br/mgi/pt-br/centrais-de-conteudo/publicacoes/guia-de-licitacoes.pdf',
-                uf: 'MG',
-                modalidadeNome: 'Concorrência Pública',
-            }
-        ];
-    }
-
-    /**
-     * Fallback Global para permitir ao usuário testar o Frontend para todos os 27 estados.
-     */
-    private getGenericFallback(uf: string, municipio?: string): ScrapedLicitacao[] {
-        const pdfGenericoReal = 'https://www.gov.br/mgi/pt-br/centrais-de-conteudo/publicacoes/guia-de-licitacoes.pdf';
-        return [
-            {
-                orgao: `Governo do Estado - ${uf}`,
-                objeto: 'Aquisição de materiais de escritório e insumos administrativos para as secretarias estaduais.',
-                dataPublicacao: new Date().toISOString(),
-                linkPdf: pdfGenericoReal,
-                uf: uf,
-                modalidadeNome: 'Pregão Eletrônico',
-            },
-            {
-                orgao: `Secretaria de Obras - ${uf}`,
-                objeto: 'Contratação de empresa de engenharia para pavimentação e infraestrutura.',
-                dataPublicacao: new Date().toISOString(),
-                linkPdf: pdfGenericoReal,
-                uf: uf,
-            },
-            {
-                orgao: municipio ? `Prefeitura Municipal de ${municipio}` : `Prefeitura da Capital - ${uf}`,
-                objeto: 'Registro de preço para fornecimento de merenda escolar, gêneros alimentícios e perecíveis.',
-                dataPublicacao: new Date().toISOString(),
-                linkPdf: pdfGenericoReal,
-                uf: uf,
-                municipio: municipio,
-                modalidadeNome: 'Concorrência Pública',
-            }
-        ];
+        this.logger.warn("Scraping DOMG sem resultado. Retornando lista vazia.");
+        return [];
     }
 
     /**

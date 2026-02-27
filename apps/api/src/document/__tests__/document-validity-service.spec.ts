@@ -260,28 +260,8 @@ describe("DocumentService - Validade de Documentos", () => {
 
   describe("update() - Tenant Isolation", () => {
     it("deve rejeitar update de documento de outro tenant", async () => {
-      const empresaId1 = "tenant-1";
       const empresaId2 = "tenant-2";
       const documentId = "doc-1";
-
-      // Documento pertence a tenant-1
-      const existingDoc = {
-        id: documentId,
-        empresaId: empresaId1, // Pertence a tenant-1
-        doesExpire: false,
-        expiresAt: null,
-        issuedAt: null,
-        name: "Doc",
-        category: "OUTROS",
-        filename: "file.pdf",
-        mimeType: "application/pdf",
-        size: 1000,
-        url: "/file.pdf",
-        uploadedBy: "user-1",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-      };
 
       const mockPrismaTenant = {
         document: {

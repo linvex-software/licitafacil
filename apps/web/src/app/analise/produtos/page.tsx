@@ -86,15 +86,16 @@ export default function ProdutosPage() {
             <CardTitle>Filtros</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
+            <div className="flex flex-col sm:flex-row gap-3 flex-wrap items-end">
+              <div className="w-full sm:flex-1">
               <Label>Categoria</Label>
               <Input
                 placeholder="Ex: informática, mobiliário, equipamentos médicos"
                 value={categoria}
                 onChange={(e) => setCategoria(e.target.value)}
               />
-            </div>
-            <Button onClick={handleBuscar} disabled={loading}>
+              </div>
+            <Button onClick={handleBuscar} disabled={loading} className="w-full sm:w-auto">
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -107,6 +108,7 @@ export default function ProdutosPage() {
                 </>
               )}
             </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -148,7 +150,8 @@ export default function ProdutosPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
+              <div className="overflow-x-auto w-full">
+              <Table className="min-w-full">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Produto</TableHead>
@@ -184,6 +187,7 @@ export default function ProdutosPage() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             </CardContent>
           </Card>
         )}

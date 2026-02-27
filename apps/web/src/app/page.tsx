@@ -127,7 +127,7 @@ export default function DashboardPage() {
         </div>
 
         {/* ── KPI Strip ───────────────────────────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 stagger-children">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 stagger-children">
           <KpiCard label="Ativas" value={totalOpen} sub="Operacionais" accent="blue" delay={0} />
           <KpiCard label="Em Risco" value={totalAtRisk} sub="Requer ação" accent={totalAtRisk > 0 ? "red" : "slate"} delay={60} />
           <KpiCard label="Analisando" value={totalAnalyze} sub="Fase inicial" accent="amber" delay={120} />

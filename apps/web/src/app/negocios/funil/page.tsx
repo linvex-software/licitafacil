@@ -79,18 +79,18 @@ export default function FunilPage() {
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
                         <div className="relative">
                             <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
                             <Input
                                 placeholder="Buscar órgão ou objeto..."
-                                className="pl-9 w-[250px]"
+                                className="pl-9 w-full sm:w-[250px]"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                             />
                         </div>
                         <Select value={modality} onValueChange={setModality}>
-                            <SelectTrigger className="w-[180px]">
+                            <SelectTrigger className="w-full sm:w-[180px]">
                                 <SelectValue placeholder="Modalidade" />
                             </SelectTrigger>
                             <SelectContent>
@@ -101,7 +101,7 @@ export default function FunilPage() {
                             </SelectContent>
                         </Select>
                         <Select value={period} onValueChange={setPeriod}>
-                            <SelectTrigger className="w-[150px]">
+                            <SelectTrigger className="w-full sm:w-[150px]">
                                 <SelectValue placeholder="Período" />
                             </SelectTrigger>
                             <SelectContent>

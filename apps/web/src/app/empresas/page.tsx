@@ -11,10 +11,7 @@ export default function EmpresasPage() {
     const { data: _empresa, isLoading } = useQuery({
         queryKey: ["empresa-principal"],
         queryFn: async () => {
-            // In this setup, we usually get the user's company
-            // The API doesn't seem to have a /empresa/:id list for everyone, usually it's tenant isolated
-            // Let's try to get current user info and extract company
-            const { data } = await api.get("/auth/me").catch(() => api.get("/users"));
+            const { data } = await api.get("/empresas/me");
             return data;
         },
     });

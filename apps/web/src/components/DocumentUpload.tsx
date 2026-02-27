@@ -148,7 +148,7 @@ export const DocumentUpload = forwardRef<DocumentUploadRef, DocumentUploadProps>
         </Button>
 
         <Dialog open={isOpen} onOpenChange={(open) => (open ? setIsOpen(true) : !isUploading && handleClose())}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="w-[95vw] md:w-[80vw] lg:w-[60vw] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="font-heading">Adicionar Documento</DialogTitle>
             </DialogHeader>

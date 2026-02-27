@@ -85,7 +85,7 @@ export function GerarPeticaoModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="w-[95vw] md:w-[80vw] lg:w-[60vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-heading">{title}</DialogTitle>
         </DialogHeader>

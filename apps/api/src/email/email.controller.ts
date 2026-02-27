@@ -7,10 +7,12 @@ import {
   Logger,
   BadRequestException,
   NotFoundException,
+  UseGuards,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { EmailService } from "./email.service";
 import { EmailCronService } from "./email.cron.service";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 
 /**
  * Controller público para ações de email (sem autenticação)
@@ -59,6 +61,7 @@ export class EmailController {
    * Body: { email: string, tipo: 'bem-vindo' | 'documento' | 'prazo' | 'risco' }
    */
   @Post("test")
+  @UseGuards(JwtAuthGuard)
   async testarEmail(@Body() body: { email: string; tipo: string }) {
     const { email, tipo } = body;
 
@@ -142,6 +145,7 @@ export class EmailController {
    * POST /email/test-cron
    */
   @Post("test-cron")
+  @UseGuards(JwtAuthGuard)
   async testarCron() {
     this.logger.log("Disparando cron de alertas manualmente para teste...");
     await this.emailCronService.verificarAlertas();

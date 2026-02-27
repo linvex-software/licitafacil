@@ -114,7 +114,7 @@ export default function HistoricoComprasPage() {
                 </Select>
               </div>
             </div>
-            <Button onClick={handleBuscar} disabled={loading}>
+            <Button onClick={handleBuscar} disabled={loading} className="w-full sm:w-auto">
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -200,7 +200,8 @@ export default function HistoricoComprasPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
+              <div className="overflow-x-auto w-full">
+              <Table className="min-w-full">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Data</TableHead>
@@ -224,6 +225,7 @@ export default function HistoricoComprasPage() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             </CardContent>
           </Card>
         )}

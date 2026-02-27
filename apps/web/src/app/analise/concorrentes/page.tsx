@@ -64,15 +64,16 @@ export default function ConcorrentesPage() {
             <CardTitle>Filtros</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
+            <div className="flex flex-col sm:flex-row gap-3 flex-wrap items-end">
+              <div className="w-full sm:flex-1">
               <Label>CNPJ da empresa</Label>
               <Input
                 placeholder="00.000.000/0000-00"
                 value={cnpj}
                 onChange={(e) => setCnpj(maskCNPJ(e.target.value))}
               />
-            </div>
-            <Button onClick={handleBuscar} disabled={loading}>
+              </div>
+            <Button onClick={handleBuscar} disabled={loading} className="w-full sm:w-auto">
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -85,6 +86,7 @@ export default function ConcorrentesPage() {
                 </>
               )}
             </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -165,7 +167,8 @@ export default function ConcorrentesPage() {
               <CardTitle>Licitações Vencidas ({resultado.licitacoes.length})</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
+              <div className="overflow-x-auto w-full">
+              <Table className="min-w-full">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Data</TableHead>
@@ -187,6 +190,7 @@ export default function ConcorrentesPage() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             </CardContent>
           </Card>
         )}
