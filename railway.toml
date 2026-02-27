@@ -1,6 +1,5 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @licitafacil/api build"
 
 [deploy]
 startCommand = "node apps/api/dist/main.js"
