@@ -124,8 +124,8 @@ export default function AgendaPage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             <Button type="button" variant="outline" onClick={mesAnterior}>
               <ChevronLeft className="h-4 w-4 mr-1" />
               Mes Anterior
@@ -157,13 +157,13 @@ export default function AgendaPage() {
             </div>
           </div>
         ) : (
-          <div className="rounded-lg border bg-white dark:bg-gray-900 p-3">
+          <div className="rounded-lg border bg-white dark:bg-gray-900 p-3 overflow-x-auto">
             {eventos.length === 0 && (
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
                 {mensagemVazia || "Nenhum evento neste mes"}
               </p>
             )}
-            <div className="h-[500px] max-h-[70vh]">
+            <div className="h-[500px] max-h-[70vh] min-w-[720px]">
               <Calendar
                 localizer={localizer}
                 events={eventosFormatados}

@@ -181,7 +181,7 @@ export default function ComprasnetPage() {
     <Layout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Globe className="w-6 h-6" />
@@ -245,7 +245,7 @@ export default function ComprasnetPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label>CNPJ do Órgão</Label>
                     <Input
@@ -357,7 +357,7 @@ export default function ComprasnetPage() {
                   </p>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     onClick={handleBuscar}
                     disabled={buscando}
@@ -432,8 +432,8 @@ export default function ComprasnetPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                  <div className="overflow-x-auto w-full">
+                    <table className="min-w-full text-sm">
                       <thead>
                         <tr className="border-b">
                           <th className="p-2 w-8">

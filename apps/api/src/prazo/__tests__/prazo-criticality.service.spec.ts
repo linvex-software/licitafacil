@@ -12,7 +12,6 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import {
   PrazoCriticalityService,
   CRITICAL_DAYS_THRESHOLD_DEFAULT,
-  getCriticalDaysThresholdConfig,
   CriticalReason,
 } from "../prazo-criticality.service";
 import { PrismaTenantService } from "../../prisma/prisma-tenant.service";

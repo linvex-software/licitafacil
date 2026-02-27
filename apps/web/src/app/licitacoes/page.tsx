@@ -155,7 +155,7 @@ export default function LicitacoesListPage() {
                         </h1>
                         <p className="text-gray-500 dark:text-gray-400 mt-1 max-w-2xl">Acompanhe editais ativos, prazos críticos e o status das suas participações</p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex w-full md:w-auto items-center gap-3 flex-wrap">
                         <Button variant="outline" className="border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800">
                             <Download className="w-4 h-4 mr-2" />
                             Exportar
@@ -274,8 +274,8 @@ export default function LicitacoesListPage() {
                 </div>
 
                 {/* Data Table */}
-                <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden w-full transition-all">
-                    <Table>
+                <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-x-auto w-full transition-all">
+                    <Table className="min-w-[980px]">
                         <TableHeader className="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
                             <TableRow className="hover:bg-transparent dark:hover:bg-transparent">
                                 <TableHead className="w-[50px]">
@@ -425,8 +425,8 @@ export default function LicitacoesListPage() {
                     </Table>
 
                     {/* Pagination */}
-                    <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between bg-white dark:bg-gray-900">
-                        <div className="flex items-center gap-4">
+                    <div className="px-4 md:px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex flex-col md:flex-row items-start md:items-center gap-3 md:justify-between bg-white dark:bg-gray-900">
+                        <div className="flex items-center gap-4 flex-wrap">
                             <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Página <span className="text-gray-900 dark:text-gray-100">{page}</span> de <span className="text-gray-900 dark:text-gray-100">{totalPages}</span>
                             </p>

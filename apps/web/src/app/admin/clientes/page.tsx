@@ -106,7 +106,7 @@ export default function PainelAdminClientes() {
         router.push("/");
         return;
       }
-      console.error("Erro ao carregar dados:", error);
+      console.warn("Erro ao carregar dados do admin/clientes", error);
     } finally {
       setLoading(false);
     }
@@ -193,7 +193,7 @@ export default function PainelAdminClientes() {
     <Layout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               Gerenciar Clientes
@@ -268,8 +268,8 @@ export default function PainelAdminClientes() {
         {/* Tabela de Clientes */}
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-center gap-4">
-              <div className="relative flex-1 max-w-md">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+              <div className="relative flex-1 w-full sm:max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar por nome ou CNPJ..."
@@ -285,7 +285,8 @@ export default function PainelAdminClientes() {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
+            <div className="overflow-x-auto w-full">
+            <Table className="min-w-full">
               <TableHeader>
                 <TableRow>
                   <TableHead>Empresa</TableHead>
@@ -335,6 +336,7 @@ export default function PainelAdminClientes() {
                 )}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
 

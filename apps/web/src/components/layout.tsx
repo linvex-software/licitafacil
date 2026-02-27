@@ -6,8 +6,8 @@ import {
     LayoutDashboard, Gavel, Settings,
     User, LogOut, Menu, FileText, BarChart3,
     Globe, ShieldCheck, ChevronDown, ClipboardList,
-    Compass, BarChart2, Swords, Briefcase,
-    Newspaper, Building2, Search as SearchIcon, Zap,
+    BarChart2, Swords, Briefcase,
+    Building2,
     TrendingUp, History, Tag as TagIcon,
     CalendarDays, Users,
 } from "lucide-react";
@@ -49,15 +49,6 @@ const navGroups: NavGroup[] = [
     {
         group: "Módulos",
         items: [
-            {
-                label: "Oportunidades", icon: Compass, href: "/oportunidades",
-                subItems: [
-                    { label: "Encontrar", href: "/oportunidades", icon: SearchIcon },
-                    { label: "Pesquisas rápida", href: "/oportunidades/pesquisas-rapida", icon: Zap },
-                    { label: "Meus Jornais", href: "/oportunidades/jornais", icon: Newspaper },
-                    { label: "Órgãos", href: "/oportunidades/orgaos", icon: Building2 },
-                ]
-            },
             {
                 label: "Análise", icon: BarChart2, href: "/analise",
 

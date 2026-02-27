@@ -144,7 +144,7 @@ export function JuridicoTab({ bidId }: JuridicoTabProps) {
     <div className="space-y-6">
       <Card className="shadow-sm border-gray-200 dark:border-gray-700">
         <CardContent className="pt-6">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 flex-wrap">
             {PETICAO_TIPOS.map((item) => (
               <Button
                 key={item.tipo}
@@ -172,47 +172,49 @@ export function JuridicoTab({ bidId }: JuridicoTabProps) {
               Nenhuma petição gerada para esta licitação.
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Data de geração</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {peticoes.map((peticao) => (
-                  <TableRow key={peticao.id}>
-                    <TableCell className="font-medium text-gray-900 dark:text-gray-100">
-                      {getTipoLabel(peticao.tipo)}
-                    </TableCell>
-                    <TableCell>{formatDateTime(peticao.createdAt)}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
-                          peticao.status === "ENVIADO"
-                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                            : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                        }`}
-                      >
-                        {getStatusLabel(peticao.status)}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={peticao.status === "ENVIADO" || atualizandoId === peticao.id}
-                        onClick={() => marcarComoEnviado(peticao.id)}
-                      >
-                        {peticao.status === "ENVIADO" ? "Enviado" : "Marcar como Enviado"}
-                      </Button>
-                    </TableCell>
+            <div className="overflow-x-auto w-full">
+              <Table className="min-w-full">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Data de geração</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {peticoes.map((peticao) => (
+                    <TableRow key={peticao.id}>
+                      <TableCell className="font-medium text-gray-900 dark:text-gray-100">
+                        {getTipoLabel(peticao.tipo)}
+                      </TableCell>
+                      <TableCell>{formatDateTime(peticao.createdAt)}</TableCell>
+                      <TableCell>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
+                            peticao.status === "ENVIADO"
+                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                              : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                          }`}
+                        >
+                          {getStatusLabel(peticao.status)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={peticao.status === "ENVIADO" || atualizandoId === peticao.id}
+                          onClick={() => marcarComoEnviado(peticao.id)}
+                        >
+                          {peticao.status === "ENVIADO" ? "Enviado" : "Marcar como Enviado"}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

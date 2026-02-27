@@ -94,7 +94,7 @@ export default function ClienteDetalhesPage() {
       // Se o contrato não existir (404), não é erro crítico
       const asRecordForLog = error as Record<string, { status?: number }>;
       if (asRecordForLog.response?.status !== 404) {
-        console.error("Erro ao carregar dados:", error);
+        console.warn("Erro ao carregar dados de admin/clientes/[id]", error);
       }
     } finally {
       setLoading(false);
@@ -136,7 +136,7 @@ export default function ClienteDetalhesPage() {
     <Layout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <Button
             variant="outline"
             size="sm"
@@ -166,7 +166,8 @@ export default function ClienteDetalhesPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="resumo" className="w-full">
-          <TabsList>
+          <div className="overflow-x-auto w-full">
+          <TabsList className="min-w-max">
             <TabsTrigger value="resumo" className="gap-2">
               <FileText className="h-4 w-4" />
               Resumo
@@ -176,6 +177,7 @@ export default function ClienteDetalhesPage() {
               Financeiro
             </TabsTrigger>
           </TabsList>
+          </div>
 
           {/* Tab Resumo */}
           <TabsContent value="resumo" className="space-y-4 mt-4">
@@ -216,7 +218,7 @@ export default function ClienteDetalhesPage() {
                   <CardTitle>Informações do Contrato</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">
                         Valor Setup

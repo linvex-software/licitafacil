@@ -7,6 +7,8 @@ interface HealthResponse {
   service: string;
 }
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
 export function HealthCheck() {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [data, setData] = useState<HealthResponse | null>(null);
@@ -17,7 +19,7 @@ export function HealthCheck() {
     setError(null);
 
     try {
-      const response = await fetch("http://localhost:3001/health");
+      const response = await fetch(`${API_BASE_URL}/health`);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -63,7 +65,7 @@ export function HealthCheck() {
             {error}
           </p>
           <p className="text-xs text-red-600 dark:text-red-500 mt-2">
-            Certifique-se de que a API está rodando em http://localhost:3001
+            Certifique-se de que a API está disponível em {API_BASE_URL}
           </p>
         </div>
       )}

@@ -410,7 +410,7 @@ export class DocumentService {
           where.doesExpire = true;
           where.expiresAt = { lte: now };
           break;
-        case "EXPIRING_SOON":
+        case "EXPIRING_SOON": {
           where.doesExpire = true;
           const expiringSoonDate = new Date(now);
           expiringSoonDate.setDate(expiringSoonDate.getDate() + (filters.expiringDays || 30));
@@ -419,12 +419,14 @@ export class DocumentService {
             lte: expiringSoonDate,
           };
           break;
-        case "VALID":
+        }
+        case "VALID": {
           where.doesExpire = true;
           const validDate = new Date(now);
           validDate.setDate(validDate.getDate() + (filters.expiringDays || 30));
           where.expiresAt = { gt: validDate };
           break;
+        }
       }
     }
 

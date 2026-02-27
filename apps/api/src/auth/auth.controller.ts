@@ -7,6 +7,7 @@ import {
   BadRequestException,
   UseGuards,
   Req,
+  Logger,
 } from "@nestjs/common";
 import { type Request } from "express";
 import { AuthService } from "./auth.service";
@@ -21,6 +22,8 @@ import {
 
 @Controller("auth")
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(private readonly authService: AuthService) {}
 
   /**
@@ -74,8 +77,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async logout(@CurrentUser() user: User) {
-    // Opcional: adicionar log de auditoria aqui
-    console.log(`[LOGOUT] Usuário ${user.email} (ID: ${user.id}) fez logout`);
+    this.logger.log(`[LOGOUT] Usuário ${user.email} (ID: ${user.id}) fez logout`);
 
     return {
       message: "Logout realizado com sucesso",

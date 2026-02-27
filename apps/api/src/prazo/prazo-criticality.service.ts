@@ -40,12 +40,29 @@ function isChecklistHeuristicEnabled(): boolean {
 function isChecklistItemRelatedToPrazo(item: {
   category: string | null;
   titulo: string;
-}): boolean {
+}, prazoTitulo?: string): boolean {
   if (!isChecklistHeuristicEnabled()) {
     return false;
   }
-  // Heurística restritiva: apenas category === "PRAZO" (sem fallback de título)
-  return item.category === "PRAZO";
+  if (item.category !== "PRAZO") {
+    return false;
+  }
+
+  // Reduz falso positivo: quando disponível, exige relação textual com o título do prazo.
+  if (prazoTitulo) {
+    const normalize = (value: string) =>
+      value
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+    const prazo = normalize(prazoTitulo);
+    const tituloItem = normalize(item.titulo || "");
+    if (!prazo || !tituloItem) return true;
+    return tituloItem.includes(prazo) || prazo.includes(tituloItem);
+  }
+
+  return true;
 }
 
 /**
@@ -123,37 +140,23 @@ export class PrazoCriticalityService {
 
   /**
    * Analisa a criticidade de um prazo baseado em todas as regras de negócio.
-   * Retorna o resultado da análise com isCritical e criticalReason (motivo principal).
+   * Retorna o resultado com isCritical e motivo principal por prioridade.
    * Comparação de datas em UTC para consistência independente do timezone do servidor.
-   *
-   * Ordem de prioridade das regras:
-   * 1. EXPIRED (mais crítico)
-   * 2. CRITICAL_CHECKLIST_PENDING
-   * 3. MISSING_REQUIRED_DOCUMENT
-   * 4. EXPIRING_SOON
-   *
-   * TODO: Suportar múltiplas razões (criticalReasons[]) sem perda de informação; hoje retorna apenas a primeira por prioridade.
    */
   async analyzeCriticality(data: PrazoCriticalityData): Promise<CriticalityAnalysis> {
     const diasRestantes = daysRemainingUTC(data.dataPrazo);
+    const reasons: CriticalReason[] = [];
 
     // Regra 1: Prazo vencido (mais crítico)
     if (diasRestantes < 0) {
-      return {
-        isCritical: true,
-        criticalReason: CriticalReason.EXPIRED,
-      };
+      reasons.push(CriticalReason.EXPIRED);
     }
 
-    // Buscar checklist items da licitação (apenas se heurística habilitada)
-    // ⚠️ HEURÍSTICA: Não existe relação direta (FK) entre ChecklistItem e Prazo no modelo atual.
-    // A associação é feita via heurística restritiva: category === "PRAZO" (sem fallback de título).
-    // Feature flag PRAZO_ENABLE_CHECKLIST_HEURISTIC controla se a heurística é aplicada.
-    // Default: false (desabilitado por segurança para evitar falsos positivos).
-    // TODO [ALTA PRIORIDADE]: Adicionar campo prazoId em ChecklistItem OU entityId/entityType
-    // para relação determinística. A heurística atual pode gerar falsos positivos/negativos.
-    // Issue sugerida: "F4-02: Adicionar relação determinística ChecklistItem ↔ Prazo"
+    // A relação Prazo <-> ChecklistItem usa filtro restritivo com category=PRAZO
+    // e correspondência textual com o título do prazo para reduzir falso positivo.
     const prismaWithTenant = this.prismaTenant.forTenant(data.empresaId);
+    const prazo = await prismaWithTenant.prazo.findUnique({ where: { id: data.prazoId } });
+    const prazoTitulo = prazo?.titulo;
 
     let checklistItems: Array<{
       isCritical: boolean;
@@ -181,48 +184,49 @@ export class PrazoCriticalityService {
       (item) =>
         item.isCritical &&
         !item.concluido &&
-        isChecklistItemRelatedToPrazo(item),
+        isChecklistItemRelatedToPrazo(item, prazoTitulo),
     );
 
     if (hasCriticalChecklistPending) {
-      return {
-        isCritical: true,
-        criticalReason: CriticalReason.CRITICAL_CHECKLIST_PENDING,
-      };
+      reasons.push(CriticalReason.CRITICAL_CHECKLIST_PENDING);
     }
 
-      // Regra 3: Proxy "documento obrigatório não entregue" = exigeEvidencia sem evidenciaId, não concluído
-      // ⚠️ Heurística restritiva: apenas category === "PRAZO" (sem fallback de título)
-      // ⚠️ Aplicada apenas se PRAZO_ENABLE_CHECKLIST_HEURISTIC=true
-      // ⚠️ Proxy: exigeEvidencia/evidenciaId é usado como indicador de "documento obrigatório não entregue"
-      // (não há FK direta Prazo → Document; relação é via ChecklistItem)
-      const hasMissingRequiredDocument = checklistItems.some(
-        (item) =>
-          item.exigeEvidencia &&
-          !item.evidenciaId &&
-          !item.concluido &&
-          isChecklistItemRelatedToPrazo(item),
-      );
+    // Regra 3: Proxy "documento obrigatório não entregue" = exigeEvidencia sem evidenciaId, não concluído
+    const hasMissingRequiredDocument = checklistItems.some(
+      (item) =>
+        item.exigeEvidencia &&
+        !item.evidenciaId &&
+        !item.concluido &&
+        isChecklistItemRelatedToPrazo(item, prazoTitulo),
+    );
 
     if (hasMissingRequiredDocument) {
-      return {
-        isCritical: true,
-        criticalReason: CriticalReason.MISSING_REQUIRED_DOCUMENT,
-      };
+      reasons.push(CriticalReason.MISSING_REQUIRED_DOCUMENT);
     }
 
     // Regra 4: Prazo próximo do vencimento (threshold configurável)
     const threshold = getCriticalDaysThreshold();
     if (diasRestantes <= threshold) {
+      reasons.push(CriticalReason.EXPIRING_SOON);
+    }
+
+    if (reasons.length === 0) {
       return {
-        isCritical: true,
-        criticalReason: CriticalReason.EXPIRING_SOON,
+        isCritical: false,
+        criticalReason: null,
       };
     }
 
+    const orderedPriority: CriticalReason[] = [
+      CriticalReason.EXPIRED,
+      CriticalReason.CRITICAL_CHECKLIST_PENDING,
+      CriticalReason.MISSING_REQUIRED_DOCUMENT,
+      CriticalReason.EXPIRING_SOON,
+    ];
+    const primaryReason = orderedPriority.find((reason) => reasons.includes(reason)) ?? null;
     return {
-      isCritical: false,
-      criticalReason: null,
+      isCritical: true,
+      criticalReason: primaryReason,
     };
   }
 
@@ -254,6 +258,16 @@ export class PrazoCriticalityService {
         : [];
 
     const checklistItemsByBid = new Map<string, ChecklistRow[]>();
+    const prazoTitlesById = new Map<string, string>();
+    if (prazos.length > 0) {
+      const prazoRows = await prismaWithTenant.prazo.findMany({
+        where: { id: { in: prazos.map((p) => p.id) } },
+        select: { id: true, titulo: true },
+      });
+      for (const row of prazoRows) {
+        prazoTitlesById.set(row.id, row.titulo);
+      }
+    }
     for (const item of allItems) {
       const list = checklistItemsByBid.get(item.licitacaoId) ?? [];
       list.push(item);
@@ -265,10 +279,11 @@ export class PrazoCriticalityService {
 
     for (const prazo of prazos) {
       const diasRestantes = daysRemainingUTC(prazo.dataPrazo);
+      const prazoTitulo = prazoTitlesById.get(prazo.id);
+      const reasons: CriticalReason[] = [];
 
       if (diasRestantes < 0) {
-        results.set(prazo.id, { isCritical: true, criticalReason: CriticalReason.EXPIRED });
-        continue;
+        reasons.push(CriticalReason.EXPIRED);
       }
 
       const checklistItems = checklistItemsByBid.get(prazo.bidId) ?? [];
@@ -280,14 +295,10 @@ export class PrazoCriticalityService {
         (item) =>
           item.isCritical &&
           !item.concluido &&
-          isChecklistItemRelatedToPrazo(item),
+          isChecklistItemRelatedToPrazo(item, prazoTitulo),
       );
       if (hasCriticalChecklistPending) {
-        results.set(prazo.id, {
-          isCritical: true,
-          criticalReason: CriticalReason.CRITICAL_CHECKLIST_PENDING,
-        });
-        continue;
+        reasons.push(CriticalReason.CRITICAL_CHECKLIST_PENDING);
       }
 
       // Regra 3: Documento obrigatório não entregue
@@ -299,25 +310,29 @@ export class PrazoCriticalityService {
           item.exigeEvidencia &&
           !item.evidenciaId &&
           !item.concluido &&
-          isChecklistItemRelatedToPrazo(item),
+          isChecklistItemRelatedToPrazo(item, prazoTitulo),
       );
       if (hasMissingRequiredDocument) {
-        results.set(prazo.id, {
-          isCritical: true,
-          criticalReason: CriticalReason.MISSING_REQUIRED_DOCUMENT,
-        });
-        continue;
+        reasons.push(CriticalReason.MISSING_REQUIRED_DOCUMENT);
       }
 
       if (diasRestantes <= threshold) {
-        results.set(prazo.id, {
-          isCritical: true,
-          criticalReason: CriticalReason.EXPIRING_SOON,
-        });
+        reasons.push(CriticalReason.EXPIRING_SOON);
+      }
+
+      if (reasons.length === 0) {
+        results.set(prazo.id, { isCritical: false, criticalReason: null });
         continue;
       }
 
-      results.set(prazo.id, { isCritical: false, criticalReason: null });
+      const orderedPriority: CriticalReason[] = [
+        CriticalReason.EXPIRED,
+        CriticalReason.CRITICAL_CHECKLIST_PENDING,
+        CriticalReason.MISSING_REQUIRED_DOCUMENT,
+        CriticalReason.EXPIRING_SOON,
+      ];
+      const primaryReason = orderedPriority.find((reason) => reasons.includes(reason)) ?? null;
+      results.set(prazo.id, { isCritical: true, criticalReason: primaryReason });
     }
 
     return results;
