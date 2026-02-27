@@ -1,8 +1,9 @@
 "use client";
 
 import { DocumentsList } from "@/components/DocumentsList";
-import { DocumentUpload } from "@/components/DocumentUpload";
+import { DocumentUpload, type DocumentUploadRef } from "@/components/DocumentUpload";
 import { useToast } from "@/hooks/use-toast";
+import { useRef } from "react";
 
 interface DocumentsPageClientProps {
   bidId: string;
@@ -10,6 +11,7 @@ interface DocumentsPageClientProps {
 
 export function DocumentsPageClient({ bidId }: DocumentsPageClientProps) {
   const { toast } = useToast();
+  const uploadRef = useRef<DocumentUploadRef>(null);
 
   const handleError = (error: string) => {
     toast({ title: "Erro", description: error, variant: "destructive" });
@@ -20,12 +22,16 @@ export function DocumentsPageClient({ bidId }: DocumentsPageClientProps) {
     window.location.reload();
   };
 
+  const handleUploadRequest = (documentId: string, category: string) => {
+    uploadRef.current?.openUploadModal(documentId, category, undefined);
+  };
+
   return (
     <>
       <div className="mb-6 flex justify-end">
-        <DocumentUpload bidId={bidId} onUploadSuccess={handleUploadSuccess} onError={handleError} />
+        <DocumentUpload ref={uploadRef} bidId={bidId} onUploadSuccess={handleUploadSuccess} onError={handleError} />
       </div>
-      <DocumentsList bidId={bidId} onError={handleError} />
+      <DocumentsList bidId={bidId} onError={handleError} onUploadRequest={handleUploadRequest} />
     </>
   );
 }

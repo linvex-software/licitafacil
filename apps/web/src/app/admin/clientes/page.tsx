@@ -94,9 +94,10 @@ export default function PainelAdminClientes() {
       ]);
       setClientes(clientesRes.data);
       setEstatisticas(statsRes.data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Se backend retornar 403, redirecionar
-      if (error.response?.status === 403) {
+      const asRecord = error as Record<string, { status?: number }>;
+      if (asRecord?.response?.status === 403) {
         toast({
           title: "Acesso negado",
           description: "Você não tem permissão para acessar esta área",

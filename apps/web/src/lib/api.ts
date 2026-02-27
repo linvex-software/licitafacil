@@ -232,6 +232,46 @@ export async function getChatHistorico(bidId: string): Promise<ChatMensagem[]> {
   return data;
 }
 
+export interface FatorAnalise {
+  nome: string;
+  descricao: string;
+  peso: number;
+  score: number;
+  scoreContribuicao: number;
+  detalhe: string;
+  dados?: Record<string, any>;
+}
+
+export interface BidPrediction {
+  id: string;
+  bidId: string;
+  empresaId: string;
+  score: number;
+  recomendacao: "PARTICIPAR" | "ANALISAR" | "DESCARTAR";
+  fatores: FatorAnalise[];
+  explicacao: string;
+  acoes: string[];
+  tokensUsados?: number;
+  tempoSegundos?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function obterProbabilidadeLicitacao(id: string): Promise<BidPrediction> {
+  const { data } = await api.get(`/bids/${id}/probabilidade`);
+  return data;
+}
+
+export async function importarDocumentosAnalise(bidId: string) {
+  const { data } = await api.post(`/bids/${bidId}/importar-documentos-analise`);
+  return data;
+}
+
+export async function gerarChecklistAnalise(bidId: string) {
+  const { data } = await api.post(`/bids/${bidId}/gerar-checklist-analise`);
+  return data;
+}
+
 // --- Análise de Mercado (PNCP) ---
 export interface HistoricoCompraItem {
   data: string;

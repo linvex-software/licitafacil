@@ -223,10 +223,11 @@ export const documentSchema = z.object({
   name: z.string(),
   filename: z.string(),
   mimeType: z.string(),
-  size: z.number().int().positive(),
+  size: z.number().int().nonnegative(),
   category: z.string(),
   url: z.string(),
   uploadedBy: z.string().uuid(),
+  status: z.enum(["PENDENTE", "ATIVO"]),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   // Associação com licitação (opcional)

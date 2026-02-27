@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import { PrismaService } from "../prisma/prisma.service";
 import { PrismaTenantService } from "../prisma/prisma-tenant.service";
 import { AiService } from "../ai/ai.service";
+import { DocumentService } from "../document/document.service";
 import { PdfParserUtil } from "../common/utils/pdf-parser.util";
 import { type CreateBidInput, type UpdateBidInput, type Bid } from "@licitafacil/shared";
 import type { AnalisarEditalResponseDto } from "./dto/analisar-edital.dto";
@@ -27,6 +28,7 @@ export class BidService {
     private readonly prisma: PrismaService,
     private readonly prismaTenant: PrismaTenantService,
     private readonly aiService: AiService,
+    private readonly documentService: DocumentService,
   ) { }
 
   /**
@@ -405,5 +407,129 @@ export class BidService {
     });
 
     return historicoDesc.reverse();
+  }
+  /**
+   * Importa requisitos de documentação gerados pela IA e cria Documentos PENDENTES.
+   */
+  async importarDocumentosAnalise(
+    bidId: string,
+    empresaId: string,
+    userId: string,
+  ) {
+    // 1. Verificar se licitação existe
+    await this.findOne(bidId, empresaId);
+
+    // 2. Buscar última análise concluída
+    const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
+    const analise = await prismaWithTenant.editalAnalise.findFirst({
+      where: { bidId, status: "CONCLUIDA" },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!analise || !analise.resultado) {
+      throw new BadRequestException("Nenhuma análise de edital concluída encontrada para esta licitação");
+    }
+
+    const resultado = analise.resultado as any;
+    const documentos = resultado.documentos || [];
+
+    if (documentos.length === 0) {
+      return { criados: 0, documentos: [] };
+    }
+
+    const criados = [];
+    for (const doc of documentos) {
+      // Infere a categoria do documento (ex: Certidão, Balanço)
+      const category = this.inferirCategoriaDocumento(doc.nome || "");
+
+      const novoDoc = await this.documentService.createPendente(
+        doc.nome,
+        category,
+        bidId,
+        empresaId,
+        userId,
+      );
+      criados.push(novoDoc);
+    }
+
+    return { criados: criados.length, documentos: criados };
+  }
+
+  /**
+   * Gera a lista de Checklist baseada nas etapas/tarefas extraídas pela AI
+   */
+  async gerarChecklistAnalise(
+    bidId: string,
+    empresaId: string,
+    _userId: string,
+  ) {
+    await this.findOne(bidId, empresaId);
+
+    const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
+    const analise = await prismaWithTenant.editalAnalise.findFirst({
+      where: { bidId, status: "CONCLUIDA" },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!analise || !analise.resultado) {
+      throw new BadRequestException("Nenhuma análise de edital concluída encontrada para esta licitação");
+    }
+
+    const resultado = analise.resultado as any;
+    let etapas = resultado.etapas || [];
+
+    if (etapas.length === 0) {
+      const prazos = resultado.prazos || [];
+      const documentos = resultado.documentos || [];
+
+      etapas = [
+        ...prazos.map((p: any) => ({
+          nome: `Prazo: ${p.tipo}`,
+          descricao: `Data: ${p.data}. ${p.descricao || ""}`
+        })),
+        ...documentos.map((d: any) => ({
+          nome: `Providenciar: ${d.nome}`,
+          descricao: d.obrigatorio ? "Documento Obrigatório" : "Documento Opcional"
+        }))
+      ];
+    }
+
+    if (etapas.length === 0) {
+      return { criados: 0, itens: [] };
+    }
+
+    const itensCriados = [];
+    for (const etapa of etapas) {
+      const isCritical = etapa.nome?.toLowerCase().includes("vencimento") ||
+        etapa.nome?.toLowerCase().includes("prazo") ||
+        etapa.nome?.toLowerCase().includes("obrigatório");
+
+      const newItem = await prismaWithTenant.checklistItem.create({
+        data: {
+          empresaId,
+          licitacaoId: bidId,
+          titulo: etapa.nome,
+          descricao: etapa.descricao || "",
+          category: "OUTROS", // TODO: Melhorar no futuro com machine learning se necessário
+          exigeEvidencia: false,
+          isCritical: !!isCritical,
+        }
+      });
+      itensCriados.push(newItem);
+    }
+
+    return { criados: itensCriados.length, itens: itensCriados };
+  }
+
+  private inferirCategoriaDocumento(nomeDocumento: string): string {
+    const n = nomeDocumento.toLowerCase();
+    if (n.includes("certidão") || n.includes("certidao") || n.includes("cnd")) return "CERTIDOES";
+    if (n.includes("contrato") || n.includes("social")) return "CONTRATOS";
+    if (n.includes("certificado") || n.includes("iso") || n.includes("qualidade")) return "CERTIFICADOS";
+    if (n.includes("licença") || n.includes("licenca") || n.includes("alvará") || n.includes("alvara")) return "LICENCAS";
+    if (n.includes("proposta") || n.includes("preço") || n.includes("preco")) return "PROPOSTAS";
+    if (n.includes("habilitação") || n.includes("habilitacao") || n.includes("cnpj") || n.includes("balanço")) return "HABILITACAO";
+    if (n.includes("comprovante") || n.includes("declaração") || n.includes("declaracao")) return "COMPROVANTES";
+    return "OUTROS";
   }
 }

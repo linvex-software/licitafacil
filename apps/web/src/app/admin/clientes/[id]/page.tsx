@@ -80,8 +80,9 @@ export default function ClienteDetalhesPage() {
         setContrato(contratoRes.data);
         setEmpresaNome(contratoRes.data.empresa?.name || "");
       }
-    } catch (error: any) {
-      if (error.response?.status === 403) {
+    } catch (error: unknown) {
+      const asRecord = error as Record<string, { status?: number }>;
+      if (asRecord.response?.status === 403) {
         toast({
           title: "Acesso negado",
           description: "Você não tem permissão para acessar esta área",
@@ -91,7 +92,8 @@ export default function ClienteDetalhesPage() {
         return;
       }
       // Se o contrato não existir (404), não é erro crítico
-      if (error.response?.status !== 404) {
+      const asRecordForLog = error as Record<string, { status?: number }>;
+      if (asRecordForLog.response?.status !== 404) {
         console.error("Erro ao carregar dados:", error);
       }
     } finally {

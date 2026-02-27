@@ -1,34 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Tipos
-// ─────────────────────────────────────────────────────────────────────────────
-
-export interface FatorAnalise {
-  nome: string;
-  descricao: string;
-  peso: number;
-  score: number;
-  scoreContribuicao: number;
-  detalhe: string;
-  dados?: Record<string, any>;
-}
-
-export interface BidPredictionResult {
-  id: string;
-  bidId: string;
-  empresaId: string;
-  score: number;
-  recomendacao: "PARTICIPAR" | "ANALISAR" | "DESCARTAR";
-  fatores: FatorAnalise[];
-  explicacao: string;
-  acoes: string[];
-  tokensUsados?: number;
-  tempoSegundos?: number;
-  createdAt: string;
-  updatedAt: string;
-}
+import { api, type BidPrediction } from "@/lib/api";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Hooks
@@ -39,10 +10,10 @@ export interface BidPredictionResult {
  * Retorna null se não houver análise prévia.
  */
 export function useBidPrediction(bidId: string) {
-  return useQuery<BidPredictionResult | null>({
+  return useQuery<BidPrediction | null>({
     queryKey: ["bid-prediction", bidId],
     queryFn: async () => {
-      const { data } = await api.get<BidPredictionResult | null>(
+      const { data } = await api.get<BidPrediction | null>(
         `/bids/${bidId}/probabilidade`,
       );
       return data;
@@ -59,9 +30,9 @@ export function useBidPrediction(bidId: string) {
 export function useAnalisarProbabilidade() {
   const queryClient = useQueryClient();
 
-  return useMutation<BidPredictionResult, Error, string>({
+  return useMutation<BidPrediction, Error, string>({
     mutationFn: async (bidId: string) => {
-      const { data } = await api.post<BidPredictionResult>(
+      const { data } = await api.post<BidPrediction>(
         `/bids/${bidId}/analisar-probabilidade`,
       );
       return data;
