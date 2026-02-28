@@ -26,6 +26,7 @@ import { formatCurrency, formatCNPJ, formatDate } from "@/lib/utils";
 import { Layout } from "@/components/layout";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "@/hooks/use-toast";
+import { AuthGuard } from "@/components/AuthGuard";
 
 interface ClienteConfig {
   id: string;
@@ -190,166 +191,168 @@ export default function PainelAdminClientes() {
   }
 
   return (
-    <Layout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Gerenciar Clientes
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Painel administrativo B2B — Limvex Licitação
-            </p>
+    <AuthGuard>
+      <Layout>
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Gerenciar Clientes
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                Painel administrativo B2B — Limvex Licitação
+              </p>
+            </div>
+            <Button onClick={() => setModalAberto(true)} size="lg">
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Cliente
+            </Button>
           </div>
-          <Button onClick={() => setModalAberto(true)} size="lg">
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Cliente
-          </Button>
-        </div>
 
-        {/* Cards de Estatísticas */}
-        {estatisticas && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{estatisticas.totalClientes}</div>
-                <p className="text-xs text-muted-foreground">
-                  {estatisticas.clientesAtivos} ativos · {estatisticas.clientesSuspensos} suspensos
-                </p>
-              </CardContent>
-            </Card>
+          {/* Cards de Estatísticas */}
+          {estatisticas && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{estatisticas.totalClientes}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {estatisticas.clientesAtivos} ativos · {estatisticas.clientesSuspensos} suspensos
+                  </p>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">MRR</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(estatisticas.mrr)}</div>
-                <p className="text-xs text-muted-foreground">
-                  ARR: {formatCurrency(estatisticas.arr)}
-                </p>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">MRR</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{formatCurrency(estatisticas.mrr)}</div>
+                  <p className="text-xs text-muted-foreground">
+                    ARR: {formatCurrency(estatisticas.arr)}
+                  </p>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Churn Rate</CardTitle>
-                <TrendingDown className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{estatisticas.churnRate}%</div>
-                <p className="text-xs text-muted-foreground">Últimos 30 dias</p>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Churn Rate</CardTitle>
+                  <TrendingDown className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{estatisticas.churnRate}%</div>
+                  <p className="text-xs text-muted-foreground">Últimos 30 dias</p>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {estatisticas.clientesAtivos > 0
-                    ? formatCurrency(estatisticas.mrr / estatisticas.clientesAtivos)
-                    : "R$ 0,00"}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {estatisticas.clientesAtivos > 0
+                      ? formatCurrency(estatisticas.mrr / estatisticas.clientesAtivos)
+                      : "R$ 0,00"}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Mensalidade média por cliente ativo</p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Tabela de Clientes */}
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                <div className="relative flex-1 w-full sm:max-w-md">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por nome ou CNPJ..."
+                    value={busca}
+                    onChange={(e) => setBusca(e.target.value)}
+                    className="pl-9"
+                  />
                 </div>
-                <p className="text-xs text-muted-foreground">Mensalidade média por cliente ativo</p>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Tabela de Clientes */}
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-              <div className="relative flex-1 w-full sm:max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por nome ou CNPJ..."
-                  value={busca}
-                  onChange={(e) => setBusca(e.target.value)}
-                  className="pl-9"
-                />
+                <Button variant="outline" onClick={exportarCSV} disabled={clientes.length === 0}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Exportar CSV
+                </Button>
               </div>
-              <Button variant="outline" onClick={exportarCSV} disabled={clientes.length === 0}>
-                <Download className="mr-2 h-4 w-4" />
-                Exportar CSV
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto w-full">
-            <Table className="min-w-full">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Empresa</TableHead>
-                  <TableHead>CNPJ</TableHead>
-                  <TableHead>Plano</TableHead>
-                  <TableHead className="text-center">Usuários</TableHead>
-                  <TableHead className="text-center">Licitações</TableHead>
-                  <TableHead>Mensalidade</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Início</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {clientesFiltrados.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                      {busca
-                        ? "Nenhum cliente encontrado para essa busca"
-                        : "Nenhum cliente cadastrado. Clique em \"Novo Cliente\" para começar."}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  clientesFiltrados.map((cliente) => (
-                    <TableRow
-                      key={cliente.id}
-                      className="cursor-pointer hover:bg-muted/50 transition-colors"
-                      onClick={() => router.push(`/admin/clientes/${cliente.empresaId}`)}
-                    >
-                      <TableCell className="font-medium">{cliente.empresa.name}</TableCell>
-                      <TableCell className="font-mono text-sm">{formatCNPJ(cliente.cnpj)}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={badgePlanoVariant(cliente.plano)}>
-                          {cliente.plano}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center">{cliente.empresa._count.users}</TableCell>
-                      <TableCell className="text-center">{cliente.empresa._count.bids}</TableCell>
-                      <TableCell>{formatCurrency(Number(cliente.mensalidade))}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={badgeStatusVariant(cliente.status)}>
-                          {cliente.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm">{formatDate(cliente.dataInicio)}</TableCell>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto w-full">
+                <Table className="min-w-full">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Empresa</TableHead>
+                      <TableHead>CNPJ</TableHead>
+                      <TableHead>Plano</TableHead>
+                      <TableHead className="text-center">Usuários</TableHead>
+                      <TableHead className="text-center">Licitações</TableHead>
+                      <TableHead>Mensalidade</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Início</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-            </div>
-          </CardContent>
-        </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {clientesFiltrados.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                          {busca
+                            ? "Nenhum cliente encontrado para essa busca"
+                            : "Nenhum cliente cadastrado. Clique em \"Novo Cliente\" para começar."}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      clientesFiltrados.map((cliente) => (
+                        <TableRow
+                          key={cliente.id}
+                          className="cursor-pointer hover:bg-muted/50 transition-colors"
+                          onClick={() => router.push(`/admin/clientes/${cliente.empresaId}`)}
+                        >
+                          <TableCell className="font-medium">{cliente.empresa.name}</TableCell>
+                          <TableCell className="font-mono text-sm">{formatCNPJ(cliente.cnpj)}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={badgePlanoVariant(cliente.plano)}>
+                              {cliente.plano}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center">{cliente.empresa._count.users}</TableCell>
+                          <TableCell className="text-center">{cliente.empresa._count.bids}</TableCell>
+                          <TableCell>{formatCurrency(Number(cliente.mensalidade))}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={badgeStatusVariant(cliente.status)}>
+                              {cliente.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm">{formatDate(cliente.dataInicio)}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Modal de Criação */}
-        <CriarClienteModal
-          aberto={modalAberto}
-          onFechar={() => setModalAberto(false)}
-          onSucesso={() => {
-            setModalAberto(false);
-            carregarDados();
-          }}
-        />
-      </div>
-    </Layout>
+          {/* Modal de Criação */}
+          <CriarClienteModal
+            aberto={modalAberto}
+            onFechar={() => setModalAberto(false)}
+            onSucesso={() => {
+              setModalAberto(false);
+              carregarDados();
+            }}
+          />
+        </div>
+      </Layout>
+    </AuthGuard >
   );
 }
