@@ -102,3 +102,20 @@ export function useBidLimite() {
         },
     });
 }
+
+export interface BidOverviewStats {
+    total: number;
+    emAndamento: number;
+    emRisco: number;
+    encerrandoEmBreve: number;
+}
+
+export function useBidOverviewStats() {
+    return useQuery({
+        queryKey: ["bid-overview-stats"],
+        queryFn: async () => {
+            const { data } = await api.get<BidOverviewStats>("/bids/stats/overview");
+            return data;
+        },
+    });
+}

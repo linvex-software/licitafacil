@@ -404,6 +404,18 @@ export class BidController {
   }
 
   /**
+   * Retorna os overview stats dinâmicos das licitações (total, em andamento, risco operativo e encerrando em breve)
+   * GET /bids/stats/overview
+   * 
+   * Permissão: ADMIN e COLABORADOR
+   */
+  @Get("stats/overview")
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  async getOverviewStats(@Tenant() empresaId: string) {
+    return this.bidService.getOverviewStats(empresaId);
+  }
+
+  /**
    * Analisa o risco de uma licitação
    * GET /bids/:id/risk-analysis
    * 

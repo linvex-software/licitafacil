@@ -532,4 +532,51 @@ export class BidService {
     if (n.includes("comprovante") || n.includes("declaração") || n.includes("declaracao")) return "COMPROVANTES";
     return "OUTROS";
   }
+
+  async getOverviewStats(empresaId: string) {
+    // Contagem total
+    const total = await this.prisma.bid.count({
+      where: { empresaId }
+    });
+
+    // Contagem de licitações com operationalState = "OK"
+    const emAndamento = await this.prisma.bid.count({
+      where: {
+        empresaId,
+        operationalState: "OK",
+      }
+    });
+
+    // Contagem de licitações com operationalState = "EM_RISCO"
+    const emRisco = await this.prisma.bid.count({
+      where: {
+        empresaId,
+        operationalState: "EM_RISCO",
+      }
+    });
+
+    // Contagem de licitações encerrando em até 48 horas (encerrando em breve)
+    const agora = new Date();
+    const daqui48h = new Date(agora.getTime() + 48 * 60 * 60 * 1000);
+    const encerrandoEmBreve = await this.prisma.bid.count({
+      where: {
+        empresaId,
+        prazos: {
+          some: {
+            dataPrazo: {
+              gte: agora,
+              lte: daqui48h,
+            }
+          }
+        }
+      }
+    });
+
+    return {
+      total,
+      emAndamento,
+      emRisco,
+      encerrandoEmBreve,
+    };
+  }
 }

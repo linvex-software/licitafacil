@@ -51,6 +51,7 @@ import { useState, useEffect } from "react";
 import { MetricsCard } from "@/components/metrics-card";
 import { Badge } from "@/components/ui/Badge";
 import { useBidPrediction } from "@/hooks/use-bid-prediction";
+import { useBidOverviewStats } from "@/hooks/use-licitacoes";
 import { PredictionBadge } from "@/components/licitacoes/prediction-badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -68,15 +69,15 @@ import {
  * Componente separado para poder usar o hook useBidPrediction por bid.
  */
 function PredictionCell({ bidId }: { bidId: string }) {
-  const { data: prediction, isLoading } = useBidPrediction(bidId);
-  return (
-    <PredictionBadge
-      prediction={prediction}
-      isLoading={isLoading}
-      size="sm"
-      showLabel={false}
-    />
-  );
+    const { data: prediction, isLoading } = useBidPrediction(bidId);
+    return (
+        <PredictionBadge
+            prediction={prediction}
+            isLoading={isLoading}
+            size="sm"
+            showLabel={false}
+        />
+    );
 }
 
 export default function LicitacoesListPage() {
@@ -95,11 +96,14 @@ export default function LicitacoesListPage() {
         status: statusFilter !== 'all' ? statusFilter : undefined
     });
 
+    const { data: overviewStats, refetch: refetchStats } = useBidOverviewStats();
+
     const licitacoes = response?.data || [];
     const totalPages = response?.totalPages || 1;
 
     const recarregarDados = () => {
         refetch();
+        refetchStats();
     };
 
     const handleLicitacaoCriada = () => {
@@ -131,8 +135,58 @@ export default function LicitacoesListPage() {
         setLastSync(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
     }, []);
 
-    const handleSync = () => {
-        setLastSync(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+    const handleSync = async () => {
+        try {
+            await Promise.all([refetch(), refetchStats()]);
+            setLastSync(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+            toast({
+                title: "Sincronizado",
+                description: "Os dados foram atualizados com sucesso.",
+            });
+        } catch (error) {
+            toast({
+                title: "Erro na sincronização",
+                description: "Não foi possível atualizar os dados.",
+                variant: "destructive",
+            });
+        }
+    };
+
+    const handleExport = () => {
+        if (!licitacoes || licitacoes.length === 0) {
+            toast({
+                title: "Nada para exportar",
+                description: "Não há licitações nesta página para exportar.",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        const headers = ["Número/Edital", "Órgão", "Modalidade", "Status", "Data Limite"];
+
+        const csvContent = [
+            headers.join(";"),
+            ...licitacoes.map(l => {
+                const numeroEdital = l.title || "---";
+                const orgao = l.agency || "---";
+                const modalidade = l.modality || "---";
+                const status = l.legalStatus || "---";
+                const dataLimite = l.createdAt ? new Date(l.createdAt).toLocaleDateString('pt-BR') : "---";
+
+                return [numeroEdital, orgao, modalidade, status, dataLimite]
+                    .map(str => `"${str.replace(/"/g, '""')}"`) // Escape quotes
+                    .join(";");
+            })
+        ].join("\n");
+
+        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", `licitacoes_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     return (
@@ -156,7 +210,11 @@ export default function LicitacoesListPage() {
                         <p className="text-gray-500 dark:text-gray-400 mt-1 max-w-2xl">Acompanhe editais ativos, prazos críticos e o status das suas participações</p>
                     </div>
                     <div className="flex w-full md:w-auto items-center gap-3 flex-wrap">
-                        <Button variant="outline" className="border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800">
+                        <Button
+                            variant="outline"
+                            className="border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                            onClick={handleExport}
+                        >
                             <Download className="w-4 h-4 mr-2" />
                             Exportar
                         </Button>
@@ -179,28 +237,28 @@ export default function LicitacoesListPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <MetricsCard
                         title="Total de Licitações"
-                        value={response?.total || 0}
+                        value={overviewStats?.total || 0}
                         description="Processos mapeados"
                         icon={TrendingUp}
                         variant="default"
                     />
                     <MetricsCard
                         title="Em Andamento"
-                        value={licitacoes.filter(l => l.operationalState === 'OK').length + 5}
+                        value={overviewStats?.emAndamento || 0}
                         description="Monitoramento ativo"
                         icon={CheckCircle2}
                         variant="success"
                     />
                     <MetricsCard
                         title="Risco Operacional"
-                        value={3}
+                        value={overviewStats?.emRisco || 0}
                         description="Ações necessárias"
                         icon={AlertCircle}
                         variant="danger"
                     />
                     <MetricsCard
                         title="Encerrando em Breve"
-                        value={8}
+                        value={overviewStats?.encerrandoEmBreve || 0}
                         description="Próximas 48 horas"
                         icon={Clock}
                         variant="warning"
