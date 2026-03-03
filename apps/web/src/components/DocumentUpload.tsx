@@ -42,9 +42,10 @@ export const DocumentUpload = forwardRef<DocumentUploadRef, DocumentUploadProps>
     // Armazena o ID do documento pendente sendo sobrescrito, se houver
     const [targetDocumentId, setTargetDocumentId] = useState<string | undefined>();
 
-    const [formData, setFormData] = useState<CreateDocumentInput & { bidId?: string }>({
+    const [formData, setFormData] = useState<CreateDocumentInput & { bidId?: string; outrosDescricao?: string }>({
       name: "",
       category: DocumentCategory.OUTROS,
+      outrosDescricao: "",
     });
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -55,6 +56,7 @@ export const DocumentUpload = forwardRef<DocumentUploadRef, DocumentUploadProps>
         setFormData({
           name: defaultName || "",
           category: (defaultCategory as typeof DocumentCategory[keyof typeof DocumentCategory]) || DocumentCategory.OUTROS,
+          outrosDescricao: "",
         });
         setIsOpen(true);
       },
@@ -86,10 +88,8 @@ export const DocumentUpload = forwardRef<DocumentUploadRef, DocumentUploadProps>
       setSelectedFile(file);
       setErrors((prev) => ({ ...prev, file: "" }));
 
-      // Preencher nome automaticamente se estiver vazio
-      if (!formData.name) {
-        setFormData((prev) => ({ ...prev, name: file.name.replace(/\.[^/.]+$/, "") }));
-      }
+      // Sempre atualizar o nome ao selecionar novo arquivo
+      setFormData((prev) => ({ ...prev, name: file.name.replace(/\.[^/.]+$/, "") }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -115,13 +115,15 @@ export const DocumentUpload = forwardRef<DocumentUploadRef, DocumentUploadProps>
       setIsUploading(true);
       try {
         await uploadDocument(selectedFile, {
-          name: formData.name,
+          name: formData.category === "OUTROS" && formData.outrosDescricao
+            ? `${formData.name} - ${formData.outrosDescricao}`
+            : formData.name,
           category: formData.category,
           bidId: bidId || formData.bidId,
           id: targetDocumentId, // Pass the ID if updating a pending document
         } as any);
         setIsOpen(false);
-        setFormData({ name: "", category: DocumentCategory.OUTROS });
+        setFormData({ name: "", category: DocumentCategory.OUTROS, outrosDescricao: "" });
         setSelectedFile(null);
         onUploadSuccess();
       } catch (error) {
@@ -134,7 +136,7 @@ export const DocumentUpload = forwardRef<DocumentUploadRef, DocumentUploadProps>
     const handleClose = () => {
       if (!isUploading) {
         setIsOpen(false);
-        setFormData({ name: "", category: DocumentCategory.OUTROS });
+        setFormData({ name: "", category: DocumentCategory.OUTROS, outrosDescricao: "" });
         setSelectedFile(null);
         setTargetDocumentId(undefined);
         setErrors({});
@@ -196,11 +198,22 @@ export const DocumentUpload = forwardRef<DocumentUploadRef, DocumentUploadProps>
                   ))}
                 </select>
               </div>
-              <DialogFooter className="gap-2 sm:gap-0 pt-4">
-                <Button type="button" variant="outline" onClick={handleClose} disabled={isUploading} className="border-gray-200 dark:border-gray-700">
+              {formData.category === "OUTROS" && (
+                <div className="grid gap-2">
+                  <Label className="text-gray-700 dark:text-gray-300">Especifique o tipo *</Label>
+                  <Input
+                    value={formData.outrosDescricao || ""}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, outrosDescricao: e.target.value }))}
+                    placeholder="Ex: Certidão Municipal, Alvará, etc."
+                    className="border-gray-200 dark:border-gray-700 focus-visible:ring-emerald-500"
+                  />
+                </div>
+              )}
+              <DialogFooter className="gap-2 sm:gap-0 pt-4 flex-shrink-0">
+                <Button type="button" variant="outline" onClick={handleClose} disabled={isUploading} className="border-gray-200 dark:border-gray-700 flex-shrink-0">
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={isUploading} className="bg-emerald-600 hover:bg-emerald-700">
+                <Button type="submit" disabled={isUploading} className="bg-emerald-600 hover:bg-emerald-700 flex-shrink-0">
                   {isUploading ? "Enviando..." : "Enviar"}
                 </Button>
               </DialogFooter>

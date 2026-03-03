@@ -22,8 +22,11 @@ export default async function DisputaLicitacaoPage({ params }: PageProps) {
             </Button>
           </Link>
           <h1 className="text-2xl md:text-3xl font-heading font-bold text-slate-900 mb-2">
-            Disputa
+            Simulador de Disputa
           </h1>
+          <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm font-medium mb-2">
+            ⚠️ Simulação — os valores calculados são estimativas e não garantem resultado real.
+          </div>
           <p className="text-slate-600">
             Simule lances com base no cenário da licitação e acompanhe o histórico salvo.
           </p>
