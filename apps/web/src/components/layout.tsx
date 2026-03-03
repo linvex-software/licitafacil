@@ -59,7 +59,7 @@ const navGroups: NavGroup[] = [
                 ]
             },
             {
-                label: "Disputa", icon: Swords, href: "/disputa",
+                label: "Simulador", icon: Swords, href: "/disputa",
                 subItems: [
                     { label: "Comprasnet", href: "/integracoes/comprasnet", icon: Globe },
                 ]
