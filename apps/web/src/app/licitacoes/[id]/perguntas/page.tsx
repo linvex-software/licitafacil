@@ -18,16 +18,16 @@ export default async function PerguntasPage({ params }: PageProps) {
           <Link href={`/licitacoes/${id}`}>
             <Button
               variant="ghost"
-              className="pl-0 text-slate-500 hover:text-slate-900 hover:bg-transparent mb-4"
+              className="pl-0 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-transparent mb-4"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar para licitação
             </Button>
           </Link>
-          <h1 className="text-2xl md:text-3xl font-heading font-bold text-slate-900 mb-2">
+          <h1 className="text-2xl md:text-3xl font-heading font-bold text-slate-900 dark:text-white mb-2">
             Chat com o Edital
           </h1>
-          <p className="text-slate-600">
+          <p className="text-slate-600 dark:text-slate-400">
             Faça perguntas sobre o edital analisado pela IA
           </p>
         </div>

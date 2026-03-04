@@ -45,7 +45,8 @@ import {
     SlidersHorizontal,
     LayoutGrid,
     List,
-    Trash2
+    Trash2,
+    Pencil
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { MetricsCard } from "@/components/metrics-card";
@@ -457,6 +458,9 @@ export default function LicitacoesListPage() {
                                                         <DropdownMenuContent align="end" className="w-48">
                                                             <DropdownMenuLabel>Ações Rápidas</DropdownMenuLabel>
                                                             <DropdownMenuSeparator />
+                                                            <DropdownMenuItem onClick={() => setModalBidId(item.id)}>
+                                                                <Pencil className="w-4 h-4 mr-2" /> Editar Licitação
+                                                            </DropdownMenuItem>
                                                             <DropdownMenuItem>
                                                                 <Eye className="w-4 h-4 mr-2" /> Visualizar Edital
                                                             </DropdownMenuItem>

@@ -9,7 +9,7 @@ import {
     BarChart2, Swords, Briefcase,
     Building2,
     TrendingUp, History, Tag as TagIcon,
-    CalendarDays, Users,
+    CalendarDays, Users, HelpCircle,
 } from "lucide-react";
 
 import { AlertsDropdown } from "@/components/AlertsDropdown";
@@ -75,7 +75,9 @@ const navGroups: NavGroup[] = [
     },
     {
         group: "Outros",
-        items: []
+        items: [
+            { label: "Suporte", icon: HelpCircle, href: "/suporte" }
+        ]
     },
 ];
 

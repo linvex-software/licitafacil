@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Body,
   Param,
   HttpCode,
@@ -40,7 +41,7 @@ import type { Request } from "express";
 @UseGuards(DevBypassGuard, JwtAuthGuard, RolesGuard)
 @UseInterceptors(AuditInterceptor)
 export class ChecklistItemController {
-  constructor(private readonly checklistItemService: ChecklistItemService) {}
+  constructor(private readonly checklistItemService: ChecklistItemService) { }
 
   /**
    * Cria um novo item de checklist para uma licitação
@@ -186,5 +187,24 @@ export class ChecklistItemController {
     }
 
     return this.checklistItemService.update(id, result.data, empresaId, user.id, request);
+  }
+
+  /**
+   * Remove um item de checklist
+   * DELETE /checklist-items/:id
+   *
+   * Permissão: ADMIN e COLABORADOR
+   */
+  @Delete(":id")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  @Audit({ action: "checklist-item.delete", resourceType: "ChecklistItem", captureResourceId: true })
+  async remove(
+    @Param("id") id: string,
+    @Tenant() empresaId: string,
+    @CurrentUser() user: User,
+    @Req() request: Request,
+  ): Promise<void> {
+    await this.checklistItemService.delete(id, empresaId, user.id, request);
   }
 }

@@ -24,7 +24,7 @@ import {
 @Controller("users")
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
   /**
    * Lista todos os usuários da empresa (incluindo inativos)
@@ -91,6 +91,7 @@ export class UserController {
   async create(
     @Body() body: unknown,
     @Tenant() empresaId: string,
+    @CurrentUser() user: User,
   ): Promise<User> {
     const result = createUserSchema.safeParse({
       ...(body as any),
@@ -109,7 +110,7 @@ export class UserController {
       password: result.data.password,
       name: result.data.name,
       role: result.data.role,
-    });
+    }, user.role);
   }
 
   /**
@@ -122,8 +123,9 @@ export class UserController {
     @Param("id") id: string,
     @Body() body: { name?: string; role?: string },
     @Tenant() empresaId: string,
+    @CurrentUser() user: User,
   ): Promise<User> {
-    return this.userService.updateForEmpresa(id, empresaId, body);
+    return this.userService.updateForEmpresa(id, empresaId, body, user.role);
   }
 
   /**
@@ -137,7 +139,7 @@ export class UserController {
     @Tenant() empresaId: string,
     @CurrentUser() currentUser: User,
   ) {
-    return this.userService.deactivate(id, empresaId, currentUser.id);
+    return this.userService.deactivate(id, empresaId, currentUser.id, currentUser.role);
   }
 
   /**
@@ -151,7 +153,7 @@ export class UserController {
     @Tenant() empresaId: string,
     @CurrentUser() currentUser: User,
   ) {
-    return this.userService.deletePermanent(id, empresaId, currentUser.id);
+    return this.userService.deletePermanent(id, empresaId, currentUser.id, currentUser.role);
   }
 
   /**

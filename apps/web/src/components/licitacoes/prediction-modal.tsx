@@ -258,6 +258,15 @@ export function PredictionModal({
 
         {prediction && (
           <div className="p-6 pt-4 space-y-5">
+            {/* Aviso Permanente de Limitações da IA */}
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 lg:p-4 text-sm text-amber-800 dark:text-amber-400 flex gap-3">
+              <AlertTriangle className="w-5 h-5 shrink-0" />
+              <div>
+                <strong className="block mb-1">Aviso Importante:</strong>
+                Esta predição é <strong>gerada por Inteligência Artificial</strong> com base nos <em>documentos e prazos</em> da licitação, e pode conter imprecisões. Use como auxílio à decisão, não como fator único. É crucial que você tenha rodado a análise de edital e configurado os prazos previamente para melhor precisão.
+              </div>
+            </div>
+
             {/* Explicação da IA */}
             {prediction.explicacao && (
               <div className="bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">

@@ -76,6 +76,15 @@ export default function ComprasnetPage() {
   });
 
   async function handleBuscar() {
+    if (!filtros.dataInicio || !filtros.dataFim) {
+      toast({
+        title: "Datas obrigatórias",
+        description: "Informe a Data Início e a Data Fim para realizar a busca.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setBuscando(true);
     setResultados([]);
     setSelecionadas(new Set());
@@ -318,7 +327,7 @@ export default function ComprasnetPage() {
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <Label>Data Início</Label>
+                      <Label>Data Início <span className="text-red-500">*</span></Label>
                       <Input
                         type="date"
                         value={filtros.dataInicio}
@@ -331,7 +340,7 @@ export default function ComprasnetPage() {
                       />
                     </div>
                     <div>
-                      <Label>Data Fim</Label>
+                      <Label>Data Fim <span className="text-red-500">*</span></Label>
                       <Input
                         type="date"
                         value={filtros.dataFim}
