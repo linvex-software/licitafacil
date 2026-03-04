@@ -8,12 +8,25 @@ import {
   markChecklistItemCompleted,
   markChecklistItemIncomplete,
   gerarChecklistAnalise,
+  updateChecklistItem,
+  deleteChecklistItem,
 } from "@/lib/api";
 import type { LicitacaoChecklistItem } from "@licitafacil/shared";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle2, Circle, AlertCircle, ListChecks } from "lucide-react";
+import { CheckCircle2, Circle, AlertCircle, ListChecks, Plus, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ChecklistPageClientProps {
   licitacaoId: string;
@@ -31,6 +44,23 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
+
+  // States do Modal de Criar / Editar
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+
+  const [newItemData, setNewItemData] = useState({
+    titulo: "",
+    descricao: "",
+    exigeEvidencia: false,
+  });
+
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const { toast } = useToast();
 
   const loadItems = async () => {
@@ -101,12 +131,87 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
       await gerarChecklistAnalise(licitacaoId);
       toast({ title: "Checklist importado com sucesso!" });
       await loadItems();
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro ao importar checklist";
+    } catch (err: any) {
+      const errorMessage = err?.response?.data?.message || err?.message || "Erro ao importar checklist";
       setError(errorMessage);
-      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+      toast({ title: "Aviso", description: errorMessage, variant: "destructive" });
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleOpenModal = () => {
+    setIsEditing(false);
+    setEditingItemId(null);
+    setNewItemData({ titulo: "", descricao: "", exigeEvidencia: false });
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (item: LicitacaoChecklistItem) => {
+    setIsEditing(true);
+    setEditingItemId(item.id);
+    setNewItemData({
+      titulo: item.titulo,
+      descricao: item.descricao || "",
+      exigeEvidencia: item.exigeEvidencia,
+    });
+    setIsModalOpen(true);
+  };
+
+  const confirmDelete = (item: LicitacaoChecklistItem) => {
+    setDeletingItemId(item.id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteItem = async () => {
+    if (!deletingItemId) return;
+    try {
+      setIsDeleting(true);
+      await deleteChecklistItem(deletingItemId);
+      toast({ title: "Item excluído com sucesso!" });
+      setIsDeleteDialogOpen(false);
+      setDeletingItemId(null);
+      await loadItems();
+    } catch (err) {
+      toast({ title: "Erro", description: "Não foi possível excluir o item", variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCreateOrUpdateItem = async () => {
+    if (!newItemData.titulo.trim()) {
+      toast({ title: "Erro", description: "O título do item é obrigatório", variant: "destructive" });
+      return;
+    }
+
+    try {
+      setIsCreating(true);
+
+      if (isEditing && editingItemId) {
+        await updateChecklistItem(editingItemId, {
+          titulo: newItemData.titulo.trim(),
+          descricao: newItemData.descricao.trim() || undefined,
+          exigeEvidencia: newItemData.exigeEvidencia,
+        });
+        toast({ title: "Item atualizado com sucesso!" });
+      } else {
+        const { api } = await import("@/lib/api");
+        await api.post("/checklist-items", {
+          licitacaoId,
+          titulo: newItemData.titulo.trim(),
+          descricao: newItemData.descricao.trim() || undefined,
+          exigeEvidencia: newItemData.exigeEvidencia,
+        });
+        toast({ title: "Item adicionado com sucesso!" });
+      }
+
+      setIsModalOpen(false);
+      await loadItems();
+    } catch (err) {
+      toast({ title: "Erro", description: isEditing ? "Não foi possível atualizar o item" : "Não foi possível adicionar o item", variant: "destructive" });
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -180,7 +285,15 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
       </Card>
 
       {/* Ações / Botões */}
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end mb-4 gap-3">
+        <Button
+          variant="outline"
+          onClick={handleOpenModal}
+          className="gap-2 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/50"
+        >
+          <Plus className="w-4 h-4" />
+          Adicionar Item
+        </Button>
         <Button
           variant="outline"
           onClick={handleGerarIA}
@@ -260,6 +373,25 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
                             {item.evidenciaId ? "Evidência OK" : "Exige evidência"}
                           </span>
                         )}
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 ml-auto text-gray-500">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleOpenEditModal(item)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              <span>Editar</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => confirmDelete(item)} className="text-red-600 focus:text-red-700 focus:bg-red-50 dark:focus:bg-red-950/50">
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              <span>Excluir</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+
                       </div>
                       {item.descricao && (
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{item.descricao}</p>
@@ -283,6 +415,80 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
           })}
         </div>
       )}
-    </div>
+
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{isEditing ? "Editar Item do Checklist" : "Novo Item do Checklist"}</DialogTitle>
+            <DialogDescription>
+              {isEditing ? "Altere as informações deste item." : "Adicione um item manual obrigatório ou opcional a este checklist."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Título do Item <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="Ex: Requerer termo de compromisso"
+                value={newItemData.titulo}
+                onChange={(e) => setNewItemData({ ...newItemData, titulo: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Descrição (Opcional)</Label>
+              <Textarea
+                placeholder="Ex: O documento está no anexo III, página 42..."
+                value={newItemData.descricao}
+                onChange={(e) => setNewItemData({ ...newItemData, descricao: e.target.value })}
+                className="resize-none"
+                rows={3}
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-3 border rounded-lg bg-gray-50/50 dark:bg-gray-800/20 dark:border-gray-700">
+              <div className="space-y-0.5">
+                <Label>Exige Anexo de Documento?</Label>
+                <div className="text-[0.8rem] text-muted-foreground">
+                  Bloqueia a conclusão até que haja evidência ({`"Evidência OK"`})
+                </div>
+              </div>
+              <Switch
+                checked={newItemData.exigeEvidencia}
+                onCheckedChange={(checked) => setNewItemData({ ...newItemData, exigeEvidencia: checked })}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsModalOpen(false)} disabled={isCreating}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateOrUpdateItem} disabled={isCreating}>
+              {isCreating ? "Salvando..." : isEditing ? "Salvar Alterações" : "Salvar Item"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir Item</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir permanentemente este item do checklist? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isDeleting}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteItem} disabled={isDeleting}>
+              {isDeleting ? "Excluindo..." : "Excluir Item"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div >
   );
 }

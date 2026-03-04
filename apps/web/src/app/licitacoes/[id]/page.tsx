@@ -257,7 +257,7 @@ export default function LicitacaoDetailPage() {
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+          <Card className="shadow-sm border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-transparent">
             <CardHeader>
               <CardTitle className="text-lg font-heading flex items-center gap-2">
                 <FileText className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />

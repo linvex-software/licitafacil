@@ -56,9 +56,9 @@ const roleLabel: Record<string, string> = {
 };
 
 const roleBadgeClass: Record<string, string> = {
-  SUPER_ADMIN: "bg-amber-100 text-amber-800 border-amber-200",
-  ADMIN: "bg-purple-100 text-purple-800 border-purple-200",
-  COLABORADOR: "bg-blue-100 text-blue-800 border-blue-200",
+  SUPER_ADMIN: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-800",
+  ADMIN: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/50 dark:text-purple-400 dark:border-purple-800",
+  COLABORADOR: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/50 dark:text-blue-400 dark:border-blue-800",
 };
 
 export default function UsuariosPage() {
@@ -268,7 +268,7 @@ export default function UsuariosPage() {
                           </Badge>
                         )}
                       </TableCell>
-                      {isAdmin && (
+                      {isAdmin && !(user?.role === 'ADMIN' && usuario.role === 'SUPER_ADMIN') && (
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
                             <Button

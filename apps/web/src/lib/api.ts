@@ -447,3 +447,13 @@ export async function markAlertResolved(id: string) {
   const { data } = await api.post(`/alerts/${id}/mark-resolved`);
   return data;
 }
+
+// --- Checklist Items (Adicional) ---
+export async function updateChecklistItem(id: string, body: { titulo?: string; descricao?: string; exigeEvidencia?: boolean }) {
+  const { data } = await api.patch(`/checklist-items/${id}`, body);
+  return data;
+}
+
+export async function deleteChecklistItem(id: string): Promise<void> {
+  await api.delete(`/checklist-items/${id}`);
+}

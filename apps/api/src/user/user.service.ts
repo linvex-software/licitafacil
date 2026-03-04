@@ -16,7 +16,7 @@ export class UserService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly prismaTenant: PrismaTenantService,
-  ) {}
+  ) { }
 
   /**
    * Cria um novo usuário com senha hasheada
@@ -139,7 +139,15 @@ export class UserService {
   async createForEmpresa(
     empresaId: string,
     data: { email: string; password: string; name: string; role?: string },
+    currentUserRole?: string,
   ): Promise<User> {
+    // Regra de hierarquia: ADMIN não pode criar SUPER_ADMIN
+    if (currentUserRole === UserRole.ADMIN && data.role === UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException(
+        "Apenas Super Admins podem criar outros Super Admins.",
+      );
+    }
+
     const totalUsuariosCriados = await this.prisma.user.count({
       where: { empresaId },
     });
@@ -181,6 +189,7 @@ export class UserService {
     id: string,
     empresaId: string,
     data: { name?: string; role?: string },
+    currentUserRole?: string,
   ): Promise<User> {
     // Verificar que pertence à empresa
     const usuario = await this.prisma.user.findFirst({
@@ -189,6 +198,20 @@ export class UserService {
 
     if (!usuario) {
       throw new NotFoundException("Usuário não encontrado");
+    }
+
+    // Regra de hierarquia: ADMIN não pode editar SUPER_ADMIN
+    if (currentUserRole === UserRole.ADMIN && usuario.role === UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException(
+        "Você não tem permissão para editar um Super Admin.",
+      );
+    }
+
+    // Regra de hierarquia: ADMIN não pode promover para SUPER_ADMIN
+    if (currentUserRole === UserRole.ADMIN && data.role === UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException(
+        "Apenas Super Admins podem promover outros usuários para Super Admin.",
+      );
     }
 
     const updateData: any = {};
@@ -206,7 +229,7 @@ export class UserService {
   /**
    * Desativa um usuário (soft delete)
    */
-  async deactivate(id: string, empresaId: string, currentUserId: string): Promise<{ message: string }> {
+  async deactivate(id: string, empresaId: string, currentUserId: string, currentUserRole?: string): Promise<{ message: string }> {
     // Impedir auto-desativação
     if (id === currentUserId) {
       throw new ForbiddenException("Você não pode desativar a si mesmo");
@@ -218,6 +241,13 @@ export class UserService {
 
     if (!usuario) {
       throw new NotFoundException("Usuário não encontrado");
+    }
+
+    // Regra de hierarquia: ADMIN não pode desativar SUPER_ADMIN
+    if (currentUserRole === UserRole.ADMIN && usuario.role === UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException(
+        "Você não tem permissão para desativar um Super Admin.",
+      );
     }
 
     await this.prisma.user.update({
@@ -235,6 +265,7 @@ export class UserService {
     id: string,
     empresaId: string,
     currentUserId: string,
+    currentUserRole?: string,
   ): Promise<{ message: string }> {
     if (id === currentUserId) {
       throw new ForbiddenException("Você não pode excluir sua própria conta");
@@ -246,6 +277,13 @@ export class UserService {
 
     if (!usuario) {
       throw new NotFoundException("Usuário não encontrado");
+    }
+
+    // Regra de hierarquia: ADMIN não pode excluir SUPER_ADMIN
+    if (currentUserRole === UserRole.ADMIN && usuario.role === UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException(
+        "Você não tem permissão para excluir um Super Admin.",
+      );
     }
 
     await this.prisma.user.delete({ where: { id } });

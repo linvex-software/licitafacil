@@ -25,7 +25,7 @@ export class ChecklistItemService {
     private readonly bidService: BidService,
     private readonly bidRiskService: BidRiskService,
     private readonly documentService: DocumentService,
-  ) {}
+  ) { }
 
   /**
    * Cria um novo item de checklist para uma licitação
@@ -318,6 +318,41 @@ export class ChecklistItemService {
     }
 
     return this.mapToChecklistItem(updatedItem);
+  }
+
+  /**
+   * Remove um item de checklist
+   *
+   * Regras de domínio:
+   * - Executa análise automática de risco após a exclusão do item se ele for crítico ou exigir evidência.
+   */
+  async delete(
+    id: string,
+    empresaId: string,
+    userId: string,
+    request: Request,
+  ): Promise<void> {
+    const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
+
+    const item = await prismaWithTenant.checklistItem.findUnique({
+      where: { id },
+    });
+
+    if (!item) {
+      throw new NotFoundException(`Item de checklist com ID ${id} não encontrado`);
+    }
+
+    await prismaWithTenant.checklistItem.delete({
+      where: { id },
+    });
+
+    if (item.isCritical || item.exigeEvidencia) {
+      this.bidRiskService
+        .autoUpdateRiskState(item.licitacaoId, empresaId, userId, request)
+        .catch((error) => {
+          console.error("Erro ao atualizar análise de risco automaticamente:", error);
+        });
+    }
   }
 
   /**
