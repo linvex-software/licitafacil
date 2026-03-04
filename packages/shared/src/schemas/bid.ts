@@ -129,6 +129,7 @@ export const bidSchema = z.object({
   manualRiskOverride: z.boolean(),
   manualRiskOverrideBy: z.string().uuid().nullable(),
   manualRiskOverrideAt: z.string().datetime().nullable(),
+  hasEditalAnalysis: z.boolean(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });

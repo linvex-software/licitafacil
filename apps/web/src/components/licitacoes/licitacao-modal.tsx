@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ExternalLink, X } from "lucide-react";
+import { Calendar, ExternalLink, Plus, X } from "lucide-react";
 import { api, fetchPrazosByBid } from "@/lib/api";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
@@ -92,7 +92,7 @@ function badgeCriticoClass(diasRestantes: number | null) {
   return "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300";
 }
 
-function PrazosTab({ bidId }: { bidId: string }) {
+function PrazosTab({ bidId, onNovoPrazo }: { bidId: string; onNovoPrazo: () => void }) {
   const [prazos, setPrazos] = useState<PrazoModal[]>([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
@@ -133,7 +133,26 @@ function PrazosTab({ bidId }: { bidId: string }) {
   }
 
   if (prazos.length === 0) {
-    return <p className="text-sm text-muted-foreground">Nenhum prazo encontrado para esta licitação.</p>;
+    return (
+      <div className="flex flex-col items-center justify-center py-10 text-center">
+        <div className="mb-3 rounded-full bg-gray-100 p-3 dark:bg-gray-800">
+          <Calendar className="h-5 w-5 text-gray-400" />
+        </div>
+        <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+          Nenhum prazo cadastrado
+        </p>
+        <p className="mt-1 max-w-xs text-xs text-gray-400 dark:text-gray-500">
+          O edital não informou prazos automaticamente. Adicione manualmente as datas importantes.
+        </p>
+        <button
+          onClick={onNovoPrazo}
+          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0078D1] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#0062ab]"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Adicionar prazo manualmente
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -220,6 +239,10 @@ export function LicitacaoModal({ bidId, onFechar, onAbrirPaginaCompleta }: Licit
     setTabAtiva(tab);
     setTabsCarregadas((prev) => new Set([...prev, tab]));
   };
+  const handleNovoPrazo = () => {
+    if (!bidId) return;
+    window.location.href = `/licitacoes/${bidId}/prazos`;
+  };
 
   if (!bidId) return null;
 
@@ -230,7 +253,7 @@ export function LicitacaoModal({ bidId, onFechar, onAbrirPaginaCompleta }: Licit
     >
       <div
         className="
-          bg-background shadow-2xl flex flex-col overflow-hidden
+          bg-white dark:bg-gray-950 shadow-2xl flex flex-col overflow-hidden
           w-full h-full rounded-none
           md:w-[90vw] md:h-[90vh] md:rounded-xl
         "
@@ -284,8 +307,8 @@ export function LicitacaoModal({ bidId, onFechar, onAbrirPaginaCompleta }: Licit
                 flex-shrink-0 px-3 md:px-4 py-2 text-xs md:text-sm font-medium
                 border-b-2 transition-colors whitespace-nowrap
                 ${tabAtiva === tab.id
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
+                  ? "text-[#0078D1] border-b-2 border-[#0078D1]"
+                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                 }
               `}
             >
@@ -354,7 +377,7 @@ export function LicitacaoModal({ bidId, onFechar, onAbrirPaginaCompleta }: Licit
                   )}
 
                   {tab === "checklist" && bidId && <ChecklistPageClient licitacaoId={bidId} />}
-                  {tab === "prazos" && bidId && <PrazosTab bidId={bidId} />}
+                  {tab === "prazos" && bidId && <PrazosTab bidId={bidId} onNovoPrazo={handleNovoPrazo} />}
                   {tab === "juridico" && bidId && <JuridicoTab bidId={bidId} />}
                   {tab === "perguntas" && bidId && <PerguntasTab bidId={bid?.id ?? bidId} emModal />}
                 </>

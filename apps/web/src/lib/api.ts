@@ -394,7 +394,8 @@ export async function deleteDocument(id: string): Promise<void> {
 
 export async function uploadDocument(
   file: File,
-  body: { name: string; category: string; bidId?: string }
+  body: { name: string; category: string; bidId?: string; documentId?: string },
+  onProgress?: (progress: number) => void,
 ): Promise<Document> {
   const formData = new FormData();
   formData.append("file", file);
@@ -403,8 +404,16 @@ export async function uploadDocument(
   if (body.bidId) {
     formData.append("bidId", body.bidId);
   }
+  if (body.documentId) {
+    formData.append("documentId", body.documentId);
+  }
   const { data } = await api.post("/documents", formData, {
     headers: { "Content-Type": "multipart/form-data" },
+    onUploadProgress: (event) => {
+      if (!onProgress || !event.total) return;
+      const progress = Math.round((event.loaded * 100) / event.total);
+      onProgress(progress);
+    },
   });
   return data;
 }

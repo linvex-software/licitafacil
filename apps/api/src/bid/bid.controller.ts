@@ -293,7 +293,7 @@ export class BidController {
   }
 
   /**
-   * Remove uma licitação (soft delete)
+   * Remove uma licitação permanentemente (hard delete)
    * DELETE /bids/:id
    * 
    * Permissão: ADMIN
@@ -304,17 +304,13 @@ export class BidController {
   async remove(
     @Param("id") id: string,
     @Tenant() empresaId: string,
-    @CurrentUser() user: User,
-    @Req() request: Request,
+    @CurrentUser() _user: User,
+    @Req() _request: Request,
   ) {
-    // Validar que a licitação existe antes de deletar
     await this.bidService.remove(id, empresaId);
 
-    // Fazer soft delete com auditoria
-    await this.softDeleteService.delete("bid", id, empresaId, user.id, request);
-
     return {
-      message: "Licitação deletada com sucesso",
+      message: "Licitação excluída permanentemente com sucesso",
       id,
     };
   }

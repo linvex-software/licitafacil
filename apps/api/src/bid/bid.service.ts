@@ -47,7 +47,7 @@ export class BidService {
       },
     });
 
-    return this.mapToBid(bid);
+    return this.mapToBid(bid, false);
   }
 
   /**
@@ -106,8 +106,27 @@ export class BidService {
       prismaWithTenant.bid.count({ where }),
     ]);
 
+    const bidIds = bids.map((bid) => bid.id);
+    const analisesConcluidasPorBid = bidIds.length > 0
+      ? await this.prisma.editalAnalise.groupBy({
+        by: ["bidId"],
+        where: {
+          empresaId: filters.empresaId,
+          bidId: { in: bidIds },
+          status: "CONCLUIDA",
+        },
+        _count: { _all: true },
+      })
+      : [];
+
+    const bidsComAnaliseSet = new Set(
+      analisesConcluidasPorBid
+        .filter((item) => item._count._all > 0)
+        .map((item) => item.bidId),
+    );
+
     return {
-      data: bids.map((bid) => this.mapToBid(bid)),
+      data: bids.map((bid) => this.mapToBid(bid, bidsComAnaliseSet.has(bid.id))),
       pagination: {
         page,
         limit,
@@ -130,7 +149,15 @@ export class BidService {
       throw new NotFoundException(`Licitação com ID ${id} não encontrada`);
     }
 
-    return this.mapToBid(bid);
+    const analiseConcluidaCount = await this.prisma.editalAnalise.count({
+      where: {
+        bidId: id,
+        empresaId,
+        status: "CONCLUIDA",
+      },
+    });
+
+    return this.mapToBid(bid, analiseConcluidaCount > 0);
   }
 
   /**
@@ -160,7 +187,15 @@ export class BidService {
       },
     });
 
-    return this.mapToBid(updatedBid);
+    const analiseConcluidaCount = await this.prisma.editalAnalise.count({
+      where: {
+        bidId: id,
+        empresaId,
+        status: "CONCLUIDA",
+      },
+    });
+
+    return this.mapToBid(updatedBid, analiseConcluidaCount > 0);
   }
 
   /**
@@ -179,7 +214,14 @@ export class BidService {
     }
 
     if (existingBid.legalStatus === targetColumn) {
-      return this.mapToBid(existingBid);
+      const analiseConcluidaCount = await this.prisma.editalAnalise.count({
+        where: {
+          bidId: id,
+          empresaId,
+          status: "CONCLUIDA",
+        },
+      });
+      return this.mapToBid(existingBid, analiseConcluidaCount > 0);
     }
 
     const previousColumn = existingBid.legalStatus;
@@ -205,17 +247,22 @@ export class BidService {
       }),
     ]);
 
-    return this.mapToBid(updatedBid);
+    const analiseConcluidaCount = await this.prisma.editalAnalise.count({
+      where: {
+        bidId: id,
+        empresaId,
+        status: "CONCLUIDA",
+      },
+    });
+
+    return this.mapToBid(updatedBid, analiseConcluidaCount > 0);
   }
 
   /**
-   * Remove uma licitação (soft delete é feito via SoftDeleteService)
-   * Este método não deve ser usado diretamente
+   * Remove uma licitação permanentemente (hard delete)
    */
   async remove(id: string, empresaId: string): Promise<void> {
-    const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
-
-    const bid = await prismaWithTenant.bid.findUnique({
+    const bid = await this.prisma.bid.findFirst({
       where: { id },
     });
 
@@ -223,8 +270,13 @@ export class BidService {
       throw new NotFoundException(`Licitação com ID ${id} não encontrada`);
     }
 
-    // Soft delete é feito via SoftDeleteService
-    // Este método apenas valida que a licitação existe
+    if (bid.empresaId !== empresaId) {
+      throw new NotFoundException(`Licitação com ID ${id} não encontrada`);
+    }
+
+    await this.prisma.bid.delete({
+      where: { id },
+    });
   }
 
   /**
@@ -245,7 +297,7 @@ export class BidService {
     manualRiskOverrideAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
-  }): Bid {
+  }, hasEditalAnalysis: boolean): Bid {
     return {
       id: bid.id,
       empresaId: bid.empresaId,
@@ -259,6 +311,7 @@ export class BidService {
       manualRiskOverride: bid.manualRiskOverride,
       manualRiskOverrideBy: bid.manualRiskOverrideBy,
       manualRiskOverrideAt: bid.manualRiskOverrideAt?.toISOString() ?? null,
+      hasEditalAnalysis,
       createdAt: bid.createdAt.toISOString(),
       updatedAt: bid.updatedAt.toISOString(),
     };

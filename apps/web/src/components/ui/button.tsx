@@ -4,12 +4,12 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
     {
         variants: {
             variant: {
                 default:
-                    "bg-[#2563eb] text-white shadow-sm hover:bg-[#1d4ed8] hover:shadow-md active:bg-[#1e40af] active:shadow-sm",
+                    "bg-primary text-white shadow-sm hover:bg-primary-600 hover:shadow-md active:bg-primary-700 active:shadow-sm",
                 destructive:
                     "bg-red-600 text-white shadow-sm hover:bg-red-700 hover:shadow-md active:bg-red-800",
                 outline:
@@ -19,7 +19,7 @@ const buttonVariants = cva(
                 ghost:
                     "text-gray-600 hover:bg-gray-100 hover:text-gray-900 active:bg-gray-200",
                 link:
-                    "text-[#2563eb] underline-offset-4 hover:underline p-0 h-auto shadow-none",
+                    "text-primary underline-offset-4 hover:underline p-0 h-auto shadow-none",
             },
             size: {
                 default: "h-9 px-4 py-2",

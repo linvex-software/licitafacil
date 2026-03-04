@@ -45,3 +45,13 @@ export function maskCNPJ(value: string): string {
         .replace(/(\d{4})(\d)/, "$1-$2")
         .slice(0, 18);
 }
+
+export const getFileUrl = (url: string | null | undefined): string | null => {
+    if (!url || url === "pendente" || url.trim() === "") return null;
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
+
+    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+    if (url.startsWith("/uploads/")) return `${apiBase}${url}`;
+    if (url.startsWith("/")) return `${apiBase}${url}`;
+    return `${apiBase}/uploads/${url}`;
+}

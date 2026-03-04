@@ -338,8 +338,8 @@ export function PerguntasTab({ bidId: bidIdProp, emModal = false }: PerguntasTab
             <Send className="w-4 h-4" />
           </button>
         </div>
-        <p className="text-xs text-muted-foreground mt-2 text-center">
-          LicitaIA pode cometer erros. Sempre verifique o edital original.
+        <p className="mt-2 text-center text-xs text-gray-400 dark:text-gray-500">
+          ✦ LicitaAI pode cometer erros. Confirme as informações no edital original.
         </p>
       </div>
     </div>

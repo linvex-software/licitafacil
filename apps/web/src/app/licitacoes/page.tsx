@@ -29,7 +29,6 @@ import { useRouter } from "next/navigation";
 import {
     Search,
     Filter,
-    Calendar,
     ChevronLeft,
     ChevronRight,
     RefreshCcw,
@@ -42,9 +41,6 @@ import {
     CheckCircle2,
     Clock,
     ArrowUpDown,
-    SlidersHorizontal,
-    LayoutGrid,
-    List,
     Trash2,
     Pencil
 } from "lucide-react";
@@ -65,6 +61,14 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AuthGuard } from "@/components/AuthGuard";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 
 /**
  * Célula de predição para cada linha da tabela.
@@ -89,6 +93,8 @@ export default function LicitacoesListPage() {
     const [page, setPage] = useState(1);
     const [lastSync, setLastSync] = useState<string>("");
     const [modalBidId, setModalBidId] = useState<string | null>(null);
+    const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const { toast } = useToast();
 
@@ -113,23 +119,23 @@ export default function LicitacoesListPage() {
     };
 
     async function deletarLicitacao(id: string) {
-        if (!window.confirm("Tem certeza que deseja descartar esta licitação?")) {
-            return;
-        }
-
+        setIsDeleting(true);
         try {
             await api.delete(`/bids/${id}`);
             toast({
-                title: "Licitação descartada",
-                description: "A licitação foi removida com sucesso.",
+                title: "Licitação excluída",
+                description: "A licitação foi removida permanentemente com sucesso.",
             });
             recarregarDados();
+            setDeleteTargetId(null);
         } catch (error: any) {
             toast({
-                title: "Erro ao descartar",
+                title: "Erro ao excluir",
                 description: error.response?.data?.message || "Tente novamente",
                 variant: "destructive",
             });
+        } finally {
+            setIsDeleting(false);
         }
     }
 
@@ -215,7 +221,7 @@ export default function LicitacoesListPage() {
                         <div className="flex w-full md:w-auto items-center gap-3 flex-wrap">
                             <Button
                                 variant="outline"
-                                className="border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                className="border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
                                 onClick={handleExport}
                             >
                                 <Download className="w-4 h-4 mr-2" />
@@ -223,7 +229,7 @@ export default function LicitacoesListPage() {
                             </Button>
                             <Button
                                 variant="outline"
-                                className="border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                className="border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
                                 onClick={handleSync}
                             >
                                 <RefreshCcw className="w-4 h-4 mr-2" />
@@ -304,30 +310,11 @@ export default function LicitacoesListPage() {
                                     </SelectContent>
                                 </Select>
 
-                                <Button variant="ghost" className="h-10 border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800">
-                                    <Calendar className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
-                                    Período
-                                </Button>
-
-                                <Button variant="ghost" className="h-10 border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800">
-                                    <SlidersHorizontal className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
-                                    Filtros Avançados
-                                </Button>
                             </div>
                         </div>
 
                         <div className="flex items-center justify-between px-2">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Visualização:</span>
-                                <div className="flex items-center bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 bg-white dark:bg-gray-700 shadow-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700">
-                                        <List className="w-4 h-4" />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
-                                        <LayoutGrid className="w-4 h-4" />
-                                    </Button>
-                                </div>
-                            </div>
+                            <div />
                             <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                                 Mostrando <span className="text-gray-900 dark:text-gray-100 font-bold">{licitacoes.length}</span> de <span className="text-gray-900 dark:text-gray-100 font-bold">{response?.total || 0}</span> resultados
                             </div>
@@ -343,9 +330,9 @@ export default function LicitacoesListPage() {
                                         <Checkbox className="border-gray-300 dark:border-gray-600" />
                                     </TableHead>
                                     <TableHead className="min-w-[300px] py-4">
-                                        <div className="flex items-center gap-2 cursor-pointer group hover:text-slate-900">
+                                        <div className="flex items-center gap-2 cursor-pointer group text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
                                             Título / Órgão
-                                            <ArrowUpDown className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
+                                            <ArrowUpDown className="w-3 h-3 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
                                         </div>
                                     </TableHead>
                                     <TableHead>Modalidade</TableHead>
@@ -397,7 +384,7 @@ export default function LicitacoesListPage() {
                                                 <Checkbox className="border-gray-200 dark:border-gray-600 group-hover:border-gray-400" />
                                             </TableCell>
                                             <TableCell className="py-4">
-                                                <div className="font-bold text-gray-900 dark:text-gray-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors uppercase text-sm tracking-tight">{item.title}</div>
+                                                <div className="font-bold text-gray-900 dark:text-gray-100 group-hover:text-[#0078D1] transition-colors uppercase text-sm tracking-tight">{item.title}</div>
                                                 <div className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-1 flex items-center gap-1.5">
                                                     <span className="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded uppercase">{item.agency.slice(0, 3)}</span>
                                                     <span className="truncate max-w-[250px]">{item.agency}</span>
@@ -445,7 +432,11 @@ export default function LicitacoesListPage() {
                                             <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                                                 <div className="flex justify-end items-center gap-2">
                                                     <Link href={`/licitacoes/${item.id}`}>
-                                                        <Button variant="outline" size="sm" className="h-9 font-semibold border-gray-200 dark:border-gray-700 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 dark:bg-gray-900">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="h-9 font-semibold border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:text-[#0078D1] hover:bg-gray-50 dark:hover:bg-gray-700/50 bg-white dark:bg-transparent"
+                                                        >
                                                             Acessar Processo
                                                         </Button>
                                                     </Link>
@@ -473,10 +464,10 @@ export default function LicitacoesListPage() {
                                                             <DropdownMenuSeparator />
                                                             <DropdownMenuItem
                                                                 className="text-red-600 cursor-pointer"
-                                                                onClick={() => deletarLicitacao(item.id)}
+                                                                onClick={() => setDeleteTargetId(item.id)}
                                                             >
                                                                 <Trash2 className="w-4 h-4 mr-2" />
-                                                                Descartar
+                                                                Excluir permanentemente
                                                             </DropdownMenuItem>
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
@@ -505,7 +496,7 @@ export default function LicitacoesListPage() {
                                     size="sm"
                                     disabled={page <= 1}
                                     onClick={() => setPage(p => p - 1)}
-                                    className="h-9 px-4 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                    className="h-9 px-4 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40"
                                 >
                                     <ChevronLeft className="h-4 w-4 mr-2" />
                                     Anterior
@@ -515,7 +506,7 @@ export default function LicitacoesListPage() {
                                     size="sm"
                                     disabled={page >= totalPages}
                                     onClick={() => setPage(p => p + 1)}
-                                    className="h-9 px-4 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                    className="h-9 px-4 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40"
                                 >
                                     Próxima
                                     <ChevronRight className="h-4 w-4 ml-2" />
@@ -530,6 +521,33 @@ export default function LicitacoesListPage() {
                     onFechar={() => setModalBidId(null)}
                     onAbrirPaginaCompleta={(id) => router.push(`/licitacoes/${id}`)}
                 />
+
+                <Dialog open={!!deleteTargetId} onOpenChange={(open) => !open && setDeleteTargetId(null)}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Excluir licitação</DialogTitle>
+                            <DialogDescription>
+                                Tem certeza que deseja excluir esta licitação? Esta ação não pode ser desfeita.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button
+                                variant="outline"
+                                onClick={() => setDeleteTargetId(null)}
+                                disabled={isDeleting}
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                onClick={() => deleteTargetId && deletarLicitacao(deleteTargetId)}
+                                disabled={isDeleting}
+                            >
+                                {isDeleting ? "Excluindo..." : "Excluir permanentemente"}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </Layout>
         </AuthGuard>
     );

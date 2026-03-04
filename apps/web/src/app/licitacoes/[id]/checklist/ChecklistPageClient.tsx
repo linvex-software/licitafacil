@@ -289,7 +289,7 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
         <Button
           variant="outline"
           onClick={handleOpenModal}
-          className="gap-2 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/50"
+          className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors gap-2"
         >
           <Plus className="w-4 h-4" />
           Adicionar Item
@@ -298,7 +298,7 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
           variant="outline"
           onClick={handleGerarIA}
           disabled={isGenerating}
-          className="gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400 dark:hover:bg-purple-950/50"
+          className="border border-[#0078D1]/40 dark:border-[#0078D1]/50 text-[#0078D1] dark:text-[#60a5fa] bg-[#0078D1]/5 dark:bg-[#0078D1]/10 hover:bg-[#0078D1]/10 dark:hover:bg-[#0078D1]/20 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors gap-2"
         >
           {isGenerating ? (
             <div className="w-4 h-4 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
@@ -333,7 +333,7 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
             return (
               <Card
                 key={item.id}
-                className={`shadow-sm border-gray-200 dark:border-gray-700 transition-colors ${item.concluido ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20" : "hover:border-gray-300 dark:hover:border-gray-600"
+                className={`shadow-sm border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 transition-colors ${item.concluido ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20" : "hover:border-gray-300 dark:hover:border-gray-600"
                   }`}
               >
                 <CardContent className="py-4">
@@ -358,7 +358,7 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 flex-wrap">
                         <h3
-                          className={`font-heading font-medium ${item.concluido ? "text-gray-500 dark:text-gray-400 line-through" : "text-gray-900 dark:text-gray-100"
+                          className={`font-heading font-medium ${item.concluido ? "text-gray-500 dark:text-gray-400 line-through" : "text-gray-800 dark:text-gray-200"
                             }`}
                         >
                           {item.titulo}
@@ -394,10 +394,13 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
 
                       </div>
                       {item.descricao && (
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{item.descricao}</p>
+                        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">{item.descricao}</p>
                       )}
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                        {item.exigeEvidencia ? "Documento Obrigatório" : "Documento Opcional"}
+                      </p>
                       {item.concluido && item.concluidoEm && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
                           Concluído em {formatDate(item.concluidoEm)}
                         </p>
                       )}
