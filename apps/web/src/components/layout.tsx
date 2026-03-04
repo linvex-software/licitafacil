@@ -337,8 +337,12 @@ export function Layout({ children, fullWidth = false }: {
                         <DropdownMenuContent align="end" className="w-52 rounded-xl">
                             <DropdownMenuLabel className="section-label">Minha Conta</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="rounded-lg"><User className="mr-2 h-4 w-4" /> Perfil</DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-lg"><Settings className="mr-2 h-4 w-4" /> Configurações</DropdownMenuItem>
+                            <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
+                                <Link href="/perfil"><User className="mr-2 h-4 w-4" /> Perfil</Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
+                                <Link href="/configuracoes"><Settings className="mr-2 h-4 w-4" /> Configurações</Link>
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={logout} className="text-red-600 focus:text-red-600 rounded-lg">
                                 <LogOut className="mr-2 h-4 w-4" /> Sair

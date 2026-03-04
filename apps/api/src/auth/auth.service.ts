@@ -3,7 +3,11 @@ import { JwtService } from "@nestjs/jwt";
 import { UserService } from "../user/user.service";
 import { EmpresaService } from "../empresa/empresa.service";
 import { AuditLogService } from "../audit-log/audit-log.service";
+import { EmailService } from "../email/email.service";
+import { PrismaService } from "../prisma/prisma.service";
 import { type CreateUserInput, type LoginInput, type AuthResponse, type User } from "@licitafacil/shared";
+import * as crypto from "crypto";
+import * as bcrypt from "bcrypt";
 
 @Injectable()
 export class AuthService {
@@ -12,7 +16,9 @@ export class AuthService {
     private readonly empresaService: EmpresaService,
     private readonly jwtService: JwtService,
     private readonly auditLogService: AuditLogService,
-  ) {}
+    private readonly emailService: EmailService,
+    private readonly prisma: PrismaService,
+  ) { }
 
   /**
    * Registra um novo usuário
@@ -112,6 +118,119 @@ export class AuthService {
     };
 
     return this.jwtService.sign(payload);
+  }
+
+  /**
+   * Envia email de recuperação de senha
+   * POST /auth/forgot-password
+   */
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+
+    // Sempre retorna sucesso para não vazar se o email existe ou não
+    if (!user || user.deletedAt) {
+      return { message: "Se o email existir, você receberá as instruções em breve." };
+    }
+
+    // Gera token aleatório seguro
+    const token = crypto.randomBytes(32).toString("hex");
+    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetToken: token,
+        passwordResetExpires: expires,
+      },
+    });
+
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const resetLink = `${frontendUrl}/redefinir-senha?token=${token}`;
+
+    // Envia email (não bloqueia se falhar)
+    this.emailService.sendEmail({
+      to: user.email,
+      subject: "Recuperação de senha — LicitaFácil",
+      html: `
+        <div style="font-family:sans-serif;max-width:500px;margin:0 auto">
+          <h2>Redefinição de senha</h2>
+          <p>Olá, <strong>${user.name}</strong>!</p>
+          <p>Recebemos uma solicitação para redefinir a senha da sua conta.</p>
+          <p>
+            <a href="${resetLink}" style="display:inline-block;padding:12px 24px;background:#10b981;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold">
+              Redefinir minha senha
+            </a>
+          </p>
+          <p style="color:#6b7280;font-size:13px">Este link expira em <strong>1 hora</strong>. Se não foi você, ignore este email.</p>
+          <p style="color:#6b7280;font-size:12px">Ou copie: ${resetLink}</p>
+        </div>
+      `,
+    }).catch(() => { }); // Não deixa erro de email quebrar a requisição
+
+    return { message: "Se o email existir, você receberá as instruções em breve." };
+  }
+
+  /**
+   * Redefine a senha usando o token de reset
+   * POST /auth/reset-password
+   */
+  async resetPassword(token: string, novaSenha: string): Promise<{ message: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { passwordResetToken: token },
+    });
+
+    if (!user || !user.passwordResetExpires) {
+      throw new BadRequestException("Token inválido ou expirado.");
+    }
+
+    if (user.passwordResetExpires < new Date()) {
+      throw new BadRequestException("Token expirado. Solicite uma nova redefinição.");
+    }
+
+    const hashedPassword = await bcrypt.hash(novaSenha, 10);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+      },
+    });
+
+    return { message: "Senha redefinida com sucesso!" };
+  }
+
+  /**
+   * Altera a senha do usuário autenticado
+   * PATCH /auth/me/senha
+   */
+  async alterarSenha(userId: string, senhaAtual: string, novaSenha: string): Promise<{ message: string }> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new BadRequestException("Usuário não encontrado.");
+
+    const isValid = await bcrypt.compare(senhaAtual, user.password);
+    if (!isValid) throw new BadRequestException("Senha atual incorreta.");
+
+    const hashedPassword = await bcrypt.hash(novaSenha, 10);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+
+    return { message: "Senha alterada com sucesso!" };
+  }
+
+  /**
+   * Atualiza o nome do usuário autenticado
+   */
+  async atualizarNome(userId: string, name: string): Promise<{ name: string }> {
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: { name },
+      select: { name: true },
+    });
+    return updated;
   }
 
   /**
