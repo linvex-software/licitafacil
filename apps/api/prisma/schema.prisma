@@ -111,6 +111,10 @@ model User {
   frequenciaEmail     String  @default("IMEDIATO") // IMEDIATO | DIARIO | OFF
   unsubscribeToken    String? @unique
 
+  // Reset de senha
+  passwordResetToken   String?   @unique
+  passwordResetExpires DateTime?
+
   @@index([email])
   @@index([empresaId])
   @@index([role])

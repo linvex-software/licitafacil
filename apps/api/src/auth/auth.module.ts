@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
 import { JwtModule } from "@nestjs/jwt";
 import { PassportModule } from "@nestjs/passport";
 import { AuthController } from "./auth.controller";
@@ -9,12 +10,15 @@ import { DevBypassGuard } from "./guards/dev-bypass.guard";
 import { UserModule } from "../user/user.module";
 import { EmpresaModule } from "../empresa/empresa.module";
 import { AuditLogModule } from "../audit-log/audit-log.module";
+import { MailModule } from "../mail/mail.module";
 
 @Module({
   imports: [
     UserModule,
     EmpresaModule,
     AuditLogModule,
+    MailModule,
+    ConfigModule,
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || "your-secret-key-change-in-production",
@@ -27,4 +31,4 @@ import { AuditLogModule } from "../audit-log/audit-log.module";
   providers: [AuthService, JwtStrategy, DevBypassGuard],
   exports: [AuthService, DevBypassGuard],
 })
-export class AuthModule {}
+export class AuthModule { }
