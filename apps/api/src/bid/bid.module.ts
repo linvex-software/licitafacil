@@ -3,6 +3,7 @@ import { BidController } from "./bid.controller";
 import { BidService } from "./bid.service";
 import { BidRiskService } from "./bid-risk.service";
 import { BidPredictionService } from "./bid-prediction.service";
+import { EventoLicitacaoService } from "./evento-licitacao.service";
 import { PrismaModule } from "../prisma/prisma.module";
 import { CommonModule } from "../common/common.module";
 import { AuditLogModule } from "../audit-log/audit-log.module";
@@ -12,7 +13,7 @@ import { AiModule } from "../ai/ai.module";
 @Module({
   imports: [PrismaModule, CommonModule, AuditLogModule, DocumentModule, AiModule],
   controllers: [BidController],
-  providers: [BidService, BidRiskService, BidPredictionService],
-  exports: [BidService, BidRiskService, BidPredictionService],
+  providers: [BidService, BidRiskService, BidPredictionService, EventoLicitacaoService],
+  exports: [BidService, BidRiskService, BidPredictionService, EventoLicitacaoService],
 })
 export class BidModule {}

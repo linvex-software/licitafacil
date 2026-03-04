@@ -132,6 +132,11 @@ model Bid {
   modality             String
   legalStatus          String
   operationalState     String
+  janelaIntencaoRecursoTermino DateTime?
+  isVencedorProvisorio         Boolean              @default(false)
+  statusEsclarecimento         StatusEsclarecimento @default(NORMAL)
+  dataAdjudicacao              DateTime?
+  dataHomologacao              DateTime?
   riskReason           String? // Motivo do estado EM_RISCO (para alertas e relatórios)
   lastRiskAnalysisAt   DateTime? // Última vez que a análise de risco foi executada
   manualRiskOverride   Boolean   @default(false) // Se o estado foi definido manualmente (override)
@@ -159,6 +164,8 @@ model Bid {
   editalAnalises EditalAnalise[]
   // Relacionamento: Uma licitação pode ter várias petições jurídicas
   peticoes       Peticao[]
+  // Relacionamento: Uma licitação pode ter vários eventos jurídicos
+  eventos        EventoLicitacao[]
   // Relacionamento: Uma licitação pode ter várias simulações de disputa
   simulacoes     SimulacaoDisputa[]
   // Relacionamento: Uma licitação pode ter vários históricos de chat com edital
@@ -213,6 +220,54 @@ enum StatusPeticao {
   ENVIADO
 }
 
+enum EscopoImpugnacao {
+  TOTAL
+  PARCIAL
+}
+
+enum EfeitoRecurso {
+  SUSPENSIVO
+  DEVOLUTIVO
+  NAO_APLICA
+}
+
+enum AutorTipo {
+  CONCORRENTE
+  CIDADAO
+  ORGAO
+}
+
+enum TipoEventoLicitacao {
+  EDITAL_PUBLICADO
+  SESSAO_ABERTA
+  ESCLARECIMENTO_PUBLICADO
+  ADENDO_EMITIDO
+  PRAZO_PROPOSTA_REABERTO
+  JULGAMENTO_ENCERRADO
+  JANELA_RECURSO_ABERTA
+  JANELA_RECURSO_ENCERRADA
+  INTENCAO_RECURSO_REGISTRADA
+  RECURSO_INTERPOSTO
+  RECURSO_DECIDIDO
+  CONTRA_RAZOES_APRESENTADAS
+  SUSPENSA_POR_RECURSO
+  SUSPENSAO_ENCERRADA
+  HABILITACAO_ANALISADA
+  INABILITACAO_REGISTRADA
+  ADJUDICACAO
+  HOMOLOGACAO
+  HOMOLOGACAO_ANULADA
+  REVOGACAO
+  IMPUGNACAO_RECEBIDA
+  IMPUGNACAO_DECIDIDA
+}
+
+enum StatusEsclarecimento {
+  NORMAL
+  ADENDO_EMITIDO
+  PRAZO_REABERTO
+}
+
 model Peticao {
   id          String        @id @default(cuid())
   empresaId   String
@@ -222,6 +277,13 @@ model Peticao {
   nomeArquivo String?
   dataEnvio   DateTime?
   status      StatusPeticao @default(RASCUNHO)
+  escopoImpugnacao EscopoImpugnacao?
+  efeitoRecurso    EfeitoRecurso    @default(NAO_APLICA)
+  anonimo          Boolean          @default(false)
+  autorTipo        AutorTipo        @default(CONCORRENTE)
+  motivoIntencao   String?          @db.Text
+  itensContestados String?          @db.Text
+  codigoAutenticidade String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   deletedAt   DateTime?
@@ -232,6 +294,21 @@ model Peticao {
   @@index([empresaId, bidId])
   @@index([empresaId, deletedAt])
   @@map("peticoes")
+}
+
+model EventoLicitacao {
+  id        String               @id @default(uuid())
+  bidId     String
+  bid       Bid                  @relation(fields: [bidId], references: [id], onDelete: Cascade)
+  tipo      TipoEventoLicitacao
+  timestamp DateTime             @default(now())
+  detalhes  Json?
+  criadoPor String?
+  createdAt DateTime             @default(now())
+
+  @@index([bidId])
+  @@index([timestamp])
+  @@map("eventos_licitacao")
 }
 
 model SimulacaoDisputa {

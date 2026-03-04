@@ -290,6 +290,11 @@ export class BidService {
     modality: string;
     legalStatus: string;
     operationalState: string;
+    janelaIntencaoRecursoTermino: Date | null;
+    isVencedorProvisorio: boolean;
+    statusEsclarecimento: string;
+    dataAdjudicacao: Date | null;
+    dataHomologacao: Date | null;
     riskReason: string | null;
     lastRiskAnalysisAt: Date | null;
     manualRiskOverride: boolean;
@@ -306,6 +311,11 @@ export class BidService {
       modality: bid.modality,
       legalStatus: bid.legalStatus,
       operationalState: bid.operationalState,
+      janelaIntencaoRecursoTermino: bid.janelaIntencaoRecursoTermino?.toISOString() ?? null,
+      isVencedorProvisorio: bid.isVencedorProvisorio,
+      statusEsclarecimento: bid.statusEsclarecimento,
+      dataAdjudicacao: bid.dataAdjudicacao?.toISOString() ?? null,
+      dataHomologacao: bid.dataHomologacao?.toISOString() ?? null,
       riskReason: bid.riskReason,
       lastRiskAnalysisAt: bid.lastRiskAnalysisAt?.toISOString() ?? null,
       manualRiskOverride: bid.manualRiskOverride,

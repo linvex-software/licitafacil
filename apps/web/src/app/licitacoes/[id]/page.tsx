@@ -32,6 +32,41 @@ import { useBidPrediction, useAnalisarProbabilidade } from "@/hooks/use-bid-pred
 import { PredictionBadge } from "@/components/licitacoes/prediction-badge";
 import { PredictionModal } from "@/components/licitacoes/prediction-modal";
 import { PredictiveAnalysis } from "@/components/licitacoes/PredictiveAnalysis";
+import type { Bid } from "@licitafacil/shared";
+
+function getStatusBadge(licitacao: Bid) {
+  if (licitacao.operationalState === "SUSPENSA") {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-100 px-3 py-1 text-xs font-semibold text-red-600 dark:border-red-800/40 dark:bg-red-900/20 dark:text-red-400">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+          Suspensa — Recurso em análise
+        </span>
+        <span className="text-xs text-gray-400">Efeito suspensivo ativo</span>
+      </div>
+    );
+  }
+
+  if (licitacao.isVencedorProvisorio && !licitacao.dataHomologacao) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-400">
+        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+        Vencedor Provisório — Aguarda homologação
+      </span>
+    );
+  }
+
+  if (licitacao.dataHomologacao) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:border-green-800/40 dark:bg-green-900/20 dark:text-green-400">
+        <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+        Homologado
+      </span>
+    );
+  }
+
+  return <StatusBadge status={licitacao.operationalState === "OK" ? "aberta" : "vencida"} />;
+}
 
 export default function LicitacaoDetailPage() {
   const params = useParams();
@@ -214,7 +249,7 @@ export default function LicitacaoDetailPage() {
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <StatusBadge status={licitacao.operationalState === 'OK' ? 'aberta' : 'vencida'} />
+                {getStatusBadge(licitacao)}
                 <span className="text-sm font-mono text-gray-400 dark:text-gray-500">ID: {licitacao.id.substring(0, 8)}</span>
               </div>
               <h1 className="text-2xl md:text-3xl font-heading font-bold text-gray-900 dark:text-gray-100 max-w-3xl leading-tight">
@@ -272,6 +307,28 @@ export default function LicitacaoDetailPage() {
             </div>
           </div>
         </div>
+
+        {licitacao.janelaIntencaoRecursoTermino &&
+          new Date() < new Date(licitacao.janelaIntencaoRecursoTermino) && (
+            <div className="mb-4 flex items-start gap-3 rounded-xl border border-orange-200 bg-orange-50 p-4 dark:border-orange-800/40 dark:bg-orange-900/10">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-orange-500" />
+              <div>
+                <p className="text-sm font-semibold text-orange-700 dark:text-orange-400">
+                  Janela de intenção de recurso aberta
+                </p>
+                <p className="mt-1 text-xs text-orange-600 dark:text-orange-500">
+                  O resultado ainda é provisório. Encerra em{" "}
+                  <span className="font-mono font-bold">
+                    {new Date(licitacao.janelaIntencaoRecursoTermino).toLocaleTimeString("pt-BR", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                  . Não marque como encerrada até esta janela fechar.
+                </p>
+              </div>
+            </div>
+          )}
 
         {/* Info Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">

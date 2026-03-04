@@ -22,6 +22,7 @@ import { FileInterceptor } from "@nestjs/platform-express";
 import { BidService } from "./bid.service";
 import { BidRiskService } from "./bid-risk.service";
 import { BidPredictionService } from "./bid-prediction.service";
+import { EventoLicitacaoService } from "./evento-licitacao.service";
 import { DocumentService } from "../document/document.service";
 import { SoftDeleteService } from "../common/services/soft-delete.service";
 import { AuditLogService } from "../audit-log/audit-log.service";
@@ -64,6 +65,7 @@ export class BidController {
     private readonly bidService: BidService,
     private readonly bidRiskService: BidRiskService,
     private readonly bidPredictionService: BidPredictionService,
+    private readonly eventoService: EventoLicitacaoService,
     private readonly documentService: DocumentService,
     private readonly softDeleteService: SoftDeleteService,
     private readonly auditLogService: AuditLogService,
@@ -220,6 +222,16 @@ export class BidController {
       page ? parseInt(page, 10) : 1,
       limit ? parseInt(limit, 10) : 20,
     );
+  }
+
+  @Get(":id/eventos")
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  async getEventos(
+    @Param("id") id: string,
+    @Tenant() empresaId: string,
+  ) {
+    await this.bidService.findOne(id, empresaId);
+    return this.eventoService.listarPorBid(id);
   }
 
   /**

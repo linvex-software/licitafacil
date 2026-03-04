@@ -11,12 +11,21 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { Response } from "express";
-import { StatusPeticao, TipoPeticao } from "@prisma/client";
-import { IsEnum, IsOptional, IsString, IsUUID } from "class-validator";
+import {
+  AutorTipo,
+  EfeitoRecurso,
+  EscopoImpugnacao,
+  StatusPeticao,
+  TipoPeticao,
+} from "@prisma/client";
+import { IsArray, IsBoolean, IsEnum, IsOptional, IsString, IsUUID } from "class-validator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { TenantGuard } from "../common/guards/tenant.guard";
 import { Tenant } from "../common/decorators/tenant.decorator";
 import { JuridicoService } from "./juridico.service";
+import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import { Public } from "../auth/decorators/public.decorator";
+import type { User } from "@licitafacil/shared";
 
 export class GerarPeticaoDto {
   @IsUUID()
@@ -30,6 +39,10 @@ export class GerarPeticaoDto {
 
   @IsOptional()
   @IsString()
+  nomeEmpresa?: string;
+
+  @IsOptional()
+  @IsString()
   cnpj?: string;
 
   @IsOptional()
@@ -39,6 +52,31 @@ export class GerarPeticaoDto {
   @IsOptional()
   @IsString()
   cidade?: string;
+
+  @IsOptional()
+  @IsEnum(EscopoImpugnacao)
+  escopoImpugnacao?: EscopoImpugnacao;
+
+  @IsOptional()
+  @IsEnum(EfeitoRecurso)
+  efeitoRecurso?: EfeitoRecurso;
+
+  @IsOptional()
+  @IsBoolean()
+  anonimo?: boolean;
+
+  @IsOptional()
+  @IsEnum(AutorTipo)
+  autorTipo?: AutorTipo;
+
+  @IsOptional()
+  @IsString()
+  motivoIntencao?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  itensContestados?: string[];
 }
 
 class AtualizarStatusPeticaoDto {
@@ -57,6 +95,7 @@ export class JuridicoController {
   async gerarPeticao(
     @Body() dto: GerarPeticaoDto,
     @Tenant() empresaId: string,
+    @CurrentUser() user: User,
     @Res() res: Response,
   ) {
     if (!dto?.bidId || !dto?.tipo || !dto?.conteudo) {
@@ -68,10 +107,18 @@ export class JuridicoController {
         dto.bidId,
         dto.tipo,
         {
+          userId: user.id,
           conteudo: dto.conteudo,
+          nomeEmpresa: dto.nomeEmpresa,
           cnpj: dto.cnpj,
           endereco: dto.endereco,
           cidade: dto.cidade,
+          escopoImpugnacao: dto.escopoImpugnacao,
+          efeitoRecurso: dto.efeitoRecurso,
+          anonimo: dto.anonimo,
+          autorTipo: dto.autorTipo,
+          motivoIntencao: dto.motivoIntencao,
+          itensContestados: dto.itensContestados,
         },
         empresaId,
       );
@@ -111,5 +158,11 @@ export class JuridicoController {
   @Get("peticoes/:bidId")
   async listarPeticoes(@Param("bidId") bidId: string, @Tenant() empresaId: string) {
     return this.juridicoService.listarPeticoes(bidId, empresaId);
+  }
+
+  @Get("verificar/:codigo")
+  @Public()
+  async verificarAutenticidade(@Param("codigo") codigo: string) {
+    return this.juridicoService.verificarAutenticidade(codigo);
   }
 }
