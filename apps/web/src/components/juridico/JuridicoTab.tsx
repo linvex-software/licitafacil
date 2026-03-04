@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { GerarPeticaoModal } from "./GerarPeticaoModal";
+import { LicitacaoTimeline } from "@/components/licitacoes/LicitacaoTimeline";
 
 interface JuridicoTabProps {
   bidId: string;
@@ -82,9 +83,16 @@ export function JuridicoTab({ bidId }: JuridicoTabProps) {
 
   const handleGerarPeticao = async (body: {
     conteudo: string;
+    nomeEmpresa?: string;
     cnpj?: string;
     endereco?: string;
     cidade?: string;
+    escopoImpugnacao?: "TOTAL" | "PARCIAL";
+    efeitoRecurso?: "SUSPENSIVO" | "DEVOLUTIVO" | "NAO_APLICA";
+    anonimo?: boolean;
+    autorTipo?: "CONCORRENTE" | "CIDADAO" | "ORGAO";
+    motivoIntencao?: string;
+    itensContestados?: string[];
   }) => {
     if (!tipoSelecionado) return;
     setGerando(true);
@@ -144,17 +152,34 @@ export function JuridicoTab({ bidId }: JuridicoTabProps) {
     <div className="space-y-6">
       <Card className="shadow-sm border-gray-200 dark:border-gray-700">
         <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-2 flex-wrap">
-            {PETICAO_TIPOS.map((item) => (
-              <Button
-                key={item.tipo}
-                variant="outline"
-                className="border-gray-200 dark:border-gray-700"
-                onClick={() => setTipoSelecionado(item.tipo)}
-              >
-                {item.label}
-              </Button>
-            ))}
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              Timeline do Processo
+            </h3>
+            <span className="text-xs text-gray-400">Histórico completo de eventos jurídicos</span>
+          </div>
+          <LicitacaoTimeline bidId={bidId} />
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-sm border-gray-200 dark:border-gray-700">
+        <CardContent className="pt-6">
+          <div className="border-t border-gray-100 pt-6 dark:border-gray-800">
+            <div className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              Ações de petição
+            </div>
+            <div className="flex flex-col flex-wrap gap-2 sm:flex-row">
+              {PETICAO_TIPOS.map((item) => (
+                <Button
+                  key={item.tipo}
+                  variant="outline"
+                  className="border-gray-200 dark:border-gray-700"
+                  onClick={() => setTipoSelecionado(item.tipo)}
+                >
+                  {item.label}
+                </Button>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>

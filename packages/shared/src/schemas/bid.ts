@@ -29,6 +29,7 @@ export const LegalStatus = {
 export const OperationalState = {
   OK: "OK",
   EM_RISCO: "EM_RISCO",
+  SUSPENSA: "SUSPENSA",
 } as const;
 
 /**
@@ -52,7 +53,7 @@ export const createBidSchema = z.object({
     LegalStatus.PERDIDA,
     LegalStatus.CANCELADA,
   ]),
-  operationalState: z.enum([OperationalState.OK, OperationalState.EM_RISCO]),
+  operationalState: z.enum([OperationalState.OK, OperationalState.EM_RISCO, OperationalState.SUSPENSA]),
 });
 
 /**
@@ -80,7 +81,7 @@ export const updateBidSchema = z.object({
       LegalStatus.CANCELADA,
     ])
     .optional(),
-  operationalState: z.enum([OperationalState.OK, OperationalState.EM_RISCO]).optional(),
+  operationalState: z.enum([OperationalState.OK, OperationalState.EM_RISCO, OperationalState.SUSPENSA]).optional(),
 });
 
 /**
@@ -124,6 +125,11 @@ export const bidSchema = z.object({
   modality: z.string(),
   legalStatus: z.string(),
   operationalState: z.string(),
+  janelaIntencaoRecursoTermino: z.string().datetime().nullable(),
+  isVencedorProvisorio: z.boolean(),
+  statusEsclarecimento: z.string(),
+  dataAdjudicacao: z.string().datetime().nullable(),
+  dataHomologacao: z.string().datetime().nullable(),
   riskReason: z.string().nullable(),
   lastRiskAnalysisAt: z.string().datetime().nullable(),
   manualRiskOverride: z.boolean(),

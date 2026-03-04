@@ -128,6 +128,12 @@ export interface Peticao {
   bidId: string;
   tipo: TipoPeticao;
   conteudo: string | null;
+  escopoImpugnacao: "TOTAL" | "PARCIAL" | null;
+  efeitoRecurso: "SUSPENSIVO" | "DEVOLUTIVO" | "NAO_APLICA";
+  anonimo: boolean;
+  autorTipo: "CONCORRENTE" | "CIDADAO" | "ORGAO";
+  motivoIntencao: string | null;
+  itensContestados: string | null;
   nomeArquivo: string | null;
   dataEnvio: string | null;
   status: StatusPeticao;
@@ -139,9 +145,23 @@ export interface GerarPeticaoBody {
   bidId: string;
   tipo: TipoPeticao;
   conteudo: string;
+  nomeEmpresa?: string;
   cnpj?: string;
   endereco?: string;
   cidade?: string;
+  escopoImpugnacao?: "TOTAL" | "PARCIAL";
+  efeitoRecurso?: "SUSPENSIVO" | "DEVOLUTIVO" | "NAO_APLICA";
+  anonimo?: boolean;
+  autorTipo?: "CONCORRENTE" | "CIDADAO" | "ORGAO";
+  motivoIntencao?: string;
+  itensContestados?: string[];
+}
+
+export interface EventoLicitacao {
+  id: string;
+  tipo: string;
+  timestamp: string;
+  detalhes?: Record<string, unknown> | null;
 }
 
 export async function gerarPeticaoDocx(body: GerarPeticaoBody): Promise<{ blob: Blob; fileName: string }> {
@@ -166,6 +186,11 @@ export async function listarPeticoesByBid(bidId: string): Promise<Peticao[]> {
 
 export async function atualizarStatusPeticao(id: string, status: StatusPeticao): Promise<Peticao> {
   const { data } = await api.put(`/juridico/peticoes/${id}/status`, { status });
+  return data;
+}
+
+export async function listarEventosLicitacao(bidId: string): Promise<EventoLicitacao[]> {
+  const { data } = await api.get(`/bids/${bidId}/eventos`);
   return data;
 }
 
