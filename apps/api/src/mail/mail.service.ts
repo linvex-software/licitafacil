@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
-import * as nodemailer from "nodemailer";
+import { ConfigService } from "@nestjs/config";
+import { MailtrapClient } from "mailtrap";
 
 interface BoasVindasParams {
   nomeEmpresa: string;
@@ -11,38 +12,106 @@ interface BoasVindasParams {
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
-  private transporter: nodemailer.Transporter;
+  private client: MailtrapClient;
 
-  constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "smtp.gmail.com",
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
+  constructor(private config: ConfigService) {
+    this.client = new MailtrapClient({
+      token: this.config.get<string>("MAILTRAP_API_TOKEN") ?? "",
     });
+  }
+
+  private getFrom() {
+    return {
+      // Em desenvolvimento, usa domínio demo do Mailtrap para evitar bloqueio de credibilidade.
+      email: this.config.get<string>("NODE_ENV") === "development"
+        ? "hello@demomailtrap.co"
+        : (this.config.get<string>("MAIL_FROM") ?? "noreply@limvex.com"),
+      name: this.config.get<string>("MAIL_FROM_NAME") ?? "Limvex Licitação",
+    };
+  }
+
+  async sendPasswordReset(to: string, resetUrl: string): Promise<void> {
+    try {
+      await this.client.send({
+        from: this.getFrom(),
+        to: [{ email: to }],
+        subject: "Redefinição de senha — Limvex Licitação",
+        html: `
+          <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
+            <h2 style="color: #0078D1; margin-bottom: 8px;">Redefinir sua senha</h2>
+            <p style="color: #444; line-height: 1.6;">
+              Recebemos uma solicitação para redefinir a senha da sua conta
+              na plataforma Limvex Licitação.
+            </p>
+            <p style="color: #444; line-height: 1.6;">
+              Clique no botão abaixo para criar uma nova senha.
+              Este link expira em <strong>30 minutos</strong>.
+            </p>
+            <a href="${resetUrl}"
+               style="display: inline-block; margin: 24px 0; padding: 12px 28px;
+                      background: #0078D1; color: #fff; text-decoration: none;
+                      border-radius: 8px; font-weight: 600; font-size: 14px;">
+              Redefinir senha
+            </a>
+            <p style="color: #888; font-size: 12px; line-height: 1.6;">
+              Se você não solicitou a redefinição, ignore este email.
+              Sua senha permanece a mesma.
+            </p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+            <p style="color: #bbb; font-size: 11px;">
+              Limvex Licitação · Plataforma de gestão de licitações públicas
+            </p>
+          </div>
+        `,
+        category: "Password Reset",
+      } as any);
+      this.logger.log(`Password reset email sent to ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send password reset email to ${to}`, error as any);
+      throw error;
+    }
+  }
+
+  async sendWelcome(to: string, name: string): Promise<void> {
+    try {
+      await this.client.send({
+        from: this.getFrom(),
+        to: [{ email: to }],
+        subject: "Bem-vindo à Limvex Licitação",
+        html: `
+          <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
+            <h2 style="color: #0078D1;">Bem-vindo, ${name}!</h2>
+            <p style="color: #444; line-height: 1.6;">
+              Sua conta na plataforma Limvex Licitação está pronta.
+              Acesse agora e comece a gerenciar seus processos licitatórios.
+            </p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+            <p style="color: #bbb; font-size: 11px;">
+              Limvex Licitação · Plataforma de gestão de licitações públicas
+            </p>
+          </div>
+        `,
+        category: "Welcome",
+      } as any);
+    } catch (error) {
+      this.logger.error(`Failed to send welcome email to ${to}`, error as any);
+      throw error;
+    }
   }
 
   async enviarBoasVindas(params: BoasVindasParams): Promise<void> {
     const html = this.templateBoasVindas(params);
 
     try {
-      await this.transporter.sendMail({
-        from: `"Limvex Licitação" <${process.env.SMTP_USER || "noreply@limvex.com.br"}>`,
-        to: params.emailAdmin,
+      await this.client.send({
+        from: this.getFrom(),
+        to: [{ email: params.emailAdmin }],
         subject: `Bem-vindo ao Limvex - ${params.nomeEmpresa}`,
         html,
-      });
-
+      } as any);
       this.logger.log(`Email de boas-vindas enviado para ${params.emailAdmin}`);
     } catch (error) {
-      this.logger.error(
-        `Falha ao enviar email de boas-vindas para ${params.emailAdmin}: ${error}`,
-      );
-      // Não lançar exceção para não bloquear criação do cliente
-      // O email pode ser reenviado manualmente depois
+      this.logger.error(`Falha ao enviar email de boas-vindas para ${params.emailAdmin}: ${error}`);
     }
   }
 
@@ -56,18 +125,16 @@ export class MailService {
     const html = this.templateSuspensao(nomeEmpresa);
 
     try {
-      await this.transporter.sendMail({
-        from: `"Limvex Licitação" <${process.env.SMTP_USER || "noreply@limvex.com.br"}>`,
-        to: email,
+      await this.client.send({
+        from: this.getFrom(),
+        to: [{ email }],
         subject: `[Ação Necessária] Contrato Suspenso - ${nomeEmpresa}`,
         html,
-      });
+      } as any);
 
       this.logger.log(`Email de suspensão enviado para ${email}`);
     } catch (error) {
-      this.logger.error(
-        `Falha ao enviar email de suspensão para ${email}: ${error}`,
-      );
+      this.logger.error(`Falha ao enviar email de suspensão para ${email}: ${error}`);
     }
   }
 

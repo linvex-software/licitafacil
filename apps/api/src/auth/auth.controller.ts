@@ -83,14 +83,27 @@ export class AuthController {
   }
 
   /**
-   * Solicita recuperação de senha
+   * Solicita recuperação de senha (compatibilidade)
    * POST /auth/forgot-password
    */
   @Post("forgot-password")
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() body: { email?: string }) {
     if (!body.email) throw new BadRequestException("Email obrigatório.");
-    return this.authService.forgotPassword(body.email);
+    await this.authService.requestPasswordReset(body.email);
+    return { message: "Se o email existir, você receberá as instruções em breve." };
+  }
+
+  /**
+   * Solicita recuperação de senha
+   * POST /auth/request-password-reset
+   */
+  @Post("request-password-reset")
+  @HttpCode(HttpStatus.OK)
+  async requestPasswordReset(@Body() body: { email?: string }) {
+    if (!body.email) throw new BadRequestException("Email obrigatório.");
+    await this.authService.requestPasswordReset(body.email);
+    return { message: "Se o email existir, você receberá as instruções em breve." };
   }
 
   /**
@@ -99,14 +112,16 @@ export class AuthController {
    */
   @Post("reset-password")
   @HttpCode(HttpStatus.OK)
-  async resetPassword(@Body() body: { token?: string; novaSenha?: string }) {
-    if (!body.token || !body.novaSenha) {
-      throw new BadRequestException("Token e nova senha são obrigatórios.");
+  async resetPassword(@Body() body: { token?: string; password?: string; novaSenha?: string }) {
+    const password = body.password ?? body.novaSenha;
+    if (!body.token || !password) {
+      throw new BadRequestException("Token e senha são obrigatórios.");
     }
-    if (body.novaSenha.length < 6) {
+    if (password.length < 6) {
       throw new BadRequestException("A senha deve ter pelo menos 6 caracteres.");
     }
-    return this.authService.resetPassword(body.token, body.novaSenha);
+    await this.authService.resetPassword(body.token, password);
+    return { message: "Senha redefinida com sucesso!" };
   }
 
   /**

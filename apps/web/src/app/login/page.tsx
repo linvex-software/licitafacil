@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Gavel, Loader2, Eye, EyeOff, CheckCircle2, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -25,9 +25,24 @@ const forgotSchema = z.object({
 });
 type ForgotFormValues = z.infer<typeof forgotSchema>;
 
+const GridPattern = () => (
+  <svg
+    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.04, pointerEvents: "none" }}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <defs>
+      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="0.6" />
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#grid)" />
+  </svg>
+);
+
 export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [focused, setFocused] = useState<string | null>(null);
   const { login } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -85,116 +100,389 @@ export default function LoginPage() {
     setForgotOpen(true);
   };
 
+  const emailValue = form.watch("email");
+  const passwordValue = form.watch("password");
+  const handleSubmit = form.handleSubmit(onSubmit);
+  const emailField = form.register("email");
+  const passwordField = form.register("password");
+
   return (
     <>
-      <div className="min-h-screen w-full flex flex-col md:flex-row bg-white">
-        {/* Left Side: Branding */}
-        <div className="hidden md:flex md:w-1/2 bg-[#0a0f1d] relative overflow-hidden flex-col justify-between p-12 text-white">
-          <div className="absolute top-0 right-0 w-full h-full opacity-10 pointer-events-none">
-            <div className="absolute top-[10%] right-[10%] w-64 h-64 bg-emerald-500 rounded-full blur-[120px]" />
-            <div className="absolute bottom-[10%] left-[10%] w-96 h-96 bg-blue-500 rounded-full blur-[150px]" />
-          </div>
-          <div className="relative z-10">
-            <div className="max-w-md" />
-          </div>
-          <div className="relative z-10 grid grid-cols-3 gap-8" />
-        </div>
+      <div
+        style={{
+          display: "flex",
+          minHeight: "100vh",
+          fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif",
+          background: "#ffffff",
+        }}
+      >
+        <div
+          style={{
+            flex: "0 0 50%",
+            position: "relative",
+            overflow: "hidden",
+            background: "#020B1D",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            padding: "48px 56px",
+          }}
+          className="flex"
+        >
+          <GridPattern />
+          <div
+            style={{
+              position: "absolute",
+              top: "20%",
+              left: "20%",
+              width: 300,
+              height: 300,
+              borderRadius: "50%",
+              background: "radial-gradient(circle, rgba(0,120,209,0.12) 0%, transparent 70%)",
+              pointerEvents: "none",
+            }}
+          />
 
-        {/* Right Side: Login Form */}
-        <div className="flex-1 flex items-center justify-center p-8 bg-gray-50 dark:bg-gray-950 md:bg-white md:dark:bg-gray-950">
-          <div className="w-full max-w-sm space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-            <div className="md:hidden flex justify-center mb-8">
-              <div className="flex items-center gap-2">
-                <Gavel className="w-8 h-8 text-emerald-600" />
-                <span className="text-2xl font-heading font-bold text-gray-900 dark:text-gray-100">LicitaFácil</span>
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  background: "#0078D1",
+                  borderRadius: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 4px 16px rgba(0,120,209,0.4)",
+                }}
+              >
+                <span
+                  style={{
+                    fontWeight: 800,
+                    fontSize: 15,
+                    color: "#fff",
+                    fontFamily: "monospace",
+                    letterSpacing: "-0.02em",
+                  }}
+                >
+                  LX
+                </span>
+              </div>
+              <div>
+                <div
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 800,
+                    color: "#fff",
+                    letterSpacing: "0.06em",
+                    lineHeight: 1,
+                  }}
+                >
+                  LIMVEX
+                </div>
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: "rgba(255,255,255,0.4)",
+                    letterSpacing: "0.2em",
+                    marginTop: 3,
+                  }}
+                >
+                  LICITAÇÃO
+                </div>
               </div>
             </div>
+          </div>
 
-            <div>
-              <h2 className="text-3xl font-heading font-bold text-gray-900 dark:text-gray-100">Bem-vindo de volta</h2>
-              <p className="text-gray-500 dark:text-gray-400 mt-2">Acesse sua conta para gerenciar seus processos.</p>
-            </div>
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <h1
+              style={{
+                fontSize: 36,
+                fontWeight: 700,
+                color: "#fff",
+                lineHeight: 1.2,
+                letterSpacing: "-0.02em",
+                marginBottom: 20,
+                maxWidth: 380,
+              }}
+            >
+              Gestão inteligente do ciclo completo de licitações públicas.
+            </h1>
 
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem className="space-y-1.5">
-                      <FormLabel className="text-gray-700 dark:text-gray-300 font-semibold">E-mail</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="nome@empresa.com.br"
-                          {...field}
-                          aria-label="E-mail"
-                          className="h-12 border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 focus:bg-white dark:focus:bg-gray-800 transition-all"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <FormLabel className="text-gray-700 dark:text-gray-300 font-semibold">Senha</FormLabel>
-                        <button
-                          type="button"
-                          onClick={handleForgotOpen}
-                          className="text-xs font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-wider transition-colors"
-                          aria-label="Abrir recuperação de senha"
-                        >
-                          Esqueceu a senha?
-                        </button>
-                      </div>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            type={showPassword ? "text" : "password"}
-                            placeholder="••••••••"
-                            {...field}
-                            aria-label="Senha"
-                            className="h-12 border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 focus:bg-white dark:focus:bg-gray-800 transition-all pr-10"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(p => !p)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                            aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-                          >
-                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button
-                  type="submit"
-                  className="w-full bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-white text-white dark:text-gray-900 h-12 text-base font-bold transition-all shadow-lg active:scale-[0.98]"
-                  disabled={isSubmitting}
-                  aria-label="Acessar plataforma"
-                >
-                  {isSubmitting ? (
-                    <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Autenticando...</>
-                  ) : "Acessar Plataforma"}
-                </Button>
-              </form>
-            </Form>
+            <p
+              style={{
+                fontSize: 14,
+                color: "rgba(255,255,255,0.4)",
+                lineHeight: 1.7,
+                maxWidth: 360,
+                marginBottom: 40,
+              }}
+            >
+              Monitore editais, analise riscos com IA e gerencie
+              participações em um único lugar.
+            </p>
 
-            <div className="pt-4 text-center">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Ainda não tem acesso?{" "}
-                <button className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">
-                  Entre em contato
-                </button>
+            <div
+              style={{
+                width: 40,
+                height: 1,
+                background: "rgba(255,255,255,0.15)",
+                marginBottom: 32,
+              }}
+            />
+
+          </div>
+
+          <div
+            style={{
+              position: "relative",
+              zIndex: 1,
+              fontSize: 11,
+              color: "rgba(255,255,255,0.2)",
+            }}
+          >
+            © 2026 Limvex · Todos os direitos reservados
+          </div>
+        </div>
+
+        <div
+          style={{
+            flex: 1,
+            background: "#ffffff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "48px 56px",
+            position: "relative",
+          }}
+        >
+          <div style={{ width: "100%", maxWidth: 380 }}>
+            <div style={{ marginBottom: 36 }}>
+              <h2
+                style={{
+                  fontSize: 26,
+                  fontWeight: 700,
+                  color: "#0a0a0f",
+                  letterSpacing: "-0.02em",
+                  marginBottom: 8,
+                }}
+              >
+                Bem-vindo de volta
+              </h2>
+              <p style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.6 }}>
+                Acesse sua conta para gerenciar seus processos.
               </p>
             </div>
+
+            <div
+              style={{
+                padding: "12px 14px",
+                borderRadius: 10,
+                marginBottom: 28,
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                display: "flex",
+                gap: 10,
+                alignItems: "flex-start",
+              }}
+            >
+              <span style={{ fontSize: 14, marginTop: 1 }}>🔒</span>
+              <p style={{ fontSize: 12, color: "#64748b", lineHeight: 1.6, margin: 0 }}>
+                O acesso é concedido pela sua organização.
+                Fale com o administrador caso não tenha recebido seu convite.
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit}>
+              <div style={{ marginBottom: 16 }}>
+              <label
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                    color: "#374151",
+                  letterSpacing: "0.04em",
+                  display: "block",
+                  marginBottom: 7,
+                }}
+              >
+                E-MAIL
+              </label>
+              <input
+                type="email"
+                placeholder="nome@empresa.com.br"
+                name={emailField.name}
+                ref={emailField.ref}
+                value={emailValue}
+                onChange={(e) => {
+                  emailField.onChange(e);
+                }}
+                onFocus={() => setFocused("email")}
+                onBlur={(e) => {
+                  emailField.onBlur(e);
+                  setFocused(null);
+                }}
+                style={{
+                  width: "100%",
+                  padding: "12px 14px",
+                  borderRadius: 10,
+                  border: "1.5px solid",
+                  borderColor: focused === "email" ? "#0078D1" : "#e5e7eb",
+                  background: "#fff",
+                  color: "#111827",
+                  fontSize: 14,
+                  outline: "none",
+                  transition: "border-color 0.2s",
+                  boxSizing: "border-box",
+                }}
+              />
+              {form.formState.errors.email && (
+                <p style={{ marginTop: 6, fontSize: 12, color: "#f87171" }}>
+                  {form.formState.errors.email.message}
+                </p>
+              )}
+              </div>
+
+              <div style={{ marginBottom: 28 }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 7,
+                }}
+              >
+                <label
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: "#374151",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  SENHA
+                </label>
+                <button
+                  type="button"
+                  onClick={handleForgotOpen}
+                  style={{
+                    fontSize: 11,
+                    color: "#0078D1",
+                    fontWeight: 600,
+                    textDecoration: "none",
+                    letterSpacing: "0.04em",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  ESQUECEU A SENHA?
+                </button>
+              </div>
+              <div style={{ position: "relative" }}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••••"
+                  name={passwordField.name}
+                  ref={passwordField.ref}
+                  value={passwordValue}
+                  onChange={(e) => {
+                    passwordField.onChange(e);
+                  }}
+                  onFocus={() => setFocused("pass")}
+                  onBlur={(e) => {
+                    passwordField.onBlur(e);
+                    setFocused(null);
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "12px 42px 12px 14px",
+                    borderRadius: 10,
+                    border: "1.5px solid",
+                    borderColor: focused === "pass" ? "#0078D1" : "#e5e7eb",
+                    background: "#fff",
+                    color: "#111827",
+                    fontSize: 14,
+                    outline: "none",
+                    transition: "border-color 0.2s",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  style={{
+                    position: "absolute",
+                    right: 12,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#9ca3af",
+                    fontSize: 13,
+                  }}
+                >
+                  {showPassword ? "◉" : "○"}
+                </button>
+              </div>
+              {form.formState.errors.password && (
+                <p style={{ marginTop: 6, fontSize: 12, color: "#f87171" }}>
+                  {form.formState.errors.password.message}
+                </p>
+              )}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                style={{
+                  width: "100%",
+                  padding: "14px",
+                  borderRadius: 10,
+                  border: "none",
+                  background: "#020B1D",
+                  color: "#ffffff",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  letterSpacing: "-0.01em",
+                  opacity: isSubmitting ? 0.8 : 1,
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "#0078D1";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "#020B1D";
+                }}
+              >
+                {isSubmitting ? "Autenticando..." : "Acessar Plataforma"}
+              </button>
+            </form>
+
+            <p
+              style={{
+                textAlign: "center",
+                marginTop: 24,
+                fontSize: 12,
+                color: "#9ca3af",
+              }}
+            >
+              Não tem acesso?{" "}
+              <a
+                href="https://wa.me/5582991709770"
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  color: "#0078D1",
+                  fontWeight: 600,
+                  textDecoration: "none",
+                }}
+              >
+                Fale com o suporte
+              </a>
+            </p>
           </div>
         </div>
       </div>

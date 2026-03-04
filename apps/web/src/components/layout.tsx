@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
+import { SupportDrawer } from "@/components/SupportDrawer";
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface SubItem { label: string; href: string; icon?: any; }
@@ -59,7 +60,7 @@ const navGroups: NavGroup[] = [
                 ]
             },
             {
-                label: "Simulador", icon: Swords, href: "/disputa",
+                label: "Simulador", icon: Swords, href: "/disputa/simulador",
                 subItems: [
                     { label: "Comprasnet", href: "/integracoes/comprasnet", icon: Globe },
                 ]
@@ -71,12 +72,6 @@ const navGroups: NavGroup[] = [
                     { label: "Agenda", href: "/negocios/agenda", icon: CalendarDays },
                 ]
             },
-        ]
-    },
-    {
-        group: "Outros",
-        items: [
-            { label: "Suporte", icon: HelpCircle, href: "/suporte" }
         ]
     },
 ];
@@ -152,8 +147,19 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
 }
 
 /* ─── Mobile sidebar content ─────────────────────────────── */
-function MobileSidebarContent({ pathname, user, logout }: { pathname: string; user: any; logout: () => void }) {
+function MobileSidebarContent({
+    pathname, user, logout,
+}: {
+    pathname: string;
+    user: any;
+    logout: () => void;
+}) {
     const isEmpresaAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
+    const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
+
+    const toggleSubmenu = (key: string) => {
+        setOpenSubmenus((prev) => ({ ...prev, [key]: !prev[key] }));
+    };
 
     return (
         <div className="flex flex-col h-full bg-white dark:bg-gray-900">
@@ -175,20 +181,43 @@ function MobileSidebarContent({ pathname, user, logout }: { pathname: string; us
                         <p className="section-label px-2 mb-1">{group.group}</p>
                         {group.items.map(item => {
                             const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href + "/"));
+                            const hasSubItems = Boolean(item.subItems?.length);
+                            const isSubItemActive = item.subItems?.some(
+                                (sub) => pathname === sub.href || pathname.startsWith(sub.href + "/")
+                            );
+                            const isSubmenuOpen = openSubmenus[item.label] ?? Boolean(isSubItemActive);
+
                             return (
                                 <div key={item.href}>
-                                    <Link href={item.href}
-                                        className={cn("flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-colors",
-                                            isActive
-                                                ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-300"
-                                                : "text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
-                                        )}>
-                                        <item.icon className={cn("w-4 h-4 shrink-0", isActive ? "text-primary dark:text-primary-300" : "text-gray-400 dark:text-gray-500")} />
-                                        {item.label}
-                                    </Link>
-                                    {item.subItems && (
+                                    {hasSubItems ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleSubmenu(item.label)}
+                                            className={cn(
+                                                "flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-colors",
+                                                isActive || isSubItemActive
+                                                    ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-300"
+                                                    : "text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
+                                            )}
+                                        >
+                                            <item.icon className={cn("w-4 h-4 shrink-0", isActive || isSubItemActive ? "text-primary dark:text-primary-300" : "text-gray-400 dark:text-gray-500")} />
+                                            <span className="flex-1 text-left">{item.label}</span>
+                                            <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", isSubmenuOpen ? "rotate-180" : "")} />
+                                        </button>
+                                    ) : (
+                                        <Link href={item.href}
+                                            className={cn("flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-colors",
+                                                isActive
+                                                    ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-300"
+                                                    : "text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
+                                            )}>
+                                            <item.icon className={cn("w-4 h-4 shrink-0", isActive ? "text-primary dark:text-primary-300" : "text-gray-400 dark:text-gray-500")} />
+                                            {item.label}
+                                        </Link>
+                                    )}
+                                    {hasSubItems && isSubmenuOpen && (
                                         <div className="ml-9 mt-0.5 space-y-0.5">
-                                            {item.subItems.map(sub => (
+                                            {(item.subItems ?? []).map(sub => (
                                                 <Link key={sub.href} href={sub.href}
                                                     className={cn("block px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors",
                                                         pathname === sub.href
@@ -243,13 +272,13 @@ export function Layout({ children, fullWidth = false }: {
 }) {
     const pathname = usePathname();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
+    const [supportOpen, setSupportOpen] = useState(false);
     const { user, logout } = useAuth();
     const isEmpresaAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
 
     /* Flatten all groups into topbar-ready structure */
     const principalItems = navGroups.find(g => g.group === "Principal")?.items ?? [];
     const moduleItems = navGroups.find(g => g.group === "Módulos")?.items ?? [];
-    const outrosItems = navGroups.find(g => g.group === "Outros")?.items ?? [];
 
     return (
         <div className="min-h-screen flex flex-col bg-[#f6f7f9] dark:bg-gray-950">
@@ -284,16 +313,6 @@ export function Layout({ children, fullWidth = false }: {
                     {/* Module items with dropdowns */}
                     {moduleItems.map(item => (
                         <NavDropdown key={item.label} item={item} pathname={pathname} />
-                    ))}
-
-                    {/* Divider */}
-                    <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1.5" />
-
-                    {/* Other items */}
-                    {outrosItems.map(item => (
-                        item.subItems
-                            ? <NavDropdown key={item.label} item={item} pathname={pathname} />
-                            : <NavLink key={item.href} item={item} pathname={pathname} />
                     ))}
 
                     {isEmpresaAdmin && (
@@ -343,6 +362,13 @@ export function Layout({ children, fullWidth = false }: {
                             <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
                                 <Link href="/configuracoes"><Settings className="mr-2 h-4 w-4" /> Configurações</Link>
                             </DropdownMenuItem>
+                            <DropdownMenuItem
+                                className="rounded-lg cursor-pointer"
+                                onSelect={() => setSupportOpen(true)}
+                            >
+                                <HelpCircle className="mr-2 h-4 w-4" />
+                                Suporte
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={logout} className="text-red-600 focus:text-red-600 rounded-lg">
                                 <LogOut className="mr-2 h-4 w-4" /> Sair
@@ -359,7 +385,11 @@ export function Layout({ children, fullWidth = false }: {
                         </SheetTrigger>
                         <SheetContent side="left" className="p-0 w-[280px] border-0">
                             <SheetHeader className="sr-only"><SheetTitle>Menu</SheetTitle></SheetHeader>
-                            <MobileSidebarContent pathname={pathname} user={user} logout={logout} />
+                            <MobileSidebarContent
+                                pathname={pathname}
+                                user={user}
+                                logout={logout}
+                            />
                         </SheetContent>
                     </Sheet>
                 </div>
@@ -371,6 +401,7 @@ export function Layout({ children, fullWidth = false }: {
                     {children}
                 </div>
             </main>
+            <SupportDrawer open={supportOpen} onClose={() => setSupportOpen(false)} />
         </div>
     );
 }

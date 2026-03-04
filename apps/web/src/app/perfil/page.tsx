@@ -12,6 +12,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth-context";
 import { api } from "@/lib/api";
 import {
+    applyFontSize, applyContrast, loadAccessibilityPrefs,
+    type FontSize, type Contrast as A11yContrast,
+} from "@/lib/accessibility";
+import {
     User, Lock, Eye, EyeOff, Save, ShieldCheck,
     ZoomIn, Contrast, CheckCircle2,
 } from "lucide-react";
@@ -36,19 +40,6 @@ const senhaSchema = z
     });
 type SenhaForm = z.infer<typeof senhaSchema>;
 
-// ─── Acessibilidade helpers ──────────────────────────────────
-
-type FontSize = "normal" | "grande" | "extra";
-type TemaContraste = "padrao" | "alto";
-
-
-function applyAccessibilitySettings(fontSize: FontSize, contraste: TemaContraste) {
-    const root = document.documentElement;
-    root.classList.remove("font-normal", "font-grande", "font-extra", "alto-contraste");
-    if (fontSize !== "normal") root.classList.add(`font-${fontSize}`);
-    if (contraste === "alto") root.classList.add("alto-contraste");
-}
-
 // ─── Componente ───────────────────────────────────────────────
 
 export default function PerfilPage() {
@@ -56,24 +47,24 @@ export default function PerfilPage() {
     const { toast } = useToast();
 
     // Acessibilidade
-    const [fontSize, setFontSize] = useState<FontSize>(() => {
-        if (typeof window !== "undefined") {
-            return (localStorage.getItem("a11y-fontsize") as FontSize) || "normal";
-        }
-        return "normal";
-    });
-    const [contraste, setContraste] = useState<TemaContraste>(() => {
-        if (typeof window !== "undefined") {
-            return (localStorage.getItem("a11y-contraste") as TemaContraste) || "padrao";
-        }
-        return "padrao";
-    });
+    const [fontSize, setFontSize] = useState<FontSize>("normal");
+    const [contraste, setContraste] = useState<A11yContrast>("default");
 
     useEffect(() => {
-        applyAccessibilitySettings(fontSize, contraste);
-        localStorage.setItem("a11y-fontsize", fontSize);
-        localStorage.setItem("a11y-contraste", contraste);
-    }, [fontSize, contraste]);
+        const prefs = loadAccessibilityPrefs();
+        setFontSize(prefs.size);
+        setContraste(prefs.contrast);
+    }, []);
+
+    const handleFontSize = (size: FontSize) => {
+        setFontSize(size);
+        applyFontSize(size);
+    };
+
+    const handleContrast = (c: A11yContrast) => {
+        setContraste(c);
+        applyContrast(c);
+    };
 
     // ─── Form nome ──────────────
     const [savingNome, setSavingNome] = useState(false);
@@ -310,13 +301,13 @@ export default function PerfilPage() {
                             Tamanho do texto
                         </label>
                         <div className="flex gap-2" role="group" aria-labelledby="a11y-font-size-label">
-                            {(["normal", "grande", "extra"] as FontSize[]).map((size) => {
-                                const labels = { normal: "Normal", grande: "Grande", extra: "Extra grande" };
-                                const icons = { normal: <span className="text-sm">A</span>, grande: <span className="text-base font-bold">A</span>, extra: <span className="text-lg font-bold">A</span> };
+                            {(["normal", "large", "xlarge"] as FontSize[]).map((size) => {
+                                const labels = { normal: "Normal", large: "Grande", xlarge: "Extra grande" };
+                                const icons = { normal: <span className="text-sm">A</span>, large: <span className="text-base font-bold">A</span>, xlarge: <span className="text-lg font-bold">A</span> };
                                 return (
                                     <button
                                         key={size}
-                                        onClick={() => setFontSize(size)}
+                                        onClick={() => handleFontSize(size)}
                                         aria-pressed={fontSize === size}
                                         aria-label={`Fonte ${labels[size]}`}
                                         className={cn(
@@ -341,12 +332,12 @@ export default function PerfilPage() {
                             Contraste
                         </label>
                         <div className="flex gap-2" role="group" aria-labelledby="a11y-contrast-label">
-                            {(["padrao", "alto"] as TemaContraste[]).map((c) => {
-                                const label = c === "padrao" ? "Padrão" : "Alto contraste";
+                            {(["default", "high"] as A11yContrast[]).map((c) => {
+                                const label = c === "default" ? "Padrão" : "Alto contraste";
                                 return (
                                     <button
                                         key={c}
-                                        onClick={() => setContraste(c)}
+                                        onClick={() => handleContrast(c)}
                                         aria-pressed={contraste === c}
                                         aria-label={`Contraste ${label}`}
                                         className={cn(
@@ -363,7 +354,7 @@ export default function PerfilPage() {
                                 );
                             })}
                         </div>
-                        {contraste === "alto" && (
+                        {contraste === "high" && (
                             <p className="text-xs text-slate-400 mt-2">
                                 Alto contraste aumenta a espessura das bordas e satura as cores para maior legibilidade.
                             </p>

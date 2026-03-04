@@ -3,11 +3,12 @@ import { JwtService } from "@nestjs/jwt";
 import { UserService } from "../user/user.service";
 import { EmpresaService } from "../empresa/empresa.service";
 import { AuditLogService } from "../audit-log/audit-log.service";
-import { EmailService } from "../email/email.service";
+import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../prisma/prisma.service";
 import { type CreateUserInput, type LoginInput, type AuthResponse, type User } from "@licitafacil/shared";
 import * as crypto from "crypto";
 import * as bcrypt from "bcrypt";
+import { MailService } from "../mail/mail.service";
 
 @Injectable()
 export class AuthService {
@@ -16,7 +17,8 @@ export class AuthService {
     private readonly empresaService: EmpresaService,
     private readonly jwtService: JwtService,
     private readonly auditLogService: AuditLogService,
-    private readonly emailService: EmailService,
+    private readonly config: ConfigService,
+    private readonly mailService: MailService,
     private readonly prisma: PrismaService,
   ) { }
 
@@ -121,84 +123,61 @@ export class AuthService {
   }
 
   /**
-   * Envia email de recuperação de senha
-   * POST /auth/forgot-password
+   * Compatibilidade com endpoint legado
    */
   async forgotPassword(email: string): Promise<{ message: string }> {
+    await this.requestPasswordReset(email);
+    return { message: "Se o email existir, você receberá as instruções em breve." };
+  }
+
+  async requestPasswordReset(email: string): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user || user.deletedAt) return;
 
-    // Sempre retorna sucesso para não vazar se o email existe ou não
-    if (!user || user.deletedAt) {
-      return { message: "Se o email existir, você receberá as instruções em breve." };
-    }
-
-    // Gera token aleatório seguro
     const token = crypto.randomBytes(32).toString("hex");
-    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+    const expires = new Date(Date.now() + 30 * 60 * 1000);
 
     await this.prisma.user.update({
-      where: { id: user.id },
+      where: { email },
       data: {
         passwordResetToken: token,
         passwordResetExpires: expires,
       },
     });
 
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-    const resetLink = `${frontendUrl}/redefinir-senha?token=${token}`;
+    const frontendUrl = this.config.get<string>("FRONTEND_URL") ?? "http://localhost:3000";
+    const resetUrl = `${frontendUrl.replace(/\/$/, "")}/redefinir-senha?token=${token}`;
 
-    // Envia email (não bloqueia se falhar)
-    this.emailService.sendEmail({
-      to: user.email,
-      subject: "Recuperação de senha — LicitaFácil",
-      html: `
-        <div style="font-family:sans-serif;max-width:500px;margin:0 auto">
-          <h2>Redefinição de senha</h2>
-          <p>Olá, <strong>${user.name}</strong>!</p>
-          <p>Recebemos uma solicitação para redefinir a senha da sua conta.</p>
-          <p>
-            <a href="${resetLink}" style="display:inline-block;padding:12px 24px;background:#10b981;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold">
-              Redefinir minha senha
-            </a>
-          </p>
-          <p style="color:#6b7280;font-size:13px">Este link expira em <strong>1 hora</strong>. Se não foi você, ignore este email.</p>
-          <p style="color:#6b7280;font-size:12px">Ou copie: ${resetLink}</p>
-        </div>
-      `,
-    }).catch(() => { }); // Não deixa erro de email quebrar a requisição
-
-    return { message: "Se o email existir, você receberá as instruções em breve." };
+    await this.mailService.sendPasswordReset(email, resetUrl);
   }
 
   /**
    * Redefine a senha usando o token de reset
    * POST /auth/reset-password
    */
-  async resetPassword(token: string, novaSenha: string): Promise<{ message: string }> {
-    const user = await this.prisma.user.findUnique({
-      where: { passwordResetToken: token },
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        passwordResetToken: token,
+        passwordResetExpires: { gt: new Date() },
+        deletedAt: null,
+      },
     });
 
-    if (!user || !user.passwordResetExpires) {
+    if (!user) {
       throw new BadRequestException("Token inválido ou expirado.");
     }
 
-    if (user.passwordResetExpires < new Date()) {
-      throw new BadRequestException("Token expirado. Solicite uma nova redefinição.");
-    }
-
-    const hashedPassword = await bcrypt.hash(novaSenha, 10);
+    const hashed = await bcrypt.hash(newPassword, 12);
 
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
-        password: hashedPassword,
+        password: hashed,
         passwordResetToken: null,
         passwordResetExpires: null,
       },
     });
-
-    return { message: "Senha redefinida com sucesso!" };
   }
 
   /**
