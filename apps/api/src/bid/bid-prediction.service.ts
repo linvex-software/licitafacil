@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import OpenAI from "openai";
 import { PrismaService } from "../prisma/prisma.service";
 import { PrismaTenantService } from "../prisma/prisma-tenant.service";
@@ -78,6 +78,21 @@ export class BidPredictionService {
     const bid = await prismaWithTenant.bid.findUnique({ where: { id: bidId } });
     if (!bid) {
       throw new NotFoundException(`Licitação com ID ${bidId} não encontrada`);
+    }
+
+    const temAnaliseEdital = await this.prisma.editalAnalise.findFirst({
+      where: {
+        bidId,
+        empresaId,
+        status: "CONCLUIDA",
+      },
+      select: { id: true },
+    });
+
+    if (!temAnaliseEdital) {
+      throw new BadRequestException(
+        "É necessário analisar o edital antes de executar a Análise Preditiva de Sucesso.",
+      );
     }
 
     // 2. Calcular os 6 fatores em paralelo (exceto complexidade que usa IA)
@@ -410,9 +425,9 @@ export class BidPredictionService {
           nome,
           descricao: "Adequação do valor estimado ao porte da empresa",
           peso,
-          score: 50,
-          scoreContribuicao: Math.round(50 * peso),
-          detalhe: "Edital não analisado. Faça a análise do edital para melhorar este score.",
+          score: 0,
+          scoreContribuicao: Math.round(0 * peso),
+          detalhe: "Sem análise de edital concluída para extrair valor estimado.",
           dados: { valorEstimado: null },
         };
       }
@@ -420,14 +435,14 @@ export class BidPredictionService {
       const resultado = analise.resultado as any;
       const valorEstimado = resultado?.valorEstimado;
 
-      if (!valorEstimado || typeof valorEstimado !== "number") {
+      if (!valorEstimado || typeof valorEstimado !== "number" || valorEstimado <= 0) {
         return {
           nome,
           descricao: "Adequação do valor estimado ao porte da empresa",
           peso,
-          score: 50,
-          scoreContribuicao: Math.round(50 * peso),
-          detalhe: "Valor estimado não identificado no edital.",
+          score: 0,
+          scoreContribuicao: Math.round(0 * peso),
+          detalhe: "Valor estimado indisponível ou inválido no edital analisado.",
           dados: { valorEstimado: null },
         };
       }

@@ -8,7 +8,7 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300",
+          "border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300",
         secondary:
           "border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400",
         destructive:

@@ -6,14 +6,12 @@ import { fetchDocuments, fetchUpcomingPrazos } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import {
-  BarChart3, ArrowRight, FileText, Calendar,
-  Activity, Plus, ChevronRight, Zap,
+  BarChart2, ArrowRight, FileText, Calendar,
+  Plus, ChevronRight, Zap,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Layout } from "@/components/layout";
-import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/status-badge";
 import { AuthGuard } from "@/components/AuthGuard";
 
 /* ─── KPI Card ──────────────────────────────────────────── */
@@ -25,7 +23,7 @@ function KpiCard({
   delay?: number;
 }) {
   const map = {
-    blue: { bar: "bg-blue-500", val: "text-blue-700 dark:text-blue-400" },
+    blue: { bar: "bg-[#0078D1]", val: "text-[#0078D1] dark:text-[#66b1e7]" },
     red: { bar: "bg-red-500", val: "text-red-700 dark:text-red-400" },
     amber: { bar: "bg-amber-400", val: "text-amber-700 dark:text-amber-400" },
     emerald: { bar: "bg-emerald-500", val: "text-emerald-700 dark:text-emerald-400" },
@@ -35,28 +33,13 @@ function KpiCard({
 
   return (
     <div
-      className="bg-white dark:bg-gray-900 rounded-xl px-5 pt-5 pb-4 animate-fade-up border border-gray-100 dark:border-gray-800"
+      className="rounded-xl border border-gray-100 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 animate-fade-up"
       style={{ animationDelay: `${delay}ms` }}
     >
-      <div className={`h-[3px] w-10 rounded-full ${c.bar} mb-4`} />
-      <p className={`text-[30px] font-bold leading-none stat-number ${c.val}`}>{value}</p>
-      <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mt-2">{label}</p>
-      {sub && <p className="text-[12px] text-gray-400 dark:text-gray-500 mt-0.5">{sub}</p>}
-    </div>
-  );
-}
-
-/* ─── Section Header ────────────────────────────────────── */
-function SectionHeader({ title, href, linkLabel }: { title: string; href?: string; linkLabel?: string }) {
-  return (
-    <div className="flex items-center justify-between mb-3">
-      <h2 className="text-[12px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{title}</h2>
-      {href && (
-        <Link href={href} className="text-[12px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-0.5 font-medium transition-colors">
-          {linkLabel || "Ver todos"}
-          <ChevronRight className="w-3.5 h-3.5" />
-        </Link>
-      )}
+      <div className={`mb-4 h-0.5 w-8 rounded-full ${c.bar}`} />
+      <p className={`text-4xl font-bold tracking-tight stat-number ${c.val}`}>{value}</p>
+      <p className="mt-1 text-sm font-semibold text-gray-700 dark:text-gray-200">{label}</p>
+      {sub && <p className="text-xs text-gray-400 dark:text-gray-500">{sub}</p>}
     </div>
   );
 }
@@ -86,6 +69,18 @@ export default function DashboardPage() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
   const firstName = user?.name?.split(" ")[0] || "usuário";
+  const formatDate = (date: Date) => {
+    const raw = format(date, "EEEE, dd 'de' MMMM", { locale: ptBR });
+    return raw.charAt(0).toUpperCase() + raw.slice(1);
+  };
+  const modalidadeLabel: Record<string, string> = {
+    PREGAO_ELETRONICO: "Pregão",
+    "PREGAO ELETRONICO": "Pregão",
+    DISPENSA: "Dispensa",
+    CONCORRENCIA: "Concorrência",
+    TOMADA_DE_PRECOS: "Tomada de Preços",
+    CONVITE: "Convite",
+  };
 
   return (
     <AuthGuard>
@@ -93,38 +88,51 @@ export default function DashboardPage() {
         <div className="page-enter space-y-7">
 
           {/* ── Hero ────────────────────────────────────────── */}
-          <div
-            className="rounded-2xl px-7 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-5"
-            style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #3b82f6 100%)" }}
-          >
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-blue-200 mb-1">
-                {format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR })}
-              </p>
-              <h1 className="text-[22px] font-bold text-white leading-tight">
-                {greeting}, {firstName}. 👋
-              </h1>
-              <p className="text-[13px] text-blue-200 mt-1">
-                {totalAtRisk > 0
-                  ? <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-amber-300" />{totalAtRisk} licitaç{totalAtRisk === 1 ? "ão requer" : "ões requerem"} atenção imediata</span>
-                  : "Tudo operacional — sem alertas críticos ✓"}
-              </p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <Link href="/relatorios">
-                <Button variant="outline" size="sm"
-                  className="rounded-full gap-1.5 bg-white text-gray-700 border-white hover:bg-gray-50 hover:text-gray-900 shadow-sm">
-                  <BarChart3 className="w-3.5 h-3.5" />
-                  Relatórios
-                </Button>
-              </Link>
-              <Link href="/licitacoes">
-                <Button size="sm"
-                  className="rounded-full gap-1.5 bg-white text-blue-700 hover:bg-blue-50 shadow-md hover:shadow-lg">
-                  <Plus className="w-3.5 h-3.5" />
-                  Nova Licitação
-                </Button>
-              </Link>
+          <div className="relative overflow-hidden rounded-2xl bg-[#0078D1] px-8 py-7">
+            <div
+              className="pointer-events-none absolute inset-0 opacity-[0.07]"
+              style={{
+                backgroundImage:
+                  "url(\"data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 40 0 L 0 0 0 40' fill='none' stroke='white' stroke-width='0.8'/%3E%3C/svg%3E\")",
+              }}
+            />
+
+            <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-white/50">
+                  {formatDate(new Date())}
+                </p>
+                <h1 className="text-2xl font-bold tracking-tight text-white">
+                  {greeting}, {firstName}.
+                </h1>
+
+                <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 backdrop-blur-sm">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                  </span>
+                  <span className="text-xs font-medium text-white/80">
+                    {totalAtRisk > 0
+                      ? `${totalAtRisk} licitaç${totalAtRisk === 1 ? "ão requer" : "ões requerem"} atenção imediata`
+                      : "Tudo operacional — sem alertas críticos"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Link href="/relatorios">
+                  <button className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20">
+                    <BarChart2 className="h-4 w-4" />
+                    Relatórios
+                  </button>
+                </Link>
+                <Link href="/licitacoes">
+                  <button className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#0078D1] transition-colors hover:bg-white/90">
+                    <Plus className="h-4 w-4" />
+                    Nova Licitação
+                  </button>
+                </Link>
+              </div>
             </div>
           </div>
 
@@ -140,15 +148,21 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
 
             {/* Prazos */}
-            <div className="lg:col-span-3 bg-white dark:bg-gray-900 rounded-xl animate-fade-up overflow-hidden border border-gray-100 dark:border-gray-800"
+            <div className="lg:col-span-3 rounded-xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 animate-fade-up"
               style={{ animationDelay: "100ms" }}>
-              <div className="px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800">
-                <SectionHeader title="Próximos Prazos" href="/licitacoes" linkLabel="Todos os prazos" />
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                  Próximos Prazos
+                </h2>
+                <Link href="/licitacoes" className="flex items-center gap-1 text-xs font-semibold text-[#0078D1] hover:underline">
+                  Todos os prazos
+                  <ChevronRight className="h-3 w-3" />
+                </Link>
               </div>
               <div className="divide-y divide-gray-50 dark:divide-gray-800">
                 {loadingPrazos ? (
                   [1, 2, 3].map(i => (
-                    <div key={i} className="flex gap-4 items-center px-5 py-3.5">
+                    <div key={i} className="flex gap-4 items-center py-3.5">
                       <div className="h-10 w-10 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse shrink-0" />
                       <div className="flex-1 space-y-2">
                         <div className="h-3 w-2/3 bg-gray-100 dark:bg-gray-800 rounded-full animate-pulse" />
@@ -157,12 +171,19 @@ export default function DashboardPage() {
                     </div>
                   ))
                 ) : upcomingPrazos.length === 0 ? (
-                  <div className="px-5 py-12 flex flex-col items-center gap-2 text-center">
-                    <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center mb-1 border border-gray-100 dark:border-gray-700">
-                      <Calendar className="w-5 h-5 text-gray-300 dark:text-gray-600" />
+                  <div className="flex flex-col items-center justify-center py-10 text-center">
+                    <div className="mb-3 rounded-full bg-gray-100 p-3 dark:bg-gray-800">
+                      <Calendar className="h-5 w-5 text-gray-400" />
                     </div>
-                    <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">Sem prazos próximos</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">Adicione prazos nas suas licitações</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      Nenhum prazo cadastrado
+                    </p>
+                    <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+                      Adicione prazos nas suas licitações ativas
+                    </p>
+                    <Link href="/licitacoes" className="mt-3 text-xs font-semibold text-[#0078D1] hover:underline">
+                      Ver licitações →
+                    </Link>
                   </div>
                 ) : (
                   upcomingPrazos.slice(0, 6).map((p) => {
@@ -172,7 +193,7 @@ export default function DashboardPage() {
                     const isPast = dias < 0;
                     return (
                       <Link key={p.id} href={`/licitacoes/${p.bidId}/prazos`}
-                        className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
+                        className="flex items-center gap-4 rounded-lg px-3 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
                         <div className={`shrink-0 w-11 text-center rounded-xl py-1.5 border ${isPast ? "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800" :
                           isUrgent ? "bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800" :
                             "bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700"
@@ -186,14 +207,14 @@ export default function DashboardPage() {
                           </p>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-semibold text-gray-800 dark:text-gray-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{p.titulo}</p>
+                          <p className="text-[13px] font-semibold text-gray-800 dark:text-gray-200 truncate group-hover:text-primary dark:group-hover:text-primary-300 transition-colors">{p.titulo}</p>
                           <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 truncate">{p.bidTitle || "Licitação"}</p>
                         </div>
                         <span className={`shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full border ${isPast
                           ? "bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800"
                           : isUrgent
                             ? "bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800"
-                            : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700"
+                            : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-800"
                           }`}>
                           {isPast ? `−${Math.abs(dias)}d` : dias === 0 ? "Hoje" : `+${dias}d`}
                         </span>
@@ -205,31 +226,44 @@ export default function DashboardPage() {
             </div>
 
             {/* Docs críticos */}
-            <div className="lg:col-span-2 bg-white dark:bg-gray-900 rounded-xl animate-fade-up overflow-hidden border border-gray-100 dark:border-gray-800"
+            <div className="lg:col-span-2 rounded-xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 animate-fade-up"
               style={{ animationDelay: "160ms" }}>
-              <div className="px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800">
-                <SectionHeader title="Docs Vencendo" href="/documentos" linkLabel="Ver todos" />
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 -mt-2">Próximos 30 dias</p>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                  Docs Vencendo
+                </h2>
+                <Link href="/documentos" className="flex items-center gap-1 text-xs font-semibold text-[#0078D1] hover:underline">
+                  Ver todos
+                  <ChevronRight className="h-3 w-3" />
+                </Link>
               </div>
               <div className="divide-y divide-gray-50 dark:divide-gray-800">
                 {criticalDocs.length === 0 ? (
-                  <div className="px-5 py-12 flex flex-col items-center gap-2 text-center">
-                    <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center mb-1 border border-gray-100 dark:border-gray-700">
-                      <FileText className="w-5 h-5 text-gray-300 dark:text-gray-600" />
+                  <div className="flex flex-col items-center justify-center py-10 text-center">
+                    <div className="mb-3 rounded-full bg-gray-100 p-3 dark:bg-gray-800">
+                      <FileText className="h-5 w-5 text-gray-400" />
                     </div>
-                    <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">Sem documentos críticos</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      Sem documentos críticos
+                    </p>
+                    <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+                      Nenhum documento vence nos próximos 30 dias
+                    </p>
+                    <Link href="/documentos" className="mt-3 text-xs font-semibold text-[#0078D1] hover:underline">
+                      Gerenciar documentos →
+                    </Link>
                   </div>
                 ) : (
                   criticalDocs.slice(0, 5).map(doc => {
                     const exp = doc.expiresAt ? new Date(doc.expiresAt) : null;
                     return (
                       <Link key={doc.id} href={doc.bidId ? `/licitacoes/${doc.bidId}/documentos` : "/documentos"}
-                        className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
+                        className="flex items-center gap-3 rounded-lg px-3 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
                         <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950 flex items-center justify-center shrink-0 border border-amber-200 dark:border-amber-800">
                           <FileText className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-medium text-gray-700 dark:text-gray-300 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{doc.name}</p>
+                          <p className="text-[13px] font-medium text-gray-700 dark:text-gray-300 truncate group-hover:text-primary dark:group-hover:text-primary-300 transition-colors">{doc.name}</p>
                           {exp && <p className="text-[11px] text-amber-600 dark:text-amber-400 font-medium mt-0.5">{format(exp, "dd/MM/yyyy")}</p>}
                         </div>
                         <ChevronRight className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400 shrink-0" />
@@ -243,56 +277,73 @@ export default function DashboardPage() {
 
           {/* ── Recent Bids ─────────────────────────────────── */}
           <div className="animate-fade-up" style={{ animationDelay: "220ms" }}>
-            <SectionHeader title="Licitações Recentes" href="/licitacoes" />
-            <div className="bg-white dark:bg-gray-900 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-800">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                Licitações Recentes
+              </h2>
+              <Link href="/licitacoes" className="flex items-center gap-1 text-xs font-semibold text-[#0078D1] hover:underline">
+                Ver todos
+                <ChevronRight className="h-3 w-3" />
+              </Link>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
               {isLoading ? (
                 <div className="divide-y divide-gray-50 dark:divide-gray-800">
                   {[1, 2, 3].map(i => (
-                    <div key={i} className="flex items-center gap-4 px-5 py-4">
+                    <div key={i} className="flex items-center gap-4 py-4">
                       <div className="h-4 w-48 bg-gray-100 dark:bg-gray-800 rounded-full animate-pulse" />
                       <div className="ml-auto h-5 w-16 bg-gray-100 dark:bg-gray-800 rounded-full animate-pulse" />
                     </div>
                   ))}
                 </div>
               ) : licitacoes.length === 0 ? (
-                <div className="py-14 flex flex-col items-center gap-3 text-center">
-                  <div className="w-12 h-12 bg-blue-50 dark:bg-blue-950 rounded-2xl flex items-center justify-center border border-blue-100 dark:border-blue-900">
-                    <Activity className="w-6 h-6 text-blue-500 dark:text-blue-400" />
+                <div className="flex flex-col items-center justify-center py-10 text-center">
+                  <div className="mb-3 rounded-full bg-gray-100 p-3 dark:bg-gray-800">
+                    <Zap className="h-5 w-5 text-gray-400" />
                   </div>
-                  <div>
-                    <p className="font-semibold text-gray-700 dark:text-gray-300">Nenhuma licitação</p>
-                    <p className="text-sm text-gray-400 dark:text-gray-500 mt-0.5">Adicione sua primeira licitação para começar</p>
-                  </div>
-                  <Link href="/licitacoes">
-                    <Button size="sm" className="rounded-full mt-1 gap-1.5">
-                      <Plus className="w-3.5 h-3.5" />
-                      Nova Licitação
-                    </Button>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Nenhuma licitação encontrada
+                  </p>
+                  <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+                    Cadastre sua primeira licitação para começar
+                  </p>
+                  <Link href="/licitacoes" className="mt-3 text-xs font-semibold text-[#0078D1] hover:underline">
+                    Ir para licitações →
                   </Link>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-50 dark:divide-gray-800">
                   {licitacoes.slice(0, 6).map((item, idx) => (
                     <Link key={item.id} href={`/licitacoes/${item.id}`}
-                      className="flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
-                      <span className="text-[11px] font-bold text-gray-300 dark:text-gray-600 w-5 shrink-0 stat-number tabular-nums">
+                      className="flex items-center gap-4 rounded-lg px-3 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer group">
+                      <span className="w-6 shrink-0 text-xs font-mono text-gray-300 dark:text-gray-600 stat-number tabular-nums">
                         {String(idx + 1).padStart(2, "0")}
                       </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-semibold text-gray-800 dark:text-gray-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{item.title}</p>
-                        <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 truncate">{item.agency}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-gray-800 dark:text-gray-200">{item.title}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">{item.agency}</p>
                       </div>
-                      <span className="hidden md:block text-[11px] text-gray-400 dark:text-gray-500 shrink-0 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-2 py-0.5 rounded-full">
-                        {item.modality.replace(/_/g, " ")}
-                      </span>
-                      <div className="shrink-0">
-                        <StatusBadge status={item.operationalState === "OK" ? "aberta" : "vencida"} />
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="hidden md:inline-flex rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs font-medium text-gray-600 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-400">
+                          {modalidadeLabel[item.modality] ?? item.modality.replace(/_/g, " ")}
+                        </span>
+                        {item.operationalState === "OK" ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                            Ativa
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                            <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                            Em risco
+                          </span>
+                        )}
+                        <ChevronRight className="h-4 w-4 text-gray-300 dark:text-gray-600" />
                       </div>
-                      <ChevronRight className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400 shrink-0" />
                     </Link>
                   ))}
                   <Link href="/licitacoes"
-                    className="flex items-center justify-center gap-1.5 py-3.5 text-[12px] font-medium text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    className="flex items-center justify-center gap-1.5 py-3.5 text-[12px] font-medium text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors rounded-lg">
                     Ver todas as licitações
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>

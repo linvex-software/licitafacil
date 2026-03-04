@@ -17,12 +17,11 @@ import {
   CheckCircle2,
   AlertTriangle,
   Clock,
-  ListChecks,
+  CheckSquare,
   ChevronRight,
   Scale,
   Swords,
   MessageCircle,
-  Sparkles,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -32,6 +31,7 @@ import type { AnalisarEditalResponse } from "@/hooks/use-analisar-edital";
 import { useBidPrediction, useAnalisarProbabilidade } from "@/hooks/use-bid-prediction";
 import { PredictionBadge } from "@/components/licitacoes/prediction-badge";
 import { PredictionModal } from "@/components/licitacoes/prediction-modal";
+import { PredictiveAnalysis } from "@/components/licitacoes/PredictiveAnalysis";
 
 export default function LicitacaoDetailPage() {
   const params = useParams();
@@ -44,8 +44,50 @@ export default function LicitacaoDetailPage() {
   const [predictionModalOpen, setPredictionModalOpen] = useState(false);
   const { data: prediction, isLoading: isPredictionLoading } = useBidPrediction(id);
   const { mutate: analisarProbabilidade, isPending: isAnalyzing } = useAnalisarProbabilidade();
+  const temAnaliseEdital = Boolean(licitacao?.hasEditalAnalysis);
+  const quickActions = [
+    {
+      href: `/licitacoes/${id}/prazos`,
+      icon: Clock,
+      label: "Prazos",
+      description: "Cadastre e acompanhe os prazos e dias restantes",
+    },
+    {
+      href: `/licitacoes/${id}/checklist`,
+      icon: CheckSquare,
+      label: "Checklist",
+      description: "Itens obrigatórios e evidências desta licitação",
+    },
+    {
+      href: `/licitacoes/${id}/juridico`,
+      icon: Scale,
+      label: "Jurídico",
+      description: "Gere petições e acompanhe o histórico jurídico",
+    },
+    {
+      href: `/licitacoes/${id}/disputa`,
+      icon: Swords,
+      label: "Disputa",
+      description: "Simule lances e acompanhe o histórico da disputa",
+    },
+    {
+      href: `/licitacoes/${id}/perguntas`,
+      icon: MessageCircle,
+      label: "Perguntas",
+      description: "Faça perguntas sobre o edital usando IA",
+    },
+  ];
 
   const handleAnalisarProbabilidade = () => {
+    if (!temAnaliseEdital) {
+      toast({
+        title: "Análise preditiva bloqueada",
+        description: "É necessário analisar o edital antes de executar a Análise Preditiva de Sucesso.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     analisarProbabilidade(id, {
       onSuccess: () => {
         toast({
@@ -187,9 +229,14 @@ export default function LicitacaoDetailPage() {
             <div className="flex gap-2 flex-wrap items-center">
               {/* Badge de probabilidade no header */}
               <button
-                onClick={() => setPredictionModalOpen(true)}
-                className="focus:outline-none"
-                title="Ver análise preditiva de sucesso"
+                onClick={() => {
+                  if (prediction || temAnaliseEdital) setPredictionModalOpen(true);
+                }}
+                className="focus:outline-none disabled:opacity-70"
+                title={prediction || temAnaliseEdital
+                  ? "Ver análise preditiva de sucesso"
+                  : "Análise preditiva bloqueada até concluir a análise do edital"}
+                disabled={!prediction && !temAnaliseEdital}
               >
                 <PredictionBadge
                   prediction={prediction}
@@ -282,120 +329,74 @@ export default function LicitacaoDetailPage() {
         </div>
 
         {/* Card de Análise Preditiva */}
-        <Card
-          className="shadow-sm border-gray-200 dark:border-gray-700 hover:border-purple-500/50 hover:shadow-md transition-all cursor-pointer group mb-6"
-          onClick={() => setPredictionModalOpen(true)}
-        >
-          <CardContent className="pt-5 pb-5 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 group-hover:bg-purple-500/20 transition-colors">
-                <Sparkles className="w-6 h-6" />
-              </div>
+        {prediction ? (
+          <div className="cursor-pointer" onClick={() => setPredictionModalOpen(true)}>
+            <PredictiveAnalysis
+              score={prediction.score}
+              factors={prediction.fatores}
+              processTitle={licitacao.title}
+            />
+          </div>
+        ) : !temAnaliseEdital ? (
+          <div className="mb-6 rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center dark:border-gray-700 dark:bg-gray-900/30">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-amber-100 bg-amber-50">
+              <span className="text-xl">🔒</span>
+            </div>
+            <h3 className="mb-1 text-sm font-semibold text-gray-800 dark:text-gray-100">
+              Análise Preditiva bloqueada
+            </h3>
+            <p className="mx-auto mb-4 max-w-xs text-xs text-gray-500 dark:text-gray-400">
+              Para acessar a predição de sucesso, primeiro realize a análise do edital desta licitação.
+            </p>
+            <div className="inline-flex">
+              <AnalisarEditalModal
+                bidId={id}
+                onAplicar={handleAplicarAnalise}
+                triggerLabel="Analisar Edital primeiro →"
+                triggerVariant="default"
+                triggerClassName="rounded-lg bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-gray-800"
+              />
+            </div>
+          </div>
+        ) : (
+          <Card className="mb-6 border-gray-200 shadow-sm dark:border-gray-700">
+            <CardContent className="flex items-center justify-between gap-4 py-5">
               <div>
-                <h3 className="font-heading font-semibold text-gray-900 dark:text-gray-100 group-hover:text-purple-700 dark:group-hover:text-purple-400">
+                <h3 className="font-heading text-base font-semibold text-gray-900 dark:text-gray-100">
                   Análise Preditiva de Sucesso
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {prediction
-                    ? `Score: ${prediction.score}/100 — ${prediction.recomendacao}`
-                    : "Calcule a probabilidade de sucesso com IA (6 fatores)"}
+                  Gere uma previsão com IA para estimar a chance de sucesso deste processo.
                 </p>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <PredictionBadge
-                prediction={prediction}
-                isLoading={isPredictionLoading}
-                size="sm"
-                showLabel={false}
-              />
-              <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-purple-500 shrink-0" />
-            </div>
-          </CardContent>
-        </Card>
+              <Button onClick={handleAnalisarProbabilidade} disabled={isAnalyzing}>
+                {isAnalyzing ? "Analisando..." : "Analisar com IA"}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Ações da licitação: Prazos, Checklist, etc. */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-          <Link href={`/licitacoes/${id}/prazos`}>
-            <Card className="shadow-sm border-gray-200 dark:border-gray-700 hover:border-emerald-500/50 hover:shadow-md transition-all cursor-pointer group h-full">
-              <CardContent className="pt-6 pb-6 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500/20 transition-colors">
-                    <Clock className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-heading font-semibold text-gray-900 dark:text-gray-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">Prazos</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Cadastre e acompanhe os prazos e dias restantes</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-emerald-500 shrink-0" />
-              </CardContent>
-            </Card>
-          </Link>
-          <Link href={`/licitacoes/${id}/checklist`}>
-            <Card className="shadow-sm border-gray-200 dark:border-gray-700 hover:border-emerald-500/50 hover:shadow-md transition-all cursor-pointer group h-full">
-              <CardContent className="pt-6 pb-6 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500/20 transition-colors">
-                    <ListChecks className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-heading font-semibold text-gray-900 dark:text-gray-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">Checklist</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Itens obrigatórios e evidências desta licitação</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-emerald-500 shrink-0" />
-              </CardContent>
-            </Card>
-          </Link>
-          <Link href={`/licitacoes/${id}/juridico`}>
-            <Card className="shadow-sm border-gray-200 dark:border-gray-700 hover:border-emerald-500/50 hover:shadow-md transition-all cursor-pointer group h-full">
-              <CardContent className="pt-6 pb-6 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500/20 transition-colors">
-                    <Scale className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-heading font-semibold text-gray-900 dark:text-gray-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">Jurídico</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Gere petições e acompanhe o histórico jurídico</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-emerald-500 shrink-0" />
-              </CardContent>
-            </Card>
-          </Link>
-          <Link href={`/licitacoes/${id}/disputa`}>
-            <Card className="shadow-sm border-gray-200 dark:border-gray-700 hover:border-emerald-500/50 hover:shadow-md transition-all cursor-pointer group h-full">
-              <CardContent className="pt-6 pb-6 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500/20 transition-colors">
-                    <Swords className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-heading font-semibold text-gray-900 dark:text-gray-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">Disputa</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Simule lances e acompanhe o histórico da disputa</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-emerald-500 shrink-0" />
-              </CardContent>
-            </Card>
-          </Link>
-          <Link href={`/licitacoes/${id}/perguntas`}>
-            <Card className="shadow-sm border-gray-200 dark:border-gray-700 hover:border-emerald-500/50 hover:shadow-md transition-all cursor-pointer group h-full">
-              <CardContent className="pt-6 pb-6 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500/20 transition-colors">
-                    <MessageCircle className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-heading font-semibold text-gray-900 dark:text-gray-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">Perguntas</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Faça perguntas sobre o edital usando IA</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-emerald-500 shrink-0" />
-              </CardContent>
-            </Card>
-          </Link>
+        {/* Ações rápidas da licitação */}
+        <div className="mt-6 mb-8 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
+          {quickActions.map((action) => (
+            <Link
+              key={action.href}
+              href={action.href}
+              className="group flex flex-col gap-2 rounded-xl border border-gray-100 bg-white p-4 transition-all duration-150 hover:border-[#0078D1]/30 hover:bg-blue-50/30 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-[#0078D1]/30 dark:hover:bg-[#0078D1]/5"
+            >
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-50 transition-colors group-hover:bg-[#0078D1]/10 dark:bg-gray-800">
+                <action.icon className="h-3.5 w-3.5 text-gray-400 transition-colors group-hover:text-[#0078D1]" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold leading-tight text-gray-700 transition-colors group-hover:text-[#0078D1] dark:text-gray-300">
+                  {action.label}
+                </p>
+                <p className="mt-0.5 line-clamp-2 text-[11px] leading-tight text-gray-400 dark:text-gray-500">
+                  {action.description}
+                </p>
+              </div>
+            </Link>
+          ))}
         </div>
 
         {/* Alerta de Risco */}

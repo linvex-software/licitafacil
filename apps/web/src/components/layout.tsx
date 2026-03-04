@@ -96,7 +96,7 @@ function NavDropdown({ item, pathname }: { item: NavItem; pathname: string }) {
             <button className={cn(
                 "flex items-center gap-1 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-150",
                 isActive
-                    ? "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                    ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-300"
                     : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
             )}>
                 {item.label}
@@ -118,12 +118,12 @@ function NavDropdown({ item, pathname }: { item: NavItem; pathname: string }) {
                                 className={cn(
                                     "flex items-center gap-2.5 mx-1 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors",
                                     subActive
-                                        ? "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                                        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-300"
                                         : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
                                 )}
                                 onClick={() => setOpen(false)}
                             >
-                                {Icon && <Icon className={cn("w-3.5 h-3.5 shrink-0", subActive ? "text-blue-500" : "text-gray-400 dark:text-gray-500")} />}
+                                {Icon && <Icon className={cn("w-3.5 h-3.5 shrink-0", subActive ? "text-primary" : "text-gray-400 dark:text-gray-500")} />}
                                 {sub.label}
                             </Link>
                         );
@@ -142,7 +142,7 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
             className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-150",
                 isActive
-                    ? "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                    ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-300"
                     : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
             )}
         >
@@ -160,7 +160,7 @@ function MobileSidebarContent({ pathname, user, logout }: { pathname: string; us
             <div className="px-4 py-4 border-b border-gray-100 dark:border-gray-800">
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-                        style={{ background: "linear-gradient(135deg,#2563eb,#1d4ed8)", boxShadow: "0 2px 8px rgba(37,99,235,.3)" }}>
+                        style={{ background: "linear-gradient(135deg,#0078D1,#0062ab)", boxShadow: "0 2px 8px rgba(0,120,209,.35)" }}>
                         <Gavel className="w-4 h-4 text-white" />
                     </div>
                     <div>
@@ -180,10 +180,10 @@ function MobileSidebarContent({ pathname, user, logout }: { pathname: string; us
                                     <Link href={item.href}
                                         className={cn("flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-colors",
                                             isActive
-                                                ? "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                                                ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-300"
                                                 : "text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
                                         )}>
-                                        <item.icon className={cn("w-4 h-4 shrink-0", isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-gray-500")} />
+                                        <item.icon className={cn("w-4 h-4 shrink-0", isActive ? "text-primary dark:text-primary-300" : "text-gray-400 dark:text-gray-500")} />
                                         {item.label}
                                     </Link>
                                     {item.subItems && (
@@ -192,7 +192,7 @@ function MobileSidebarContent({ pathname, user, logout }: { pathname: string; us
                                                 <Link key={sub.href} href={sub.href}
                                                     className={cn("block px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors",
                                                         pathname === sub.href
-                                                            ? "text-blue-600 dark:text-blue-400"
+                                                            ? "text-primary dark:text-primary-300"
                                                             : "text-gray-500 hover:text-gray-800 dark:text-gray-500 dark:hover:text-gray-200"
                                                     )}>
                                                     {sub.label}
@@ -209,7 +209,7 @@ function MobileSidebarContent({ pathname, user, logout }: { pathname: string; us
                     <div className="mb-3">
                         <p className="section-label px-2 mb-1">Equipe</p>
                         <Link href="/usuarios"
-                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-950 hover:text-blue-700 dark:hover:text-blue-300">
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium text-gray-600 dark:text-gray-400 hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary dark:hover:text-primary-300">
                             <Users className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                             Usuários
                         </Link>
@@ -262,7 +262,7 @@ export function Layout({ children, fullWidth = false }: {
                 <Link href="/" className="flex items-center gap-2.5 shrink-0 mr-4 group">
                     <div
                         className="w-7 h-7 rounded-lg flex items-center justify-center transition-transform group-hover:scale-95"
-                        style={{ background: "linear-gradient(135deg,#2563eb,#1d4ed8)", boxShadow: "0 2px 6px rgba(37,99,235,.3)" }}
+                        style={{ background: "linear-gradient(135deg,#0078D1,#0062ab)", boxShadow: "0 2px 6px rgba(0,120,209,.35)" }}
                     >
                         <Gavel className="w-3.5 h-3.5 text-white" />
                     </div>
@@ -324,7 +324,7 @@ export function Layout({ children, fullWidth = false }: {
                         <DropdownMenuTrigger asChild>
                             <button className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                                 <Avatar className="h-7 w-7">
-                                    <AvatarFallback className="text-[10px] font-bold bg-blue-600 text-white">
+                                    <AvatarFallback className="text-[10px] font-bold bg-primary text-white">
                                         {user?.name?.substring(0, 2).toUpperCase() || "US"}
                                     </AvatarFallback>
                                 </Avatar>

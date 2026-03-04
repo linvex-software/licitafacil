@@ -125,8 +125,8 @@ export class DocumentService {
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
 
-    // URL relativa: {empresaId}/{ano}/{mes}/{filename}
-    return `${empresaId}/${year}/${month}/${filename}`;
+    // URL pública relativa: /uploads/{empresaId}/{ano}/{mes}/{filename}
+    return `/uploads/${empresaId}/${year}/${month}/${filename}`;
   }
 
   /**
@@ -158,7 +158,7 @@ export class DocumentService {
         mimeType: "application/octet-stream",
         size: 0,
         category,
-        url: "pendente",
+        url: "",
         uploadedBy: userId,
         empresaId,
         bidId,
@@ -354,6 +354,7 @@ export class DocumentService {
           mimeType: file.mimetype,
           size: file.size,
           url: fileUrl,
+          status: "ATIVO",
         },
       });
 
@@ -514,7 +515,15 @@ export class DocumentService {
     const document = await this.findOne(id, empresaId);
 
     // Construir caminho completo do arquivo
-    const fullPath = path.join(this.uploadsDir, document.url);
+    if (!document.url || document.url.trim() === "") {
+      throw new NotFoundException("Documento ainda não possui arquivo enviado");
+    }
+
+    const normalizedUrl = document.url.startsWith("/uploads/")
+      ? document.url.replace(/^\/uploads\//, "")
+      : document.url;
+
+    const fullPath = path.join(this.uploadsDir, normalizedUrl);
 
     // Proteção contra path traversal: garantir que o caminho resolvido está dentro de uploadsDir
     const resolvedPath = path.resolve(fullPath);

@@ -32,7 +32,7 @@ export function Navbar() {
           <div className="flex items-center gap-6">
             <Link
               href="/"
-              className="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400"
+              className="text-xl font-bold text-gray-900 dark:text-white hover:text-primary dark:hover:text-primary-300"
             >
               Licitafacil
             </Link>

@@ -186,22 +186,30 @@ export function PrazosPageClient({ bidId }: PrazosPageClientProps) {
   return (
     <>
       <div className="flex justify-end mb-6">
-        <Button onClick={openCreate} className="bg-emerald-600 hover:bg-emerald-700 shadow-sm">
+        <Button onClick={openCreate} className="bg-[#0078D1] hover:bg-[#0062ab] text-white shadow-sm">
           <Plus className="w-4 h-4 mr-2" />
           Novo prazo
         </Button>
       </div>
 
-      <Card className="shadow-sm border-gray-200 dark:border-gray-700">
+      <Card className="shadow-sm border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
         <CardContent className="pt-6">
           {prazos.length === 0 ? (
-            <div className="text-center py-16 px-4">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 mb-4">
-                <Calendar className="w-7 h-7" />
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <div className="mb-3 rounded-full bg-gray-100 dark:bg-gray-800 p-3">
+                <Calendar className="h-5 w-5 text-gray-400 dark:text-gray-500" />
               </div>
-              <p className="text-gray-600 dark:text-gray-400 font-medium mb-1">Nenhum prazo cadastrado</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Clique em &quot;Novo prazo&quot; para adicionar datas importantes desta licitação.</p>
-              <Button onClick={openCreate} variant="outline" className="border-emerald-500/50 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                Nenhum prazo cadastrado
+              </p>
+              <p className="mt-1 max-w-xs text-xs text-gray-400 dark:text-gray-500">
+                O edital não informou prazos automaticamente. Adicione manualmente as datas importantes.
+              </p>
+              <Button
+                onClick={openCreate}
+                variant="outline"
+                className="mt-4 border-[#0078D1] text-[#0078D1] dark:border-[#60a5fa] dark:text-[#60a5fa] hover:bg-[#0078D1]/5 dark:hover:bg-[#60a5fa]/10"
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Adicionar primeiro prazo
               </Button>

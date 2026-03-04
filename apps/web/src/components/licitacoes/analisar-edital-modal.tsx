@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ComponentProps } from "react";
 import {
   Dialog,
   DialogContent,
@@ -24,15 +24,22 @@ import {
   Calendar,
   CheckSquare,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface AnalisarEditalModalProps {
   bidId: string;
   onAplicar: (resultado: AnalisarEditalResponse) => void;
+  triggerLabel?: string;
+  triggerClassName?: string;
+  triggerVariant?: ComponentProps<typeof Button>["variant"];
 }
 
 export function AnalisarEditalModal({
   bidId,
   onAplicar,
+  triggerLabel = "Analisar Edital (IA)",
+  triggerClassName,
+  triggerVariant = "outline",
 }: AnalisarEditalModalProps) {
   const [open, setOpen] = useState(false);
   const [arquivo, setArquivo] = useState<File | null>(null);
@@ -82,9 +89,9 @@ export function AnalisarEditalModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2">
+        <Button variant={triggerVariant} className={cn("gap-2", triggerClassName)}>
           <Sparkles className="w-4 h-4" />
-          Analisar Edital (IA)
+          {triggerLabel}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">

@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { type Document, DocumentCategory } from "@licitafacil/shared";
-import { fetchDocuments, downloadDocument, deleteDocument } from "@/lib/api";
+import { fetchDocuments, deleteDocument, uploadDocument } from "@/lib/api";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent } from "@/components/ui/Card";
 import { DocumentVersions } from "./DocumentVersions";
 import { Upload } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { getFileUrl } from "@/lib/utils";
 
 interface DocumentsListProps {
   /** Quando não informado, lista todos os documentos da empresa (incluindo os vinculados a licitações). */
@@ -60,7 +62,8 @@ function formatDate(dateString: string): string {
   });
 }
 
-export function DocumentsList({ bidId, onError, onUploadRequest }: DocumentsListProps) {
+export function DocumentsList({ bidId, onError, onUploadRequest: _onUploadRequest }: DocumentsListProps) {
+  const { toast } = useToast();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -69,6 +72,7 @@ export function DocumentsList({ bidId, onError, onUploadRequest }: DocumentsList
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [expandedDocument, setExpandedDocument] = useState<string | null>(null);
 
   const loadDocuments = async () => {
@@ -96,11 +100,16 @@ export function DocumentsList({ bidId, onError, onUploadRequest }: DocumentsList
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, selectedCategory, searchQuery, bidId]);
 
-  const handleDownload = async (document: Document) => {
+  const handleOpenFile = async (document: Document) => {
     try {
-      await downloadDocument(document.id, document.name);
+      const fileUrl = getFileUrl(document.url);
+      if (!fileUrl) {
+        onError("Documento sem arquivo enviado.");
+        return;
+      }
+      window.open(fileUrl, "_blank", "noopener,noreferrer");
     } catch (error) {
-      onError(error instanceof Error ? error.message : "Erro ao fazer download");
+      onError(error instanceof Error ? error.message : "Erro ao abrir arquivo");
     }
   };
 
@@ -115,6 +124,27 @@ export function DocumentsList({ bidId, onError, onUploadRequest }: DocumentsList
       onError(error instanceof Error ? error.message : "Erro ao excluir documento");
     } finally {
       setIsDeleting(null);
+    }
+  };
+
+  const handleUpload = async (doc: Document, file: File) => {
+    setUploadingId(doc.id);
+    try {
+      await uploadDocument(file, {
+        name: doc.name,
+        category: doc.category,
+        bidId: bidId || doc.bidId || undefined,
+        documentId: doc.id,
+      });
+      toast({
+        title: "Upload concluído",
+        description: "Documento enviado com sucesso.",
+      });
+      await loadDocuments();
+    } catch (error) {
+      onError(error instanceof Error ? error.message : "Erro ao fazer upload");
+    } finally {
+      setUploadingId(null);
     }
   };
 
@@ -230,20 +260,33 @@ export function DocumentsList({ bidId, onError, onUploadRequest }: DocumentsList
                           <Badge variant="outline" className="border-orange-500 text-orange-600 dark:border-orange-400 dark:text-orange-400 mr-2">
                             Pendente
                           </Badge>
-                          <button
-                            onClick={() => onUploadRequest?.(doc.id, doc.category)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-orange-50 dark:bg-orange-950/50 hover:bg-orange-100 dark:hover:bg-orange-900/50 text-orange-700 dark:text-orange-400 rounded-lg font-medium transition-colors"
-                          >
-                            <Upload className="w-4 h-4" />
-                            Fazer Upload
-                          </button>
+                          <>
+                            <input
+                              type="file"
+                              id={`upload-${doc.id}`}
+                              className="hidden"
+                              accept=".pdf,.doc,.docx,.png,.jpg"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) void handleUpload(doc, file);
+                                e.currentTarget.value = "";
+                              }}
+                            />
+                            <label
+                              htmlFor={`upload-${doc.id}`}
+                              className="cursor-pointer inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            >
+                              <Upload className="h-3.5 w-3.5" />
+                              {uploadingId === doc.id ? "Enviando..." : "Upload"}
+                            </label>
+                          </>
                         </>
                       ) : (
                         <button
-                          onClick={() => handleDownload(doc)}
+                          onClick={() => void handleOpenFile(doc)}
                           className="px-3 py-1.5 text-sm bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 rounded-lg font-medium transition-colors"
                         >
-                          Download
+                          Abrir
                         </button>
                       )}
 
