@@ -13,6 +13,10 @@ interface BoasVindasParams {
 export class MailService {
   private readonly logger = new Logger(MailService.name);
   private client: MailtrapClient;
+  private readonly sender = {
+    email: "hello@mail.lvxlicitacao.com.br",
+    name: "LicitaFácil",
+  };
 
   constructor(private config: ConfigService) {
     this.client = new MailtrapClient({
@@ -20,20 +24,10 @@ export class MailService {
     });
   }
 
-  private getFrom() {
-    return {
-      // Em desenvolvimento, usa domínio demo do Mailtrap para evitar bloqueio de credibilidade.
-      email: this.config.get<string>("NODE_ENV") === "development"
-        ? "hello@demomailtrap.co"
-        : (this.config.get<string>("MAIL_FROM") ?? "noreply@limvex.com"),
-      name: this.config.get<string>("MAIL_FROM_NAME") ?? "Limvex Licitação",
-    };
-  }
-
   async sendPasswordReset(to: string, resetUrl: string): Promise<void> {
     try {
       await this.client.send({
-        from: this.getFrom(),
+        from: this.sender,
         to: [{ email: to }],
         subject: "Redefinição de senha — Limvex Licitação",
         html: `
@@ -63,7 +57,8 @@ export class MailService {
             </p>
           </div>
         `,
-        category: "Password Reset",
+        text: `Recebemos uma solicitação para redefinir sua senha. Acesse este link (válido por 30 minutos): ${resetUrl}`,
+        category: "Transactional",
       } as any);
       this.logger.log(`Password reset email sent to ${to}`);
     } catch (error) {
@@ -75,7 +70,7 @@ export class MailService {
   async sendWelcome(to: string, name: string): Promise<void> {
     try {
       await this.client.send({
-        from: this.getFrom(),
+        from: this.sender,
         to: [{ email: to }],
         subject: "Bem-vindo à Limvex Licitação",
         html: `
@@ -91,7 +86,8 @@ export class MailService {
             </p>
           </div>
         `,
-        category: "Welcome",
+        text: `Bem-vindo, ${name}! Sua conta na plataforma Limvex Licitação está pronta.`,
+        category: "Transactional",
       } as any);
     } catch (error) {
       this.logger.error(`Failed to send welcome email to ${to}`, error as any);
@@ -104,10 +100,12 @@ export class MailService {
 
     try {
       await this.client.send({
-        from: this.getFrom(),
+        from: this.sender,
         to: [{ email: params.emailAdmin }],
         subject: `Bem-vindo ao Limvex - ${params.nomeEmpresa}`,
         html,
+        text: `Bem-vindo ao Limvex, ${params.nomeEmpresa}. Seu acesso inicial é ${params.emailAdmin}.`,
+        category: "Transactional",
       } as any);
       this.logger.log(`Email de boas-vindas enviado para ${params.emailAdmin}`);
     } catch (error) {
@@ -126,10 +124,12 @@ export class MailService {
 
     try {
       await this.client.send({
-        from: this.getFrom(),
+        from: this.sender,
         to: [{ email }],
         subject: `[Ação Necessária] Contrato Suspenso - ${nomeEmpresa}`,
         html,
+        text: `Contrato suspenso para ${nomeEmpresa}. Entre em contato com financeiro@limvex.com.br para regularização.`,
+        category: "Transactional",
       } as any);
 
       this.logger.log(`Email de suspensão enviado para ${email}`);

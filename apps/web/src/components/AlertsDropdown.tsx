@@ -38,7 +38,7 @@ function severityDot(severity: string) {
 
 export function AlertsDropdown() {
   const router = useRouter();
-  const { alerts, unseenCount, loading, markSeen } = useAlerts();
+  const { alerts, unseenCount, loading, markSeen, markAllSeen } = useAlerts();
 
   const handleAlertClick = (alert: Alert) => {
     if (alert.status === "UNSEEN") markSeen(alert.id);
@@ -60,14 +60,28 @@ export function AlertsDropdown() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80 p-0">
         <div className="p-4 border-b border-gray-100 dark:border-gray-800">
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100">Alertas da empresa</h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {unseenCount > 0
-              ? `${unseenCount} não ${unseenCount === 1 ? "lido" : "lidos"}`
-              : loading
-                ? "Carregando…"
-                : "Tudo em dia"}
-          </p>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Alertas da empresa</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {unseenCount > 0
+                  ? `${unseenCount} não ${unseenCount === 1 ? "lido" : "lidos"}`
+                  : loading
+                    ? "Carregando…"
+                    : "Tudo em dia"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                void markAllSeen();
+              }}
+              disabled={loading || alerts.length === 0}
+              className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 underline disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Marcar todos como lidos
+            </button>
+          </div>
         </div>
         <div className="max-h-[320px] overflow-y-auto">
           {loading ? (

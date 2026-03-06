@@ -22,6 +22,7 @@ import {
   Scale,
   Swords,
   MessageCircle,
+  Pencil,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -32,6 +33,7 @@ import { useBidPrediction, useAnalisarProbabilidade } from "@/hooks/use-bid-pred
 import { PredictionBadge } from "@/components/licitacoes/prediction-badge";
 import { PredictionModal } from "@/components/licitacoes/prediction-modal";
 import { PredictiveAnalysis } from "@/components/licitacoes/PredictiveAnalysis";
+import { EditarLicitacaoModal } from "@/components/licitacoes/EditarLicitacaoModal";
 import type { Bid } from "@licitafacil/shared";
 
 function getStatusBadge(licitacao: Bid) {
@@ -71,15 +73,16 @@ function getStatusBadge(licitacao: Bid) {
 export default function LicitacaoDetailPage() {
   const params = useParams();
   const id = params.id as string;
-  const { data: licitacao, isLoading } = useLicitacao(id);
+  const { data: licitacao, isLoading, refetch } = useLicitacao(id);
   const { mutateAsync: updateBid, isPending } = useUpdateBid();
   const { toast } = useToast();
 
   // Análise preditiva
   const [predictionModalOpen, setPredictionModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const { data: prediction, isLoading: isPredictionLoading } = useBidPrediction(id);
   const { mutate: analisarProbabilidade, isPending: isAnalyzing } = useAnalisarProbabilidade();
-  const temAnaliseEdital = Boolean(licitacao?.hasEditalAnalysis);
+  const temAnaliseEditalValida = Boolean(licitacao?.hasValidEditalAnalysis);
   const quickActions = [
     {
       href: `/licitacoes/${id}/prazos`,
@@ -114,10 +117,10 @@ export default function LicitacaoDetailPage() {
   ];
 
   const handleAnalisarProbabilidade = () => {
-    if (!temAnaliseEdital) {
+    if (!temAnaliseEditalValida) {
       toast({
         title: "Análise preditiva bloqueada",
-        description: "É necessário analisar o edital antes de executar a Análise Preditiva de Sucesso.",
+        description: "Para obter uma predição precisa, primeiro analise o edital oficial desta licitação.",
         variant: "destructive",
       });
       return;
@@ -184,10 +187,6 @@ export default function LicitacaoDetailPage() {
     if (dados.modalidade) {
       updateData.modality = mapModalidade(dados.modalidade);
     }
-    if (dados.objeto) {
-      updateData.title = dados.objeto;
-    }
-
     if (Object.keys(updateData).length > 0) {
       updateBid({ id, data: updateData as any }).then(() => {
         toast({
@@ -250,7 +249,6 @@ export default function LicitacaoDetailPage() {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 {getStatusBadge(licitacao)}
-                <span className="text-sm font-mono text-gray-400 dark:text-gray-500">ID: {licitacao.id.substring(0, 8)}</span>
               </div>
               <h1 className="text-2xl md:text-3xl font-heading font-bold text-gray-900 dark:text-gray-100 max-w-3xl leading-tight">
                 {licitacao.title}
@@ -262,16 +260,24 @@ export default function LicitacaoDetailPage() {
             </div>
 
             <div className="flex gap-2 flex-wrap items-center">
+              <Button
+                variant="outline"
+                onClick={() => setEditModalOpen(true)}
+                className="border-gray-200 dark:border-gray-700 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <Pencil className="w-4 h-4 mr-2" />
+                Editar
+              </Button>
               {/* Badge de probabilidade no header */}
               <button
                 onClick={() => {
-                  if (prediction || temAnaliseEdital) setPredictionModalOpen(true);
+                  if (prediction || temAnaliseEditalValida) setPredictionModalOpen(true);
                 }}
                 className="focus:outline-none disabled:opacity-70"
-                title={prediction || temAnaliseEdital
+                title={prediction || temAnaliseEditalValida
                   ? "Ver análise preditiva de sucesso"
                   : "Análise preditiva bloqueada até concluir a análise do edital"}
-                disabled={!prediction && !temAnaliseEdital}
+                disabled={!prediction && !temAnaliseEditalValida}
               >
                 <PredictionBadge
                   prediction={prediction}
@@ -355,6 +361,16 @@ export default function LicitacaoDetailPage() {
                 </div>
               </div>
               <div className="space-y-1">
+                <span className="text-xs uppercase font-bold text-gray-400 dark:text-gray-500 tracking-wider">UF</span>
+                <p className="font-medium text-gray-900 dark:text-gray-100">{licitacao.uf}</p>
+              </div>
+              {licitacao.municipio?.trim() && (
+                <div className="space-y-1">
+                  <span className="text-xs uppercase font-bold text-gray-400 dark:text-gray-500 tracking-wider">Município</span>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{licitacao.municipio}</p>
+                </div>
+              )}
+              <div className="space-y-1">
                 <span className="text-xs uppercase font-bold text-gray-400 dark:text-gray-500 tracking-wider">Manual Override</span>
                 <p className="font-medium text-gray-900 dark:text-gray-100">{licitacao.manualRiskOverride ? "Sim" : "Não"}</p>
               </div>
@@ -373,7 +389,7 @@ export default function LicitacaoDetailPage() {
                 Edite, envie, baixe e acompanhe os documentos desta licitação.
               </p>
               <Link href={`/licitacoes/${id}/documentos`}>
-                <Button variant="outline" className="w-full justify-between group border-gray-200 dark:border-gray-700 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/50">
+                <Button variant="outline" className="mt-4 w-full justify-between group border-gray-200 dark:border-gray-700 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/50">
                   <span className="flex items-center gap-2">
                     <Download className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400" />
                     Ver e baixar documentos
@@ -394,7 +410,7 @@ export default function LicitacaoDetailPage() {
               processTitle={licitacao.title}
             />
           </div>
-        ) : !temAnaliseEdital ? (
+        ) : !temAnaliseEditalValida ? (
           <div className="mb-6 rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center dark:border-gray-700 dark:bg-gray-900/30">
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-amber-100 bg-amber-50">
               <span className="text-xl">🔒</span>
@@ -421,13 +437,23 @@ export default function LicitacaoDetailPage() {
               <div>
                 <h3 className="font-heading text-base font-semibold text-gray-900 dark:text-gray-100">
                   Análise Preditiva de Sucesso
+                  <span className="ml-2 text-xs font-medium px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+                    Beta
+                  </span>
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Gere uma previsão com IA para estimar a chance de sucesso deste processo.
                 </p>
               </div>
               <Button onClick={handleAnalisarProbabilidade} disabled={isAnalyzing}>
-                {isAnalyzing ? "Analisando..." : "Analisar com IA"}
+                {isAnalyzing ? "Analisando..." : (
+                  <>
+                    Analisar com IA
+                    <span className="ml-2 text-xs font-medium px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+                      Beta
+                    </span>
+                  </>
+                )}
               </Button>
             </CardContent>
           </Card>
@@ -448,7 +474,7 @@ export default function LicitacaoDetailPage() {
                 <p className="text-xs font-semibold leading-tight text-gray-700 transition-colors group-hover:text-[#0078D1] dark:text-gray-300">
                   {action.label}
                 </p>
-                <p className="mt-0.5 line-clamp-2 text-[11px] leading-tight text-gray-400 dark:text-gray-500">
+                <p className="mt-0.5 line-clamp-2 text-sm leading-relaxed text-gray-400 dark:text-gray-500">
                   {action.description}
                 </p>
               </div>
@@ -458,7 +484,7 @@ export default function LicitacaoDetailPage() {
 
         {/* Alerta de Risco */}
         {licitacao.operationalState === 'EM_RISCO' && (
-          <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 mb-8">
+          <Card id="risco-operacional" className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 mb-8">
             <CardContent className="pt-6">
               <div className="flex gap-4">
                 <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400 shrink-0" />
@@ -488,6 +514,14 @@ export default function LicitacaoDetailPage() {
         isAnalyzing={isAnalyzing}
         onAnalisar={handleAnalisarProbabilidade}
         bidTitle={licitacao.title}
+      />
+      <EditarLicitacaoModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        bid={licitacao}
+        onSuccess={() => {
+          void refetch();
+        }}
       />
     </Layout>
   );

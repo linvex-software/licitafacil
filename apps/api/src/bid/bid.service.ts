@@ -40,6 +40,8 @@ export class BidService {
       data: {
         title: data.title,
         agency: data.agency,
+        uf: data.uf.toUpperCase(),
+        municipio: data.municipio?.trim() || null,
         modality: data.modality,
         legalStatus: data.legalStatus,
         operationalState: data.operationalState,
@@ -47,7 +49,7 @@ export class BidService {
       },
     });
 
-    return this.mapToBid(bid, false);
+    return this.mapToBid(bid, false, false);
   }
 
   /**
@@ -93,6 +95,10 @@ export class BidService {
       };
     }
 
+    if (process.env.NODE_ENV !== "production") {
+      console.log("Bids list query:", JSON.stringify(where));
+    }
+
     // Buscar licitações e total
     const [bids, total] = await Promise.all([
       prismaWithTenant.bid.findMany({
@@ -107,17 +113,32 @@ export class BidService {
     ]);
 
     const bidIds = bids.map((bid) => bid.id);
-    const analisesConcluidasPorBid = bidIds.length > 0
-      ? await this.prisma.editalAnalise.groupBy({
-        by: ["bidId"],
-        where: {
-          empresaId: filters.empresaId,
-          bidId: { in: bidIds },
-          status: "CONCLUIDA",
-        },
-        _count: { _all: true },
-      })
-      : [];
+    const [analisesConcluidasPorBid, ultimasAnalisesConcluidas] = bidIds.length > 0
+      ? await Promise.all([
+        this.prisma.editalAnalise.groupBy({
+          by: ["bidId"],
+          where: {
+            empresaId: filters.empresaId,
+            bidId: { in: bidIds },
+            status: "CONCLUIDA",
+          },
+          _count: { _all: true },
+        }),
+        this.prisma.editalAnalise.findMany({
+          where: {
+            empresaId: filters.empresaId,
+            bidId: { in: bidIds },
+            status: "CONCLUIDA",
+          },
+          orderBy: { createdAt: "desc" },
+          distinct: ["bidId"],
+          select: {
+            bidId: true,
+            resultado: true,
+          },
+        }),
+      ])
+      : [[], []];
 
     const bidsComAnaliseSet = new Set(
       analisesConcluidasPorBid
@@ -125,8 +146,24 @@ export class BidService {
         .map((item) => item.bidId),
     );
 
+    const bidsComAnaliseValidaSet = new Set(
+      ultimasAnalisesConcluidas
+        .filter((analise) => {
+          const resultado = analise.resultado as any;
+          // Compatibilidade retroativa: análises antigas sem is_edital continuam válidas.
+          return resultado?.is_edital !== false;
+        })
+        .map((analise) => analise.bidId),
+    );
+
     return {
-      data: bids.map((bid) => this.mapToBid(bid, bidsComAnaliseSet.has(bid.id))),
+      data: bids.map((bid) =>
+        this.mapToBid(
+          bid,
+          bidsComAnaliseSet.has(bid.id),
+          bidsComAnaliseValidaSet.has(bid.id),
+        ),
+      ),
       pagination: {
         page,
         limit,
@@ -149,15 +186,30 @@ export class BidService {
       throw new NotFoundException(`Licitação com ID ${id} não encontrada`);
     }
 
-    const analiseConcluidaCount = await this.prisma.editalAnalise.count({
-      where: {
-        bidId: id,
-        empresaId,
-        status: "CONCLUIDA",
-      },
-    });
+    const [analiseConcluidaCount, ultimaAnaliseConcluida] = await Promise.all([
+      this.prisma.editalAnalise.count({
+        where: {
+          bidId: id,
+          empresaId,
+          status: "CONCLUIDA",
+        },
+      }),
+      this.prisma.editalAnalise.findFirst({
+        where: {
+          bidId: id,
+          empresaId,
+          status: "CONCLUIDA",
+        },
+        orderBy: { createdAt: "desc" },
+        select: { resultado: true },
+      }),
+    ]);
 
-    return this.mapToBid(bid, analiseConcluidaCount > 0);
+    const hasValidEditalAnalysis =
+      analiseConcluidaCount > 0 &&
+      ((ultimaAnaliseConcluida?.resultado as any)?.is_edital !== false);
+
+    return this.mapToBid(bid, analiseConcluidaCount > 0, hasValidEditalAnalysis);
   }
 
   /**
@@ -181,21 +233,38 @@ export class BidService {
       data: {
         ...(data.title && { title: data.title }),
         ...(data.agency && { agency: data.agency }),
+        ...(data.uf && { uf: data.uf.toUpperCase() }),
+        ...(data.municipio !== undefined && { municipio: data.municipio?.trim() || null }),
         ...(data.modality && { modality: data.modality }),
         ...(data.legalStatus && { legalStatus: data.legalStatus }),
         ...(data.operationalState && { operationalState: data.operationalState }),
       },
     });
 
-    const analiseConcluidaCount = await this.prisma.editalAnalise.count({
-      where: {
-        bidId: id,
-        empresaId,
-        status: "CONCLUIDA",
-      },
-    });
+    const [analiseConcluidaCount, ultimaAnaliseConcluida] = await Promise.all([
+      this.prisma.editalAnalise.count({
+        where: {
+          bidId: id,
+          empresaId,
+          status: "CONCLUIDA",
+        },
+      }),
+      this.prisma.editalAnalise.findFirst({
+        where: {
+          bidId: id,
+          empresaId,
+          status: "CONCLUIDA",
+        },
+        orderBy: { createdAt: "desc" },
+        select: { resultado: true },
+      }),
+    ]);
 
-    return this.mapToBid(updatedBid, analiseConcluidaCount > 0);
+    const hasValidEditalAnalysis =
+      analiseConcluidaCount > 0 &&
+      ((ultimaAnaliseConcluida?.resultado as any)?.is_edital !== false);
+
+    return this.mapToBid(updatedBid, analiseConcluidaCount > 0, hasValidEditalAnalysis);
   }
 
   /**
@@ -214,14 +283,30 @@ export class BidService {
     }
 
     if (existingBid.legalStatus === targetColumn) {
-      const analiseConcluidaCount = await this.prisma.editalAnalise.count({
-        where: {
-          bidId: id,
-          empresaId,
-          status: "CONCLUIDA",
-        },
-      });
-      return this.mapToBid(existingBid, analiseConcluidaCount > 0);
+      const [analiseConcluidaCount, ultimaAnaliseConcluida] = await Promise.all([
+        this.prisma.editalAnalise.count({
+          where: {
+            bidId: id,
+            empresaId,
+            status: "CONCLUIDA",
+          },
+        }),
+        this.prisma.editalAnalise.findFirst({
+          where: {
+            bidId: id,
+            empresaId,
+            status: "CONCLUIDA",
+          },
+          orderBy: { createdAt: "desc" },
+          select: { resultado: true },
+        }),
+      ]);
+
+      const hasValidEditalAnalysis =
+        analiseConcluidaCount > 0 &&
+        ((ultimaAnaliseConcluida?.resultado as any)?.is_edital !== false);
+
+      return this.mapToBid(existingBid, analiseConcluidaCount > 0, hasValidEditalAnalysis);
     }
 
     const previousColumn = existingBid.legalStatus;
@@ -247,15 +332,30 @@ export class BidService {
       }),
     ]);
 
-    const analiseConcluidaCount = await this.prisma.editalAnalise.count({
-      where: {
-        bidId: id,
-        empresaId,
-        status: "CONCLUIDA",
-      },
-    });
+    const [analiseConcluidaCount, ultimaAnaliseConcluida] = await Promise.all([
+      this.prisma.editalAnalise.count({
+        where: {
+          bidId: id,
+          empresaId,
+          status: "CONCLUIDA",
+        },
+      }),
+      this.prisma.editalAnalise.findFirst({
+        where: {
+          bidId: id,
+          empresaId,
+          status: "CONCLUIDA",
+        },
+        orderBy: { createdAt: "desc" },
+        select: { resultado: true },
+      }),
+    ]);
 
-    return this.mapToBid(updatedBid, analiseConcluidaCount > 0);
+    const hasValidEditalAnalysis =
+      analiseConcluidaCount > 0 &&
+      ((ultimaAnaliseConcluida?.resultado as any)?.is_edital !== false);
+
+    return this.mapToBid(updatedBid, analiseConcluidaCount > 0, hasValidEditalAnalysis);
   }
 
   /**
@@ -287,6 +387,8 @@ export class BidService {
     empresaId: string;
     title: string;
     agency: string;
+    uf: string;
+    municipio: string | null;
     modality: string;
     legalStatus: string;
     operationalState: string;
@@ -302,12 +404,14 @@ export class BidService {
     manualRiskOverrideAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
-  }, hasEditalAnalysis: boolean): Bid {
+  }, hasEditalAnalysis: boolean, hasValidEditalAnalysis: boolean): Bid {
     return {
       id: bid.id,
       empresaId: bid.empresaId,
       title: bid.title,
       agency: bid.agency,
+      uf: bid.uf,
+      municipio: bid.municipio,
       modality: bid.modality,
       legalStatus: bid.legalStatus,
       operationalState: bid.operationalState,
@@ -322,6 +426,7 @@ export class BidService {
       manualRiskOverrideBy: bid.manualRiskOverrideBy,
       manualRiskOverrideAt: bid.manualRiskOverrideAt?.toISOString() ?? null,
       hasEditalAnalysis,
+      hasValidEditalAnalysis,
       createdAt: bid.createdAt.toISOString(),
       updatedAt: bid.updatedAt.toISOString(),
     };
@@ -597,15 +702,24 @@ export class BidService {
   }
 
   async getOverviewStats(empresaId: string) {
+    const baseWhere = {
+      empresaId,
+      deletedAt: null,
+    };
+
+    if (process.env.NODE_ENV !== "production") {
+      console.log("Dashboard count query:", JSON.stringify(baseWhere));
+    }
+
     // Contagem total
     const total = await this.prisma.bid.count({
-      where: { empresaId }
+      where: baseWhere,
     });
 
     // Contagem de licitações com operationalState = "OK"
     const emAndamento = await this.prisma.bid.count({
       where: {
-        empresaId,
+        ...baseWhere,
         operationalState: "OK",
       }
     });
@@ -613,9 +727,25 @@ export class BidService {
     // Contagem de licitações com operationalState = "EM_RISCO"
     const emRisco = await this.prisma.bid.count({
       where: {
-        empresaId,
+        ...baseWhere,
         operationalState: "EM_RISCO",
       }
+    });
+
+    // Contagem de licitações em análise jurídica
+    const analisando = await this.prisma.bid.count({
+      where: {
+        ...baseWhere,
+        legalStatus: "ANALISANDO",
+      },
+    });
+
+    // Contagem de licitações vencidas
+    const vencidas = await this.prisma.bid.count({
+      where: {
+        ...baseWhere,
+        legalStatus: "VENCIDA",
+      },
     });
 
     // Contagem de licitações encerrando em até 48 horas (encerrando em breve)
@@ -623,7 +753,7 @@ export class BidService {
     const daqui48h = new Date(agora.getTime() + 48 * 60 * 60 * 1000);
     const encerrandoEmBreve = await this.prisma.bid.count({
       where: {
-        empresaId,
+        ...baseWhere,
         prazos: {
           some: {
             dataPrazo: {
@@ -639,6 +769,8 @@ export class BidService {
       total,
       emAndamento,
       emRisco,
+      analisando,
+      vencidas,
       encerrandoEmBreve,
     };
   }

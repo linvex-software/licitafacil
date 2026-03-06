@@ -185,6 +185,9 @@ export function PredictionModal({
                 <DialogTitle className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-purple-500" />
                   Análise Preditiva de Sucesso
+                  <span className="ml-2 text-xs font-medium px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+                    Beta
+                  </span>
                 </DialogTitle>
                 {bidTitle && (
                   <DialogDescription className="mt-1 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">

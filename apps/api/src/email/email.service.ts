@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import sgMail from "@sendgrid/mail";
+import { MailtrapClient } from "mailtrap";
 import * as fs from "fs";
 import * as path from "path";
 import Handlebars from "handlebars";
@@ -9,19 +9,23 @@ export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private templates: Map<string, HandlebarsTemplateDelegate> = new Map();
   private baseTemplate: HandlebarsTemplateDelegate | null = null;
+  private readonly client: MailtrapClient;
+  private readonly sender = {
+    email: "hello@mail.lvxlicitacao.com.br",
+    name: "LicitaFácil",
+  };
 
   constructor() {
-    const apiKey = process.env.SENDGRID_API_KEY;
-
-    if (apiKey && apiKey !== "AGUARDANDO_CONFIGURACAO") {
-      sgMail.setApiKey(apiKey);
-      this.logger.log("SendGrid inicializado com sucesso");
+    const token = process.env.MAILTRAP_API_TOKEN;
+    if (token) {
+      this.logger.log("Mailtrap inicializado com sucesso");
     } else {
       this.logger.warn(
-        "SendGrid não configurado - emails serão apenas logados (modo simulado)",
+        "MAILTRAP_API_TOKEN não configurado - emails serão apenas logados (modo simulado)",
       );
     }
 
+    this.client = new MailtrapClient({ token: token ?? "" });
     this.carregarTemplates();
   }
 
@@ -84,6 +88,7 @@ export class EmailService {
     to: string;
     subject: string;
     html: string;
+    text?: string;
     attachments?: Array<{
       content: string;
       filename: string;
@@ -91,9 +96,9 @@ export class EmailService {
       disposition: string;
     }>;
   }): Promise<boolean> {
-    const apiKey = process.env.SENDGRID_API_KEY;
+    const token = process.env.MAILTRAP_API_TOKEN;
 
-    if (!apiKey || apiKey === "AGUARDANDO_CONFIGURACAO") {
+    if (!token) {
       this.logger.warn(
         `[SIMULADO] Email para ${params.to}: ${params.subject}${params.attachments ? ` (com ${params.attachments.length} anexo(s))` : ""}`,
       );
@@ -101,16 +106,15 @@ export class EmailService {
     }
 
     try {
-      await sgMail.send({
-        to: params.to,
-        from: {
-          email: process.env.EMAIL_FROM || "noreply@limvex.com.br",
-          name: process.env.EMAIL_FROM_NAME || "Limvex Licitação",
-        },
+      await this.client.send({
+        from: this.sender,
+        to: [{ email: params.to }],
         subject: params.subject,
         html: params.html,
+        text: params.text ?? "Este email possui conteúdo em HTML. Abra em um cliente compatível para visualizar.",
+        category: "Transactional",
         attachments: params.attachments,
-      });
+      } as any);
 
       this.logger.log(`Email enviado para ${params.to}: ${params.subject}`);
       return true;

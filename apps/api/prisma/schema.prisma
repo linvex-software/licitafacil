@@ -129,6 +129,8 @@ model Bid {
   empresaId            String
   title                String
   agency               String
+  uf                   String    @default("NI")
+  municipio            String?
   modality             String
   legalStatus          String
   operationalState     String

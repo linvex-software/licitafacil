@@ -55,3 +55,40 @@ export const getFileUrl = (url: string | null | undefined): string | null => {
     if (url.startsWith("/")) return `${apiBase}${url}`;
     return `${apiBase}/uploads/${url}`;
 }
+
+/**
+ * Retorna label amigavel do tipo de arquivo baseado em MIME type
+ * e, em fallback, extensao do nome do arquivo.
+ */
+export function getFileTypeLabel(mimeType: string, fileName?: string): string {
+    const normalizedMime = (mimeType || "").toLowerCase().trim();
+    const knownTypes: Record<string, string> = {
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "Word (.docx)",
+        "application/msword": "Word (.doc)",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "Excel (.xlsx)",
+        "application/vnd.ms-excel": "Excel (.xls)",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation": "PowerPoint (.pptx)",
+        "application/vnd.ms-powerpoint": "PowerPoint (.ppt)",
+        "application/pdf": "PDF (.pdf)",
+        "image/jpeg": "Imagem (.jpg)",
+        "image/png": "Imagem (.png)",
+        "text/plain": "Texto (.txt)",
+        "text/csv": "CSV (.csv)",
+    };
+
+    if (knownTypes[normalizedMime]) {
+        return knownTypes[normalizedMime];
+    }
+
+    const extensionFromName = fileName
+        ?.split(".")
+        .pop()
+        ?.trim()
+        .toLowerCase();
+
+    if (extensionFromName) {
+        return `Arquivo (.${extensionFromName})`;
+    }
+
+    return "Arquivo";
+}

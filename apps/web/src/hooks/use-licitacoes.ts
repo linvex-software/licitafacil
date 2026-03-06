@@ -16,13 +16,23 @@ export function useLicitacoes(filters: any = {}) {
     return useQuery({
         queryKey: ["licitacoes", filters],
         queryFn: async () => {
+            const mappedOperationalState = filters.operationalState
+                ? filters.operationalState
+                : filters.status
+                    ? statusMap[filters.status]
+                    : undefined;
+            const mappedLegalStatus = filters.status === "ENCERRANDO"
+                ? "ENCERRANDO"
+                : filters.legalStatus;
+
             const { data } = await api.get("/bids", {
                 params: {
                     page: filters.page || 1,
                     limit: filters.limit || 20,
                     search: filters.search,
                     modality: filters.modality,
-                    operationalState: filters.status ? statusMap[filters.status] : undefined,
+                    operationalState: mappedOperationalState,
+                    legalStatus: mappedLegalStatus,
                 },
             });
 
@@ -107,6 +117,8 @@ export interface BidOverviewStats {
     total: number;
     emAndamento: number;
     emRisco: number;
+    analisando: number;
+    vencidas: number;
     encerrandoEmBreve: number;
 }
 

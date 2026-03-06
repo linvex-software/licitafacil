@@ -120,11 +120,18 @@ export class PrazoService {
    */
   async findUpcoming(empresaId: string, limit: number = 10): Promise<PrazoUpcomingItem[]> {
     const prismaWithTenant = this.prismaTenant.forTenant(empresaId);
+    const now = new Date();
 
     const items = await prismaWithTenant.prazo.findMany({
       where: {
         empresaId,
         deletedAt: null,
+        dataPrazo: {
+          gte: now,
+        },
+        bid: {
+          deletedAt: null,
+        },
       },
       orderBy: { dataPrazo: "asc" },
       take: limit,

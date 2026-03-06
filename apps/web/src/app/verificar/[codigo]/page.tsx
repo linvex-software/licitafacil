@@ -1,12 +1,15 @@
 async function getPeticao(codigo: string) {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
     const res = await fetch(
-      `${apiUrl}/juridico/verificar/${codigo}`,
-      { cache: "no-store" },
+      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/juridico/verificar/${codigo}`,
+      { cache: "no-store" }
     );
-    if (!res.ok) return null;
-    return res.json();
+
+    const text = await res.text();
+
+    if (!text || text.trim() === "null" || text.trim() === "") return null;
+
+    return JSON.parse(text);
   } catch {
     return null;
   }

@@ -6,7 +6,7 @@ import {
     LayoutDashboard, Gavel, Settings,
     User, LogOut, Menu, FileText, BarChart3,
     Globe, ShieldCheck, ChevronDown, ClipboardList,
-    BarChart2, Swords, Briefcase,
+    BarChart2, Briefcase,
     Building2,
     TrendingUp, History, Tag as TagIcon,
     CalendarDays, Users, HelpCircle,
@@ -14,6 +14,7 @@ import {
 
 import { AlertsDropdown } from "@/components/AlertsDropdown";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { FontSizeControl } from "@/components/accessibility/FontSizeControl";
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -40,7 +41,7 @@ const navGroups: NavGroup[] = [
             {
                 label: "Gestão", icon: ClipboardList, href: "/licitacoes",
                 subItems: [
-                    { label: "Minhas Licitações", href: "/licitacoes", icon: Gavel },
+                    { label: "Licitações", href: "/licitacoes", icon: Gavel },
                     { label: "Documentos", href: "/documentos", icon: FileText },
                     { label: "Relatórios", href: "/relatorios", icon: BarChart3 },
                 ]
@@ -60,17 +61,14 @@ const navGroups: NavGroup[] = [
                 ]
             },
             {
-                label: "Simulador", icon: Swords, href: "/disputa/simulador",
-                subItems: [
-                    { label: "Comprasnet", href: "/integracoes/comprasnet", icon: Globe },
-                ]
-            },
-            {
                 label: "Negócios", icon: Briefcase, href: "/negocios",
                 subItems: [
                     { label: "Funil de licitações (Kanban)", href: "/negocios/funil", icon: TrendingUp },
                     { label: "Agenda", href: "/negocios/agenda", icon: CalendarDays },
                 ]
+            },
+            {
+                label: "Buscar", icon: Globe, href: "/integracoes/comprasnet",
             },
         ]
     },
@@ -255,6 +253,12 @@ function MobileSidebarContent({
                     </div>
                 )}
             </nav>
+            <div className="px-3 pb-3">
+                <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-800/40 p-3">
+                    <p className="section-label mb-2">Tamanho do texto</p>
+                    <FontSizeControl />
+                </div>
+            </div>
             <div className="p-3 border-t border-gray-100 dark:border-gray-800">
                 <button onClick={logout}
                     className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-[13px] font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950 transition-colors">
@@ -312,7 +316,9 @@ export function Layout({ children, fullWidth = false }: {
 
                     {/* Module items with dropdowns */}
                     {moduleItems.map(item => (
-                        <NavDropdown key={item.label} item={item} pathname={pathname} />
+                        item.subItems
+                            ? <NavDropdown key={item.label} item={item} pathname={pathname} />
+                            : <NavLink key={item.href} item={item} pathname={pathname} />
                     ))}
 
                     {isEmpresaAdmin && (
@@ -334,6 +340,9 @@ export function Layout({ children, fullWidth = false }: {
                 {/* Right side */}
                 <div className="ml-auto flex items-center gap-1 shrink-0">
                     <ThemeToggle />
+                    <div className="hidden md:flex">
+                        <FontSizeControl />
+                    </div>
                     <div className="h-5 w-px bg-gray-100 dark:bg-gray-800 mx-1" />
                     <AlertsDropdown />
                     <div className="h-5 w-px bg-gray-100 dark:bg-gray-800 mx-1" />

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
-import { AccessibilityInit } from "@/components/AccessibilityInit";
+import { AccessibilityProvider } from "@/contexts/accessibility-context";
 
 export const metadata: Metadata = {
   title: "Licitafacil - Gestão de Licitações",
@@ -22,10 +22,11 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className="antialiased font-sans" suppressHydrationWarning>
-        <Providers>
-          <AccessibilityInit />
-          {children}
-        </Providers>
+        <AccessibilityProvider>
+          <Providers>
+            {children}
+          </Providers>
+        </AccessibilityProvider>
       </body>
     </html>
   );

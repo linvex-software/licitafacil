@@ -49,6 +49,12 @@ const ESTADO_OPERACIONAL = [
   { value: "EM_RISCO", label: "Em Risco" },
 ] as const;
 
+const UF_LIST = [
+  "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO",
+  "MA", "MG", "MS", "MT", "PA", "PB", "PE", "PI", "PR",
+  "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO",
+] as const;
+
 export function CriarLicitacaoModal({
   onSuccess,
 }: CriarLicitacaoModalProps) {
@@ -56,6 +62,8 @@ export function CriarLicitacaoModal({
   const [formData, setFormData] = useState({
     title: "",
     agency: "",
+    uf: "",
+    municipio: "",
     modality: "PREGAO_ELETRONICO",
     legalStatus: "ANALISANDO",
     operationalState: "OK",
@@ -69,6 +77,8 @@ export function CriarLicitacaoModal({
     setFormData({
       title: "",
       agency: "",
+      uf: "",
+      municipio: "",
       modality: "PREGAO_ELETRONICO",
       legalStatus: "ANALISANDO",
       operationalState: "OK",
@@ -78,10 +88,10 @@ export function CriarLicitacaoModal({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!formData.title.trim() || !formData.agency.trim()) {
+    if (!formData.title.trim() || !formData.agency.trim() || !formData.uf.trim()) {
       toast({
         title: "Campos obrigatórios",
-        description: "Preencha o título e o órgão licitante.",
+        description: "Preencha título, órgão licitante e UF.",
         variant: "destructive",
       });
       return;
@@ -153,7 +163,40 @@ export function CriarLicitacaoModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>UF *</Label>
+              <Select
+                value={formData.uf || undefined}
+                onValueChange={(v) =>
+                  setFormData({ ...formData, uf: v })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a UF" />
+                </SelectTrigger>
+                <SelectContent>
+                  {UF_LIST.map((uf) => (
+                    <SelectItem key={uf} value={uf}>
+                      {uf}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="municipio">Município</Label>
+              <Input
+                id="municipio"
+                value={formData.municipio}
+                onChange={(e) =>
+                  setFormData({ ...formData, municipio: e.target.value })
+                }
+                placeholder="Ex: São Paulo"
+              />
+            </div>
+
             <div>
               <Label>Modalidade *</Label>
               <Select

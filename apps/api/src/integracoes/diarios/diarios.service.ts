@@ -91,6 +91,8 @@ export class DiariosService {
                     empresaId,
                     title: item.objeto,
                     agency: item.orgao,
+                    uf: item.uf.toUpperCase(),
+                    municipio: item.municipio || null,
                     modality: item.modalidadeNome || 'Outra',
                     legalStatus: 'Publicado',
                     operationalState: 'A_INICIAR', // Estado inicial padrão
