@@ -55,9 +55,9 @@ async function bootstrap() {
   // Get port from environment or default to 3001
   const port = process.env.PORT || 3001;
 
-  await app.listen(port);
-  logger.log(`API running on http://localhost:${port}`);
-  logger.log(`Health check: http://localhost:${port}/health`);
+  await app.listen(port, "0.0.0.0");
+  logger.log(`API running on http://0.0.0.0:${port}`);
+  logger.log(`Health check: http://0.0.0.0:${port}/health`);
   logger.log("Alerts WebSocket: namespace /alerts-ws");
 }
 
