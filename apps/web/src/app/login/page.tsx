@@ -11,8 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 const loginSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -25,24 +27,9 @@ const forgotSchema = z.object({
 });
 type ForgotFormValues = z.infer<typeof forgotSchema>;
 
-const GridPattern = () => (
-  <svg
-    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.04, pointerEvents: "none" }}
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <defs>
-      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="0.6" />
-      </pattern>
-    </defs>
-    <rect width="100%" height="100%" fill="url(#grid)" />
-  </svg>
-);
-
 export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [focused, setFocused] = useState<string | null>(null);
   const { login } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -100,390 +87,94 @@ export default function LoginPage() {
     setForgotOpen(true);
   };
 
-  const emailValue = form.watch("email");
-  const passwordValue = form.watch("password");
   const handleSubmit = form.handleSubmit(onSubmit);
   const emailField = form.register("email");
   const passwordField = form.register("password");
 
   return (
     <>
-      <div
-        style={{
-          display: "flex",
-          minHeight: "100vh",
-          fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif",
-          background: "#ffffff",
-        }}
-      >
-        <div
-          style={{
-            flex: "0 0 50%",
-            position: "relative",
-            overflow: "hidden",
-            background: "#020B1D",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            padding: "48px 56px",
-          }}
-          className="flex"
-        >
-          <GridPattern />
-          <div
-            style={{
-              position: "absolute",
-              top: "20%",
-              left: "20%",
-              width: 300,
-              height: 300,
-              borderRadius: "50%",
-              background: "radial-gradient(circle, rgba(0,120,209,0.12) 0%, transparent 70%)",
-              pointerEvents: "none",
-            }}
-          />
-
-          <div style={{ position: "relative", zIndex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  background: "#0078D1",
-                  borderRadius: 10,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: "0 4px 16px rgba(0,120,209,0.4)",
-                }}
-              >
-                <span
-                  style={{
-                    fontWeight: 800,
-                    fontSize: 15,
-                    color: "#fff",
-                    fontFamily: "monospace",
-                    letterSpacing: "-0.02em",
-                  }}
-                >
-                  LX
-                </span>
-              </div>
-              <div>
-                <div
-                  style={{
-                    fontSize: 18,
-                    fontWeight: 800,
-                    color: "#fff",
-                    letterSpacing: "0.06em",
-                    lineHeight: 1,
-                  }}
-                >
-                  LIMVEX
-                </div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 500,
-                    color: "rgba(255,255,255,0.4)",
-                    letterSpacing: "0.2em",
-                    marginTop: 3,
-                  }}
-                >
-                  LICITAÇÃO
-                </div>
-              </div>
-            </div>
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="w-full max-w-sm flex flex-col items-center gap-6 py-10 px-8 rounded-2xl border border-border bg-card shadow-sm">
+          <div className="flex justify-center w-full">
+            <Logo size="md" />
           </div>
 
-          <div style={{ position: "relative", zIndex: 1 }}>
-            <h1
-              style={{
-                fontSize: 36,
-                fontWeight: 700,
-                color: "#fff",
-                lineHeight: 1.2,
-                letterSpacing: "-0.02em",
-                marginBottom: 20,
-                maxWidth: 380,
-              }}
-            >
-              Gestão inteligente do ciclo completo de licitações públicas.
-            </h1>
+          <div className="w-12 h-px bg-border mx-auto" />
 
-            <p
-              style={{
-                fontSize: 14,
-                color: "rgba(255,255,255,0.4)",
-                lineHeight: 1.7,
-                maxWidth: 360,
-                marginBottom: 40,
-              }}
-            >
-              Monitore editais, analise riscos com IA e gerencie
-              participações em um único lugar.
-            </p>
-
-            <div
-              style={{
-                width: 40,
-                height: 1,
-                background: "rgba(255,255,255,0.15)",
-                marginBottom: 32,
-              }}
-            />
-
-          </div>
-
-          <div
-            style={{
-              position: "relative",
-              zIndex: 1,
-              fontSize: 11,
-              color: "rgba(255,255,255,0.2)",
-            }}
-          >
-            © 2026 Limvex · Todos os direitos reservados
-          </div>
-        </div>
-
-        <div
-          style={{
-            flex: 1,
-            background: "#ffffff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "48px 56px",
-            position: "relative",
-          }}
-        >
-          <div style={{ width: "100%", maxWidth: 380 }}>
-            <div style={{ marginBottom: 36 }}>
-              <h2
-                style={{
-                  fontSize: 26,
-                  fontWeight: 700,
-                  color: "#0a0a0f",
-                  letterSpacing: "-0.02em",
-                  marginBottom: 8,
-                }}
-              >
-                Bem-vindo de volta
-              </h2>
-              <p style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.6 }}>
-                Acesse sua conta para gerenciar seus processos.
-              </p>
-            </div>
-
-            <div
-              style={{
-                padding: "12px 14px",
-                borderRadius: 10,
-                marginBottom: 28,
-                background: "#f8fafc",
-                border: "1px solid #e2e8f0",
-                display: "flex",
-                gap: 10,
-                alignItems: "flex-start",
-              }}
-            >
-              <span style={{ fontSize: 14, marginTop: 1 }}>🔒</span>
-              <p style={{ fontSize: 12, color: "#64748b", lineHeight: 1.6, margin: 0 }}>
-                O acesso é concedido pela sua organização.
-                Fale com o administrador caso não tenha recebido seu convite.
-              </p>
-            </div>
-
-            <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: 16 }}>
-              <label
-                style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                    color: "#374151",
-                  letterSpacing: "0.04em",
-                  display: "block",
-                  marginBottom: 7,
-                }}
-              >
-                E-MAIL
+          <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5 w-full">
+              <label className="text-sm font-medium text-foreground">
+                E-mail
               </label>
               <input
                 type="email"
-                placeholder="nome@empresa.com.br"
+                placeholder="seu@email.com"
+                required
                 name={emailField.name}
                 ref={emailField.ref}
-                value={emailValue}
-                onChange={(e) => {
-                  emailField.onChange(e);
-                }}
-                onFocus={() => setFocused("email")}
-                onBlur={(e) => {
-                  emailField.onBlur(e);
-                  setFocused(null);
-                }}
-                style={{
-                  width: "100%",
-                  padding: "12px 14px",
-                  borderRadius: 10,
-                  border: "1.5px solid",
-                  borderColor: focused === "email" ? "#0078D1" : "#e5e7eb",
-                  background: "#fff",
-                  color: "#111827",
-                  fontSize: 14,
-                  outline: "none",
-                  transition: "border-color 0.2s",
-                  boxSizing: "border-box",
-                }}
+                onChange={emailField.onChange}
+                onBlur={emailField.onBlur}
+                className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2A4A] dark:focus:ring-blue-500 transition"
               />
               {form.formState.errors.email && (
-                <p style={{ marginTop: 6, fontSize: 12, color: "#f87171" }}>
+                <p className="text-destructive text-xs">
                   {form.formState.errors.email.message}
                 </p>
               )}
-              </div>
+            </div>
 
-              <div style={{ marginBottom: 28 }}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 7,
-                }}
+            <div className="flex justify-end w-full -mt-2">
+              <button
+                type="button"
+                onClick={handleForgotOpen}
+                className="text-xs text-[#1B2A4A] dark:text-blue-400 hover:underline"
               >
-                <label
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: "#374151",
-                    letterSpacing: "0.04em",
-                  }}
-                >
-                  SENHA
-                </label>
-                <button
-                  type="button"
-                  onClick={handleForgotOpen}
-                  style={{
-                    fontSize: 11,
-                    color: "#0078D1",
-                    fontWeight: 600,
-                    textDecoration: "none",
-                    letterSpacing: "0.04em",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                  }}
-                >
-                  ESQUECEU A SENHA?
-                </button>
-              </div>
-              <div style={{ position: "relative" }}>
+                Esqueceu sua senha?
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-1.5 w-full">
+              <label className="text-sm font-medium text-foreground">
+                Senha
+              </label>
+              <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••••"
+                  placeholder="••••••••"
+                  required
                   name={passwordField.name}
                   ref={passwordField.ref}
-                  value={passwordValue}
-                  onChange={(e) => {
-                    passwordField.onChange(e);
-                  }}
-                  onFocus={() => setFocused("pass")}
-                  onBlur={(e) => {
-                    passwordField.onBlur(e);
-                    setFocused(null);
-                  }}
-                  style={{
-                    width: "100%",
-                    padding: "12px 42px 12px 14px",
-                    borderRadius: 10,
-                    border: "1.5px solid",
-                    borderColor: focused === "pass" ? "#0078D1" : "#e5e7eb",
-                    background: "#fff",
-                    color: "#111827",
-                    fontSize: 14,
-                    outline: "none",
-                    transition: "border-color 0.2s",
-                    boxSizing: "border-box",
-                  }}
+                  onChange={passwordField.onChange}
+                  onBlur={passwordField.onBlur}
+                  className="w-full px-3 py-2.5 pr-10 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2A4A] dark:focus:ring-blue-500 transition"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  style={{
-                    position: "absolute",
-                    right: 12,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "#9ca3af",
-                    fontSize: 13,
-                  }}
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                 >
-                  {showPassword ? "◉" : "○"}
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
               {form.formState.errors.password && (
-                <p style={{ marginTop: 6, fontSize: 12, color: "#f87171" }}>
+                <p className="text-destructive text-xs">
                   {form.formState.errors.password.message}
                 </p>
               )}
-              </div>
+            </div>
 
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                style={{
-                  width: "100%",
-                  padding: "14px",
-                  borderRadius: 10,
-                  border: "none",
-                  background: "#020B1D",
-                  color: "#ffffff",
-                  fontSize: 14,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  letterSpacing: "-0.01em",
-                  opacity: isSubmitting ? 0.8 : 1,
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = "#0078D1";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = "#020B1D";
-                }}
-              >
-                {isSubmitting ? "Autenticando..." : "Acessar Plataforma"}
-              </button>
-            </form>
-
-            <p
-              style={{
-                textAlign: "center",
-                marginTop: 24,
-                fontSize: 12,
-                color: "#9ca3af",
-              }}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full py-2.5 rounded-lg font-semibold text-sm text-white bg-[#040319] hover:bg-[#1B2A4A] dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors mt-2 disabled:opacity-80"
             >
-              Não tem acesso?{" "}
-              <a
-                href="https://wa.me/5582991709740"
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  color: "#0078D1",
-                  fontWeight: 600,
-                  textDecoration: "none",
-                }}
-              >
-                Fale com o suporte
-              </a>
-            </p>
-          </div>
+              {isSubmitting ? "Entrando..." : "Entrar"}
+            </button>
+          </form>
         </div>
       </div>
 

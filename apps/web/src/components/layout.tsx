@@ -26,6 +26,7 @@ import {
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import { SupportDrawer } from "@/components/SupportDrawer";
+import { Logo } from "@/components/logo";
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface SubItem { label: string; href: string; icon?: any; }
@@ -163,14 +164,7 @@ function MobileSidebarContent({
         <div className="flex flex-col h-full bg-white dark:bg-gray-900">
             <div className="px-4 py-4 border-b border-gray-100 dark:border-gray-800">
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-                        style={{ background: "linear-gradient(135deg,#0078D1,#0062ab)", boxShadow: "0 2px 8px rgba(0,120,209,.35)" }}>
-                        <Gavel className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                        <p className="font-bold text-[14px] text-gray-900 dark:text-gray-100 leading-tight">LicitaFácil</p>
-                        <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">Plataforma B2B</p>
-                    </div>
+                    <Logo size="sm" />
                 </div>
             </div>
             <nav className="flex-1 overflow-y-auto p-3 space-y-0.5">
@@ -292,14 +286,8 @@ export function Layout({ children, fullWidth = false }: {
                 className="h-14 bg-white dark:bg-gray-900 sticky top-0 z-50 flex items-center px-4 gap-3 border-b border-gray-100 dark:border-gray-800"
             >
                 {/* Logo */}
-                <Link href="/" className="flex items-center gap-2.5 shrink-0 mr-4 group">
-                    <div
-                        className="w-7 h-7 rounded-lg flex items-center justify-center transition-transform group-hover:scale-95"
-                        style={{ background: "linear-gradient(135deg,#0078D1,#0062ab)", boxShadow: "0 2px 6px rgba(0,120,209,.35)" }}
-                    >
-                        <Gavel className="w-3.5 h-3.5 text-white" />
-                    </div>
-                    <span className="font-bold text-[14px] text-gray-900 dark:text-gray-100 hidden sm:block">LicitaFácil</span>
+                <Link href="/" className="flex items-center shrink-0 mr-2 md:mr-4">
+                    <Logo size="sm" />
                 </Link>
 
                 {/* Desktop nav */}
@@ -343,9 +331,9 @@ export function Layout({ children, fullWidth = false }: {
                     <div className="hidden md:flex">
                         <FontSizeControl />
                     </div>
-                    <div className="h-5 w-px bg-gray-100 dark:bg-gray-800 mx-1" />
+                    <div className="hidden md:block h-5 w-px bg-gray-100 dark:bg-gray-800 mx-1" />
                     <AlertsDropdown />
-                    <div className="h-5 w-px bg-gray-100 dark:bg-gray-800 mx-1" />
+                    <div className="hidden md:block h-5 w-px bg-gray-100 dark:bg-gray-800 mx-1" />
 
                     {/* User dropdown */}
                     <DropdownMenu>

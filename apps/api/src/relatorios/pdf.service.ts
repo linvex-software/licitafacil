@@ -1,5 +1,4 @@
 import { Injectable, Logger } from "@nestjs/common";
-import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
 import { RelatorioResponseDto } from "./dto/relatorio-response.dto";
 
@@ -17,10 +16,17 @@ export class PdfService {
     const html = this.montarHtml(dados, nomeEmpresa);
 
     const browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
+      executablePath: process.env.CHROMIUM_PATH || "/usr/bin/chromium",
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--no-first-run",
+        "--no-zygote",
+        "--single-process",
+      ],
+      headless: true,
     });
 
     try {
