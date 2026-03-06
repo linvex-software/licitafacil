@@ -22,6 +22,7 @@ import {
 import { useLicitacoes } from "@/hooks/use-licitacoes";
 import { CriarLicitacaoModal } from "@/components/licitacoes/criar-licitacao-modal";
 import { LicitacaoModal } from "@/components/licitacoes/licitacao-modal";
+import { EditarLicitacaoModal } from "@/components/licitacoes/EditarLicitacaoModal";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
@@ -45,6 +46,7 @@ import {
     Pencil
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import type { Bid } from "@licitafacil/shared";
 import { MetricsCard } from "@/components/metrics-card";
 import { Badge } from "@/components/ui/Badge";
 import { useBidPrediction } from "@/hooks/use-bid-prediction";
@@ -90,9 +92,11 @@ export default function LicitacoesListPage() {
     const router = useRouter();
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
+    const [legalStatusFilter, setLegalStatusFilter] = useState<string | undefined>(undefined);
     const [page, setPage] = useState(1);
     const [lastSync, setLastSync] = useState<string>("");
     const [modalBidId, setModalBidId] = useState<string | null>(null);
+    const [editBid, setEditBid] = useState<Bid | null>(null);
     const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -101,7 +105,8 @@ export default function LicitacoesListPage() {
     const { data: response, isLoading, refetch } = useLicitacoes({
         page,
         search: searchTerm,
-        status: statusFilter !== 'all' ? statusFilter : undefined
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        legalStatus: legalStatusFilter,
     });
 
     const { data: overviewStats, refetch: refetchStats } = useBidOverviewStats();
@@ -141,6 +146,30 @@ export default function LicitacoesListPage() {
 
     useEffect(() => {
         setLastSync(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+    }, []);
+
+    useEffect(() => {
+        const statusFromQuery = new URLSearchParams(window.location.search).get("status");
+        if (!statusFromQuery) return;
+
+        const normalized = statusFromQuery.toUpperCase();
+        if (normalized === "ATIVA") {
+            setStatusFilter("aberta");
+            setLegalStatusFilter(undefined);
+        } else if (normalized === "EM_RISCO") {
+            setStatusFilter("vencida");
+            setLegalStatusFilter(undefined);
+        } else if (normalized === "ANALISANDO") {
+            setStatusFilter("all");
+            setLegalStatusFilter("ANALISANDO");
+        } else if (normalized === "VENCIDA") {
+            setStatusFilter("all");
+            setLegalStatusFilter("VENCIDA");
+        } else if (normalized === "ENCERRANDO") {
+            setStatusFilter("ENCERRANDO");
+            setLegalStatusFilter(undefined);
+        }
+        setPage(1);
     }, []);
 
     const handleSync = async () => {
@@ -295,6 +324,7 @@ export default function LicitacoesListPage() {
                             <div className="flex flex-wrap gap-2 p-1">
                                 <Select value={statusFilter} onValueChange={(val) => {
                                     setStatusFilter(val);
+                                    setLegalStatusFilter(undefined);
                                     setPage(1);
                                 }}>
                                     <SelectTrigger className="h-10 lg:w-[160px] border-transparent hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors bg-transparent">
@@ -307,6 +337,7 @@ export default function LicitacoesListPage() {
                                         <SelectItem value="all">Todos os Status</SelectItem>
                                         <SelectItem value="aberta">Ativa (OK)</SelectItem>
                                         <SelectItem value="vencida">Em Risco</SelectItem>
+                                        <SelectItem value="ENCERRANDO">Encerrando em breve</SelectItem>
                                     </SelectContent>
                                 </Select>
 
@@ -367,7 +398,15 @@ export default function LicitacoesListPage() {
                                                 </div>
                                                 <p className="font-bold text-lg text-gray-900 dark:text-gray-100">Nenhuma licitação encontrada</p>
                                                 <p className="text-sm max-w-xs mx-auto mt-1">Não encontramos processos com os filtros atuais. Tente mudar os termos de busca.</p>
-                                                <Button variant="outline" className="mt-6 border-gray-200 dark:border-gray-700" onClick={() => { setSearchTerm(""); setStatusFilter("all"); }}>
+                                                <Button
+                                                    variant="outline"
+                                                    className="mt-6 border-gray-200 dark:border-gray-700"
+                                                    onClick={() => {
+                                                        setSearchTerm("");
+                                                        setStatusFilter("all");
+                                                        setLegalStatusFilter(undefined);
+                                                    }}
+                                                >
                                                     Limpar todos os filtros
                                                 </Button>
                                             </div>
@@ -449,16 +488,16 @@ export default function LicitacoesListPage() {
                                                         <DropdownMenuContent align="end" className="w-48">
                                                             <DropdownMenuLabel>Ações Rápidas</DropdownMenuLabel>
                                                             <DropdownMenuSeparator />
-                                                            <DropdownMenuItem onClick={() => setModalBidId(item.id)}>
-                                                                <Pencil className="w-4 h-4 mr-2" /> Editar Licitação
+                                                            <DropdownMenuItem onClick={() => setEditBid(item as Bid)}>
+                                                                <Pencil className="w-4 h-4 mr-2" /> Editar
                                                             </DropdownMenuItem>
-                                                            <DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => router.push(`/licitacoes/${item.id}/documentos`)}>
                                                                 <Eye className="w-4 h-4 mr-2" /> Visualizar Edital
                                                             </DropdownMenuItem>
-                                                            <DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => router.push(`/licitacoes/${item.id}/prazos`)}>
                                                                 <Bell className="w-4 h-4 mr-2" /> Monitorar Prazo
                                                             </DropdownMenuItem>
-                                                            <DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => router.push(`/licitacoes/${item.id}#risco-operacional`)}>
                                                                 <TrendingUp className="w-4 h-4 mr-2" /> Analisar Risco
                                                             </DropdownMenuItem>
                                                             <DropdownMenuSeparator />
@@ -520,6 +559,16 @@ export default function LicitacoesListPage() {
                     bidId={modalBidId}
                     onFechar={() => setModalBidId(null)}
                     onAbrirPaginaCompleta={(id) => router.push(`/licitacoes/${id}`)}
+                />
+                <EditarLicitacaoModal
+                    open={!!editBid}
+                    onOpenChange={(open) => {
+                        if (!open) setEditBid(null);
+                    }}
+                    bid={editBid}
+                    onSuccess={() => {
+                        recarregarDados();
+                    }}
                 />
 
                 <Dialog open={!!deleteTargetId} onOpenChange={(open) => !open && setDeleteTargetId(null)}>

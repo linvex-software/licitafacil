@@ -1,11 +1,14 @@
 export type FontSize = "normal" | "large" | "xlarge";
 export type Contrast = "default" | "high";
+const FONT_SIZE_STORAGE_KEY = "licitafacil:fontSize";
 
 export const applyFontSize = (size: FontSize) => {
   const root = document.documentElement;
   root.classList.remove("font-normal", "font-large", "font-xlarge");
-  root.classList.add(`font-${size}`);
-  localStorage.setItem("a11y-font-size", size);
+  if (size !== "normal") {
+    root.classList.add(`font-${size}`);
+  }
+  localStorage.setItem(FONT_SIZE_STORAGE_KEY, size);
 };
 
 export const applyContrast = (contrast: Contrast) => {
@@ -19,7 +22,7 @@ export const applyContrast = (contrast: Contrast) => {
 };
 
 export const loadAccessibilityPrefs = () => {
-  const size = (localStorage.getItem("a11y-font-size") as FontSize) ?? "normal";
+  const size = (localStorage.getItem(FONT_SIZE_STORAGE_KEY) as FontSize) ?? "normal";
   const contrast = (localStorage.getItem("a11y-contrast") as Contrast) ?? "default";
   applyFontSize(size);
   applyContrast(contrast);

@@ -80,18 +80,29 @@ export class BidPredictionService {
       throw new NotFoundException(`Licitação com ID ${bidId} não encontrada`);
     }
 
-    const temAnaliseEdital = await this.prisma.editalAnalise.findFirst({
+    const ultimaAnaliseEdital = await this.prisma.editalAnalise.findFirst({
       where: {
         bidId,
         empresaId,
         status: "CONCLUIDA",
       },
-      select: { id: true },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        resultado: true,
+      },
     });
 
-    if (!temAnaliseEdital) {
+    if (!ultimaAnaliseEdital) {
       throw new BadRequestException(
-        "É necessário analisar o edital antes de executar a Análise Preditiva de Sucesso.",
+        "Para obter uma predição precisa, primeiro analise o edital oficial desta licitação.",
+      );
+    }
+
+    const resultadoAnalise = ultimaAnaliseEdital.resultado as any;
+    if (resultadoAnalise?.is_edital === false) {
+      throw new BadRequestException(
+        "Para obter uma predição precisa, primeiro analise o edital oficial desta licitação.",
       );
     }
 

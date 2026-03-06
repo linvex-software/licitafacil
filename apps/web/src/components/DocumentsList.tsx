@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { DocumentVersions } from "./DocumentVersions";
 import { Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getFileUrl } from "@/lib/utils";
+import { getFileTypeLabel, getFileUrl } from "@/lib/utils";
 
 interface DocumentsListProps {
   /** Quando não informado, lista todos os documentos da empresa (incluindo os vinculados a licitações). */
@@ -238,7 +238,7 @@ export function DocumentsList({ bidId, onError, onUploadRequest: _onUploadReques
                         {doc.mimeType && (
                           <>
                             <span>•</span>
-                            <span className="uppercase">{doc.mimeType.split("/")[1]}</span>
+                            <span>{getFileTypeLabel(doc.mimeType, doc.filename)}</span>
                           </>
                         )}
                         {!bidId && doc.bidId && (

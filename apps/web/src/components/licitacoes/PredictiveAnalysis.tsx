@@ -65,6 +65,9 @@ export function PredictiveAnalysis({ score, factors, processTitle }: PredictiveA
           <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900 dark:text-gray-100">
             <Sparkles className="h-4 w-4 text-purple-500" />
             Análise Preditiva de Sucesso
+            <span className="ml-2 text-xs font-medium px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+              Beta
+            </span>
           </h3>
           <p className="mt-1 line-clamp-2 text-sm text-gray-500 dark:text-gray-400">{processTitle}</p>
         </div>

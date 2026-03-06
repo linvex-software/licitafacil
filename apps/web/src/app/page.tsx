@@ -2,9 +2,11 @@
 
 import { useAuth } from "@/contexts/auth-context";
 import { useLicitacoes } from "@/hooks/use-licitacoes";
+import { useBidOverviewStats } from "@/hooks/use-licitacoes";
 import { fetchDocuments, fetchUpcomingPrazos } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   BarChart2, ArrowRight, FileText, Calendar,
   Plus, ChevronRight, Zap,
@@ -16,11 +18,12 @@ import { AuthGuard } from "@/components/AuthGuard";
 
 /* ─── KPI Card ──────────────────────────────────────────── */
 function KpiCard({
-  label, value, sub, accent = "slate", delay = 0,
+  label, value, sub, accent = "slate", delay = 0, onClick,
 }: {
   label: string; value: string | number; sub?: string;
   accent?: "blue" | "red" | "amber" | "emerald" | "slate";
   delay?: number;
+  onClick?: () => void;
 }) {
   const map = {
     blue: { bar: "bg-[#0078D1]", val: "text-[#0078D1] dark:text-[#66b1e7]" },
@@ -32,22 +35,26 @@ function KpiCard({
   const c = map[accent];
 
   return (
-    <div
-      className="rounded-xl border border-gray-100 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 animate-fade-up"
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full rounded-xl border border-gray-100 bg-white p-6 text-left dark:border-gray-800 dark:bg-gray-900 animate-fade-up transition-colors cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className={`mb-4 h-0.5 w-8 rounded-full ${c.bar}`} />
       <p className={`text-4xl font-bold tracking-tight stat-number ${c.val}`}>{value}</p>
       <p className="mt-1 text-sm font-semibold text-gray-700 dark:text-gray-200">{label}</p>
       {sub && <p className="text-xs text-gray-400 dark:text-gray-500">{sub}</p>}
-    </div>
+    </button>
   );
 }
 
 /* ─── Dashboard Page ────────────────────────────────────── */
 export default function DashboardPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const { data: response, isLoading } = useLicitacoes({ limit: 8 });
+  const { data: overviewStats } = useBidOverviewStats();
   const licitacoes = response?.data ?? [];
 
   const { data: upcomingPrazos = [], isLoading: loadingPrazos } = useQuery({
@@ -61,10 +68,10 @@ export default function DashboardPage() {
   });
   const criticalDocs = criticalDocsResponse?.data ?? [];
 
-  const totalOpen = licitacoes.filter(l => l.operationalState === "OK").length;
-  const totalAtRisk = licitacoes.filter(l => l.operationalState === "EM_RISCO").length;
-  const totalAnalyze = licitacoes.filter(l => l.legalStatus === "ANALISANDO").length;
-  const totalWon = licitacoes.filter(l => l.legalStatus === "VENCIDA").length;
+  const totalOpen = overviewStats?.emAndamento ?? 0;
+  const totalAtRisk = overviewStats?.emRisco ?? 0;
+  const totalAnalyze = overviewStats?.analisando ?? 0;
+  const totalWon = overviewStats?.vencidas ?? 0;
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
@@ -119,15 +126,15 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <Link href="/relatorios">
-                  <button className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#0078D1] transition-colors hover:bg-white/90">
+              <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:flex sm:items-center sm:gap-3">
+                <Link href="/relatorios" className="flex-1">
+                  <button className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-white px-3 py-2 text-xs font-semibold text-[#0078D1] transition-colors hover:bg-white/90 sm:px-4 sm:text-sm">
                     <BarChart2 className="h-4 w-4" />
                     Relatórios
                   </button>
                 </Link>
-                <Link href="/licitacoes">
-                  <button className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#0078D1] transition-colors hover:bg-white/90">
+                <Link href="/licitacoes" className="flex-1">
+                  <button className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-white px-3 py-2 text-xs font-semibold text-[#0078D1] transition-colors hover:bg-white/90 sm:px-4 sm:text-sm">
                     <Plus className="h-4 w-4" />
                     Nova Licitação
                   </button>
@@ -138,10 +145,38 @@ export default function DashboardPage() {
 
           {/* ── KPI Strip ───────────────────────────────────── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 stagger-children">
-            <KpiCard label="Ativas" value={totalOpen} sub="Operacionais" accent="blue" delay={0} />
-            <KpiCard label="Em Risco" value={totalAtRisk} sub="Requer ação" accent={totalAtRisk > 0 ? "red" : "slate"} delay={60} />
-            <KpiCard label="Analisando" value={totalAnalyze} sub="Fase inicial" accent="amber" delay={120} />
-            <KpiCard label="Vencidas" value={totalWon} sub="Licitações ganhas" accent="emerald" delay={180} />
+            <KpiCard
+              label="Ativas"
+              value={totalOpen}
+              sub="Operacionais"
+              accent="blue"
+              delay={0}
+              onClick={() => router.push("/licitacoes?status=ATIVA")}
+            />
+            <KpiCard
+              label="Em Risco"
+              value={totalAtRisk}
+              sub="Requer ação"
+              accent={totalAtRisk > 0 ? "red" : "slate"}
+              delay={60}
+              onClick={() => router.push("/licitacoes?status=EM_RISCO")}
+            />
+            <KpiCard
+              label="Analisando"
+              value={totalAnalyze}
+              sub="Fase inicial"
+              accent="amber"
+              delay={120}
+              onClick={() => router.push("/licitacoes?status=ANALISANDO")}
+            />
+            <KpiCard
+              label="Vencidas"
+              value={totalWon}
+              sub="Licitações ganhas"
+              accent="emerald"
+              delay={180}
+              onClick={() => router.push("/licitacoes?status=VENCIDA")}
+            />
           </div>
 
           {/* ── Main grid ───────────────────────────────────── */}
@@ -170,7 +205,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   ))
-                ) : upcomingPrazos.length === 0 ? (
+                ) : upcomingPrazos.filter((p) => (p.diasRestantes ?? 0) >= 0).length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 text-center">
                     <div className="mb-3 rounded-full bg-gray-100 p-3 dark:bg-gray-800">
                       <Calendar className="h-5 w-5 text-gray-400" />
@@ -186,7 +221,10 @@ export default function DashboardPage() {
                     </Link>
                   </div>
                 ) : (
-                  upcomingPrazos.slice(0, 6).map((p) => {
+                  upcomingPrazos
+                    .filter((p) => (p.diasRestantes ?? 0) >= 0)
+                    .slice(0, 6)
+                    .map((p) => {
                     const d = new Date(p.dataPrazo);
                     const dias = p.diasRestantes ?? 0;
                     const isUrgent = dias >= 0 && dias <= 3;

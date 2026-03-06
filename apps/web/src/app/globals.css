@@ -118,7 +118,7 @@
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-family: var(--font-sans);
-    font-size: 14px;
+    font-size: 1rem;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -258,11 +258,11 @@
 
 /* Tamanho de texto */
 html.font-large {
-  font-size: 106%;
+  font-size: 18px;
 }
 
 html.font-xlarge {
-  font-size: 112%;
+  font-size: 20px;
 }
 
 /* Alto contraste */

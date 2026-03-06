@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -50,6 +51,7 @@ function formatDataPrazo(iso: string): string {
 /** Converte Date ou string para input datetime-local (YYYY-MM-DDTHH:mm) */
 function toInputDateTime(value: string): string {
   const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
@@ -63,6 +65,7 @@ export function PrazosPageClient({ bidId }: PrazosPageClientProps) {
   const [formTitulo, setFormTitulo] = useState("");
   const [formDataPrazo, setFormDataPrazo] = useState("");
   const [formDescricao, setFormDescricao] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -89,6 +92,7 @@ export function PrazosPageClient({ bidId }: PrazosPageClientProps) {
     setFormTitulo("");
     setFormDataPrazo("");
     setFormDescricao("");
+    setFormError(null);
     setModalOpen(true);
   };
 
@@ -97,20 +101,37 @@ export function PrazosPageClient({ bidId }: PrazosPageClientProps) {
     setFormTitulo(p.titulo);
     setFormDataPrazo(toInputDateTime(p.dataPrazo));
     setFormDescricao(p.descricao ?? "");
+    setFormError(null);
     setModalOpen(true);
   };
 
+  const closeModal = () => {
+    setModalOpen(false);
+    setEditingId(null);
+    setFormTitulo("");
+    setFormDataPrazo("");
+    setFormDescricao("");
+    setFormError(null);
+  };
+
   const handleSubmit = async () => {
+    setFormError(null);
     if (!formTitulo.trim()) {
       toast({ title: "Título é obrigatório", variant: "destructive" });
       return;
     }
     if (!formDataPrazo.trim()) {
       toast({ title: "Data do prazo é obrigatória", variant: "destructive" });
+      setFormError("Data e hora são obrigatórias.");
       return;
     }
-    // Enviar como ISO para o backend
-    const dataPrazoIso = new Date(formDataPrazo).toISOString();
+    const dataObj = new Date(formDataPrazo);
+    if (Number.isNaN(dataObj.getTime())) {
+      setFormError("Data e hora inválidas. Por favor, selecione uma data válida.");
+      return;
+    }
+
+    const dataPrazoIso = dataObj.toISOString();
 
     setSubmitting(true);
     try {
@@ -130,7 +151,7 @@ export function PrazosPageClient({ bidId }: PrazosPageClientProps) {
         });
         toast({ title: "Prazo criado com sucesso" });
       }
-      setModalOpen(false);
+      closeModal();
       loadPrazos();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao salvar";
@@ -242,7 +263,7 @@ export function PrazosPageClient({ bidId }: PrazosPageClientProps) {
                       </span>
                     </div>
                     {p.descricao && (
-                      <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{p.descricao}</p>
+                      <p className="mt-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400">{p.descricao}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
@@ -273,7 +294,16 @@ export function PrazosPageClient({ bidId }: PrazosPageClientProps) {
         </CardContent>
       </Card>
 
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+      <Dialog
+        open={modalOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeModal();
+            return;
+          }
+          setModalOpen(true);
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="font-heading">
@@ -298,22 +328,25 @@ export function PrazosPageClient({ bidId }: PrazosPageClientProps) {
                 type="datetime-local"
                 value={formDataPrazo}
                 onChange={(e) => setFormDataPrazo(e.target.value)}
-                className="border-gray-200 dark:border-gray-700"
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-[#0078D1]/50 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
               />
+              {formError && (
+                <p className="text-xs text-red-600 dark:text-red-400">{formError}</p>
+              )}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="descricao" className="text-gray-700 dark:text-gray-300">Descrição (opcional)</Label>
-              <Input
+              <Textarea
                 id="descricao"
                 value={formDescricao}
                 onChange={(e) => setFormDescricao(e.target.value)}
                 placeholder="Observações"
-                className="border-gray-200 dark:border-gray-700"
+                className="min-h-[92px] border-gray-200 text-sm dark:border-gray-700"
               />
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setModalOpen(false)} disabled={submitting} className="border-gray-200 dark:border-gray-700">
+            <Button variant="outline" onClick={closeModal} disabled={submitting} className="border-gray-200 dark:border-gray-700">
               Cancelar
             </Button>
             <Button onClick={handleSubmit} disabled={submitting} className="bg-emerald-600 hover:bg-emerald-700">

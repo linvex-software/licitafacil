@@ -51,6 +51,8 @@ export class ComprasnetService {
           empresaId,
           title: `${lic.orgao} - ${lic.numero}/${new Date().getFullYear()}`,
           agency: lic.orgao || lic.uasg,
+          uf: ((lic as any)?.uf || "NI").toUpperCase().slice(0, 2),
+          municipio: (lic as any)?.municipio?.trim() || null,
           modality: lic.modalidade || "PREGAO_ELETRONICO",
           legalStatus: "ANALISANDO",
           operationalState: "IMPORTADA",

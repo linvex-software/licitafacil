@@ -23,9 +23,9 @@ export function useAlerts() {
       setLoading(true);
       const res = await fetchAlerts({ limit: 30 });
       const list = res?.data ?? [];
-      setAlerts(list);
-      const unseen = list.filter((a: Alert) => a.status === "UNSEEN").length;
-      setUnseenCount(unseen);
+      const unseen = list.filter((a: Alert) => a.status === "UNSEEN");
+      setAlerts(unseen);
+      setUnseenCount(unseen.length);
     } catch {
       setAlerts([]);
       setUnseenCount(0);
@@ -82,9 +82,7 @@ export function useAlerts() {
     async (id: string) => {
       try {
         await markAlertSeen(id);
-        setAlerts((prev) =>
-          prev.map((a) => (a.id === id ? { ...a, status: "SEEN" as const } : a))
-        );
+        setAlerts((prev) => prev.filter((a) => a.id !== id));
         setUnseenCount((prev) => Math.max(0, prev - 1));
       } catch {
         // ignore
@@ -93,12 +91,28 @@ export function useAlerts() {
     []
   );
 
+  const markAllSeen = useCallback(async () => {
+    const ids = alerts.map((alert) => alert.id);
+    if (ids.length === 0) return;
+
+    setAlerts([]);
+    setUnseenCount(0);
+
+    try {
+      await Promise.all(ids.map((id) => markAlertSeen(id)));
+    } catch {
+      // Em caso de erro parcial, recarrega para refletir o estado real da API.
+      await loadAlerts();
+    }
+  }, [alerts, loadAlerts]);
+
   return {
     alerts,
     unseenCount,
     loading,
     refetch: loadAlerts,
     markSeen,
+    markAllSeen,
     connected,
   };
 }

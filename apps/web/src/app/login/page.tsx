@@ -471,7 +471,7 @@ export default function LoginPage() {
             >
               Não tem acesso?{" "}
               <a
-                href="https://wa.me/5582991709770"
+                href="https://wa.me/5582991709740"
                 target="_blank"
                 rel="noreferrer"
                 style={{

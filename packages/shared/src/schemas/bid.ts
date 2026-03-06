@@ -38,6 +38,8 @@ export const OperationalState = {
 export const createBidSchema = z.object({
   title: z.string().min(1, "Título é obrigatório").max(500, "Título muito longo"),
   agency: z.string().min(1, "Órgão é obrigatório").max(200, "Nome do órgão muito longo"),
+  uf: z.string().trim().min(2, "UF é obrigatória").max(2, "UF deve ter 2 caracteres"),
+  municipio: z.string().trim().max(200, "Município muito longo").optional(),
   modality: z.enum([
     BidModality.PREGAO_ELETRONICO,
     BidModality.CONCORRENCIA,
@@ -62,6 +64,8 @@ export const createBidSchema = z.object({
 export const updateBidSchema = z.object({
   title: z.string().min(1, "Título é obrigatório").max(500, "Título muito longo").optional(),
   agency: z.string().min(1, "Órgão é obrigatório").max(200, "Nome do órgão muito longo").optional(),
+  uf: z.string().trim().min(2, "UF inválida").max(2, "UF deve ter 2 caracteres").optional(),
+  municipio: z.string().trim().max(200, "Município muito longo").optional(),
   modality: z
     .enum([
       BidModality.PREGAO_ELETRONICO,
@@ -122,6 +126,8 @@ export const bidSchema = z.object({
   empresaId: z.string().uuid(),
   title: z.string(),
   agency: z.string(),
+  uf: z.string(),
+  municipio: z.string().nullable(),
   modality: z.string(),
   legalStatus: z.string(),
   operationalState: z.string(),
@@ -136,6 +142,7 @@ export const bidSchema = z.object({
   manualRiskOverrideBy: z.string().uuid().nullable(),
   manualRiskOverrideAt: z.string().datetime().nullable(),
   hasEditalAnalysis: z.boolean(),
+  hasValidEditalAnalysis: z.boolean(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });

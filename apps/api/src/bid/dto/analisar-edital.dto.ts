@@ -1,4 +1,6 @@
 export interface AnalisarEditalResponseDto {
+  is_edital: boolean;
+  motivo?: string;
   modalidade: string;
   numero: string;
   objeto: string;

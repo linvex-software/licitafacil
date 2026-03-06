@@ -5,6 +5,7 @@ import { type DocumentVersion } from "@licitafacil/shared";
 import { fetchDocumentVersions, restoreDocumentVersion, downloadDocument } from "@/lib/api";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { getFileTypeLabel } from "@/lib/utils";
 
 interface DocumentVersionsProps {
   documentId: string;
@@ -151,7 +152,7 @@ export function DocumentVersions({
                     {version.mimeType && (
                       <>
                         <span>•</span>
-                        <span className="uppercase">{version.mimeType.split("/")[1]}</span>
+                        <span>{getFileTypeLabel(version.mimeType, version.filename)}</span>
                       </>
                     )}
                   </div>

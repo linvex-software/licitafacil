@@ -150,6 +150,17 @@ export function AnalisarEditalModal({
           </div>
         ) : (
           <div className="space-y-6">
+            {resultado.is_edital === false && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+                <p className="text-sm font-medium">
+                  ⚠️ Atenção: este documento não parece ser um edital de licitação.
+                  {" "}
+                  {resultado.motivo || "O conteúdo não corresponde ao formato típico de edital."}
+                  {" "}
+                  Os dados abaixo podem estar incorretos.
+                </p>
+              </div>
+            )}
             <Tabs defaultValue="geral">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="geral">
@@ -168,34 +179,34 @@ export function AnalisarEditalModal({
 
               <TabsContent value="geral" className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-slate-700">
+                  <div className="rounded-lg border bg-card p-3">
+                    <label className="text-sm font-medium text-muted-foreground">
                       Modalidade
                     </label>
-                    <p className="mt-1 text-lg">
-                      {resultado.modalidade?.replace(/_/g, " ")}
+                    <p className="mt-1 text-lg text-card-foreground">
+                      {resultado.modalidade?.replace(/_/g, " ") || "-"}
                     </p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-slate-700">
+                  <div className="rounded-lg border bg-card p-3">
+                    <label className="text-sm font-medium text-muted-foreground">
                       Número do Edital
                     </label>
-                    <p className="mt-1 text-lg">{resultado.numero || "-"}</p>
+                    <p className="mt-1 text-lg text-card-foreground">{resultado.numero || "-"}</p>
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-sm font-medium text-slate-700">
+                <div className="rounded-lg border bg-card p-3">
+                  <label className="text-sm font-medium text-muted-foreground">
                     Objeto
                   </label>
-                  <p className="mt-1">{resultado.objeto}</p>
+                  <p className="mt-1 text-card-foreground">{resultado.objeto || "-"}</p>
                 </div>
 
-                <div>
-                  <label className="text-sm font-medium text-slate-700">
+                <div className="rounded-lg border bg-card p-3">
+                  <label className="text-sm font-medium text-muted-foreground">
                     Valor Estimado
                   </label>
-                  <p className="mt-1 text-lg font-semibold text-emerald-600">
+                  <p className="mt-1 text-lg font-semibold text-foreground">
                     {resultado.valorEstimado
                       ? `R$ ${resultado.valorEstimado.toLocaleString("pt-BR")}`
                       : "Não informado"}
@@ -203,7 +214,7 @@ export function AnalisarEditalModal({
                 </div>
 
                 {resultado.tempoSegundos && (
-                  <div className="text-sm text-slate-500 mt-4 pt-4 border-t">
+                  <div className="text-sm text-muted-foreground mt-4 pt-4 border-t">
                     Processado em {resultado.tempoSegundos}s
                     {resultado.tokensUsados &&
                       ` • ${resultado.tokensUsados} tokens`}
@@ -217,11 +228,11 @@ export function AnalisarEditalModal({
                     resultado.prazos.map((prazo: any, idx: number) => (
                       <div
                         key={idx}
-                        className="border rounded-lg p-4 hover:bg-slate-50"
+                        className="border rounded-lg p-4 bg-card hover:bg-muted/40"
                       >
                         <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-medium">{prazo.tipo}</h4>
-                          <span className="text-sm font-medium text-blue-600">
+                          <h4 className="font-medium text-card-foreground">{prazo.tipo}</h4>
+                          <span className="text-sm font-medium text-foreground">
                             {prazo.data
                               ? new Date(
                                 prazo.data + "T00:00:00",
@@ -229,13 +240,13 @@ export function AnalisarEditalModal({
                               : "-"}
                           </span>
                         </div>
-                        <p className="text-sm text-slate-600">
+                        <p className="text-sm text-muted-foreground">
                           {prazo.descricao}
                         </p>
                       </div>
                     ))
                   ) : (
-                    <p className="text-center text-slate-500 py-8">
+                    <p className="text-center text-muted-foreground py-8">
                       Nenhum prazo identificado
                     </p>
                   )}
@@ -248,7 +259,7 @@ export function AnalisarEditalModal({
                     resultado.documentos.map((doc: any, idx: number) => (
                       <div
                         key={idx}
-                        className="flex items-center gap-3 border rounded-lg p-3 hover:bg-slate-50"
+                        className="flex items-center gap-3 border rounded-lg p-3 bg-card hover:bg-muted/40"
                       >
                         <CheckSquare
                           className={`w-5 h-5 ${doc.obrigatorio
@@ -257,15 +268,15 @@ export function AnalisarEditalModal({
                             }`}
                         />
                         <div className="flex-1">
-                          <p className="font-medium">{doc.nome}</p>
-                          <p className="text-xs text-slate-500">
+                          <p className="font-medium text-card-foreground">{doc.nome}</p>
+                          <p className="text-xs text-muted-foreground">
                             {doc.obrigatorio ? "Obrigatório" : "Opcional"}
                           </p>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <p className="text-center text-slate-500 py-8">
+                    <p className="text-center text-muted-foreground py-8">
                       Nenhum documento identificado
                     </p>
                   )}

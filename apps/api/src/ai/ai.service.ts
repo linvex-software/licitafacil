@@ -7,6 +7,8 @@ import OpenAI from "openai";
 import { PrismaService } from "../prisma/prisma.service";
 
 export interface EditalAnaliseResultado {
+  is_edital: boolean;
+  motivo?: string;
   modalidade: string;
   numero: string;
   objeto: string;
@@ -68,7 +70,7 @@ export class AiService {
           {
             role: "system",
             content:
-              "Você é um especialista em editais de licitação pública brasileira. Sempre retorne JSON válido.",
+              "Você é um especialista em editais de licitação pública brasileira. Sempre retorne JSON válido. Antes de analisar, determine se o documento é um edital de licitação pública brasileira. Se não for edital, retorne {\"is_edital\": false, \"motivo\": \"descrição breve\"} e não preencha os demais campos. Se for edital, retorne {\"is_edital\": true, ...campos}.",
           },
           {
             role: "user",
@@ -229,6 +231,8 @@ ${pergunta}`;
     return `Analise o edital de licitação abaixo e extraia as informações em JSON:
 
 {
+  "is_edital": true ou false,
+  "motivo": "obrigatório quando is_edital=false. Descreva brevemente o que o documento parece ser",
   "modalidade": "PREGAO_ELETRONICO | PREGAO_PRESENCIAL | TOMADA_PRECOS | CONCORRENCIA | CONVITE | DISPENSA | INEXIGIBILIDADE",
   "numero": "número do edital (ex: 001/2025)",
   "objeto": "descrição resumida do objeto (máx 500 chars)",
@@ -250,6 +254,11 @@ ${pergunta}`;
 
 INSTRUÇÕES:
 - Retorne APENAS o JSON, sem texto adicional
+- Antes de analisar, determine se este documento é um edital de licitação pública brasileira
+- Se não for edital (ex: contrato, relatório, apresentação, nota fiscal, etc.), retorne somente:
+  {"is_edital": false, "motivo": "descrição breve do que o documento parece ser"}
+- Se for edital, retorne:
+  {"is_edital": true, ...demais campos}
 - Datas no formato YYYY-MM-DD
 - Modalidade em MAIÚSCULAS com underline
 - Liste TODOS os prazos e documentos encontrados
@@ -260,11 +269,29 @@ ${textoEdital}`;
   }
 
   private validarResultado(resultado: any): void {
+    if (typeof resultado.is_edital !== "boolean") {
+      resultado.is_edital = true;
+    }
+
+    if (resultado.is_edital === false) {
+      if (!resultado.motivo || typeof resultado.motivo !== "string") {
+        resultado.motivo = "O conteúdo analisado não possui características de edital de licitação.";
+      }
+      resultado.modalidade = "";
+      resultado.numero = "";
+      resultado.objeto = "";
+      resultado.valorEstimado = null;
+      resultado.prazos = [];
+      resultado.documentos = [];
+      return;
+    }
+
     if (!resultado.modalidade || !resultado.objeto) {
       throw new InternalServerErrorException(
         "IA não extraiu informações mínimas do edital",
       );
     }
+
     if (!Array.isArray(resultado.prazos)) resultado.prazos = [];
     if (!Array.isArray(resultado.documentos)) resultado.documentos = [];
   }

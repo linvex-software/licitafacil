@@ -23,6 +23,9 @@
     "prisma:seed": "ts-node --transpile-only prisma/seed.ts",
     "seed:admin": "ts-node --transpile-only prisma/seed-super-admin.ts"
   },
+  "prisma": {
+    "seed": "ts-node --transpile-only prisma/seed.ts"
+  },
   "dependencies": {
     "@licitafacil/shared": "workspace:*",
     "@nestjs/common": "^10.4.15",
@@ -36,7 +39,7 @@
     "@nestjs/throttler": "^6.5.0",
     "@nestjs/websockets": "^10.4.15",
     "@prisma/client": "^6.0.0",
-    "@sendgrid/mail": "^8.1.6",
+    "@sparticuz/chromium": "^123.0.1",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "cheerio": "^1.2.0",
@@ -47,14 +50,13 @@
     "mailtrap": "^4.4.0",
     "multer": "^2.0.2",
     "node-html-parser": "^7.0.2",
-    "nodemailer": "^8.0.1",
     "openai": "^6.21.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pdf-parse": "1.1.1",
     "pizzip": "^3.2.0",
     "prisma": "^6.0.0",
-    "puppeteer": "^24.37.2",
+    "puppeteer-core": "^22.0.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "reflect-metadata": "^0.2.2",
@@ -73,7 +75,6 @@
     "@types/jest": "^29.5.14",
     "@types/multer": "^2.0.0",
     "@types/node": "^22.10.5",
-    "@types/nodemailer": "^7.0.9",
     "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^6.0.2",
     "@types/uuid": "9",
