@@ -31,7 +31,7 @@ RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 # Install Chromium and its minimum runtime dependencies efficiently
 RUN apt-get update && apt-get install -y --no-install-recommends \
   chromium \
-  fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
+  libxss1 \
   && rm -rf /var/lib/apt/lists/* \
   && apt-get clean
 
