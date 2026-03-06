@@ -1,4 +1,4 @@
-FROM node:20-alpine AS builder
+FROM node:20-bookworm-slim AS builder
 
 # Bust cache
 ARG BUILDTIME=unknown
@@ -22,11 +22,18 @@ RUN pnpm --filter @licitafacil/shared build 2>/dev/null || echo "ok"
 RUN cd apps/api && npx prisma generate
 RUN pnpm --filter @licitafacil/api build
 
-FROM node:20-alpine AS runner
+FROM node:20-bookworm-slim AS runner
 
 WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+
+RUN apt-get update && apt-get install -y \
+  chromium \
+  --no-install-recommends \
+  && rm -rf /var/lib/apt/lists/*
+
+ENV CHROMIUM_PATH=/usr/bin/chromium
 
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages ./packages
