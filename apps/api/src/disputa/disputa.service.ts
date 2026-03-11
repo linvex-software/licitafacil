@@ -264,6 +264,13 @@ export class DisputaService {
       detalhe: "Lance manual enviado pelo operador",
       timestamp: new Date(),
     });
+    this.disputaGateway.emitirCanal(disputaId, "disputa:evento", {
+      tipo: "LANCE_ENVIADO",
+      descricao: `Lance manual enviado: R$ ${valor.toFixed(2)}`,
+      valor,
+      itemId: String(itemNumero),
+      timestamp: new Date().toISOString(),
+    });
 
     return { ok: true };
   }

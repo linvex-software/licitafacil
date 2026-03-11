@@ -4,9 +4,12 @@ import { BaseRobo, FaseSessao } from "./base-robo";
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 interface MockItemState {
+  itemId: string;
   valorAtual: number;
   valorMinimo: number;
   valorMaximo: number;
+  posicaoAtual: 1 | 2;
+  meuUltimoLance: number;
 }
 
 export class MockRobo extends BaseRobo {
@@ -16,12 +19,23 @@ export class MockRobo extends BaseRobo {
   configurarItens(configuracoes: ConfiguracaoLance[]) {
     this.itens.clear();
     for (const config of configuracoes) {
+      const valorBase = 5000;
       this.itens.set(config.itemNumero, {
-        valorAtual: Number(config.valorMaximo),
+        itemId: String(config.itemNumero),
+        valorAtual: valorBase,
         valorMinimo: Number(config.valorMinimo),
         valorMaximo: Number(config.valorMaximo),
+        posicaoAtual: 1,
+        meuUltimoLance: valorBase,
       });
     }
+  }
+
+  listarItens() {
+    return Array.from(this.itens.entries()).map(([itemNumero, state]) => ({
+      itemNumero,
+      itemId: state.itemId,
+    }));
   }
 
   async iniciarBrowser(): Promise<void> {
@@ -55,16 +69,58 @@ export class MockRobo extends BaseRobo {
       return Number(base.toFixed(2));
     }
 
-    const decremento = Number((0.01 + Math.random() * 2).toFixed(2));
-    item.valorAtual = Math.max(item.valorMinimo, item.valorAtual - decremento);
-    const faixa = Math.max(0, item.valorAtual - item.valorMinimo);
-    const oscilacao = Math.min(0.5, faixa);
-    const valor = Math.max(item.valorMinimo, item.valorAtual - Math.random() * oscilacao);
-    return Number(valor.toFixed(2));
+    return item.posicaoAtual === 1
+      ? Number(item.meuUltimoLance.toFixed(2))
+      : Number((item.meuUltimoLance - 50).toFixed(2));
   }
 
-  async obterPosicaoAtual(_itemNumero: number): Promise<number> {
-    return Math.floor(Math.random() * 5) + 1;
+  async obterPosicaoAtual(itemNumero: number): Promise<number> {
+    const item = this.itens.get(itemNumero);
+    return item?.posicaoAtual ?? 2;
+  }
+
+  reduzirLance(itemNumero: number) {
+    const item = this.itens.get(itemNumero);
+    if (!item) {
+      return null;
+    }
+
+    const decremento = 50 + Math.floor(Math.random() * 101);
+    const piso = Math.max(0, item.valorMinimo);
+    item.valorAtual = Math.max(piso, item.valorAtual - decremento);
+    item.meuUltimoLance = Number(item.valorAtual.toFixed(2));
+
+    const melhorLance =
+      item.posicaoAtual === 1
+        ? item.meuUltimoLance
+        : Number((item.meuUltimoLance - 50).toFixed(2));
+
+    return {
+      itemId: item.itemId,
+      meuUltimoLance: item.meuUltimoLance,
+      melhorLance,
+      posicao: item.posicaoAtual,
+    };
+  }
+
+  alternarPosicao(itemNumero: number) {
+    const item = this.itens.get(itemNumero);
+    if (!item) {
+      return null;
+    }
+
+    item.posicaoAtual = item.posicaoAtual === 1 ? 2 : 1;
+    const melhorLance =
+      item.posicaoAtual === 1
+        ? item.meuUltimoLance
+        : Number((item.meuUltimoLance - 50).toFixed(2));
+
+    return {
+      itemId: item.itemId,
+      posicao: item.posicaoAtual,
+      meuUltimoLance: item.meuUltimoLance,
+      melhorLance,
+    };
   }
 
   async obterTempoRestante(): Promise<number> {

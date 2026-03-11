@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { Radio } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Layout } from "@/components/layout";
@@ -146,9 +147,12 @@ export default function DisputaPage() {
                     </td>
                     <td className="p-3 text-right">
                       <div className="flex justify-end gap-2">
-                        {disputa.status === "AO_VIVO" && (
+                        {["AO_VIVO", "EM_ANDAMENTO", "PAUSADA"].includes(disputa.status) && (
                           <Link href={`/disputa/${disputa.id}/ao-vivo`}>
-                            <Button size="sm">Ao Vivo</Button>
+                            <Button size="sm" variant="outline" className="gap-1.5">
+                              <Radio className="h-3.5 w-3.5 text-green-400" />
+                              Ao vivo
+                            </Button>
                           </Link>
                         )}
                         {["ENCERRADA", "CANCELADA", "ERRO"].includes(disputa.status) && (
