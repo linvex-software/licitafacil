@@ -92,7 +92,14 @@ export class DisputaService {
         },
       );
     } else {
-      await this.processarDisputaAgendada(disputa.id);
+      await this.disputaQueue.add(
+        "iniciar",
+        { disputaId: disputa.id },
+        {
+          removeOnComplete: true,
+          removeOnFail: false,
+        },
+      );
     }
 
     return this.sanitizarDisputa(disputa);
@@ -177,8 +184,15 @@ export class DisputaService {
     return this.sanitizarDisputa(atualizada);
   }
 
-  async encerrarDisputa(id: string, empresaId: string, dto?: UpdateDisputaDto) {
-    await this.obterDisputaPorEmpresa(id, empresaId);
+  async encerrarDisputa(id: string, empresaId?: string, dto?: UpdateDisputaDto) {
+    if (empresaId) {
+      await this.obterDisputaPorEmpresa(id, empresaId);
+    } else {
+      const disputa = await this.prisma.disputa.findUnique({ where: { id } });
+      if (!disputa) {
+        throw new NotFoundException("Disputa não encontrada");
+      }
+    }
 
     const atualizada = await this.prisma.disputa.update({
       where: { id },
@@ -245,7 +259,7 @@ export class DisputaService {
     return historico;
   }
 
-  async processarDisputaAgendada(disputaId: string) {
+  async buscarComConfiguracoes(disputaId: string) {
     const disputa = await this.prisma.disputa.findUnique({
       where: { id: disputaId },
       include: {
@@ -255,54 +269,43 @@ export class DisputaService {
     });
 
     if (!disputa) {
-      throw new NotFoundException("Disputa agendada não encontrada");
+      throw new NotFoundException("Disputa não encontrada");
     }
 
-    try {
-      // A senha é descriptografada apenas para uso interno do fluxo de automação.
-      this.descriptografarSenha(disputa.credencial.senhaHash);
+    return disputa;
+  }
 
-      await this.prisma.disputa.update({
-        where: { id: disputaId },
-        data: {
-          status: DisputaStatus.INICIANDO,
-          iniciadoEm: disputa.iniciadoEm ?? new Date(),
-        },
-      });
+  async buscarStatus(disputaId: string) {
+    const disputa = await this.prisma.disputa.findUnique({
+      where: { id: disputaId },
+      select: { id: true, status: true },
+    });
 
-      await this.emitirEvento(disputaId, EventoDisputa.POSICAO_ATUALIZADA, {
-        disputaId,
-        evento: EventoDisputa.POSICAO_ATUALIZADA,
-        detalhe: "Disputa iniciando (simulação da infraestrutura)",
-        timestamp: new Date(),
-      });
-
-      await this.prisma.disputa.update({
-        where: { id: disputaId },
-        data: { status: DisputaStatus.AO_VIVO },
-      });
-
-      await this.emitirEvento(disputaId, EventoDisputa.RETOMADA, {
-        disputaId,
-        evento: EventoDisputa.RETOMADA,
-        detalhe: "Disputa iniciada em modo de simulação",
-        timestamp: new Date(),
-      });
-    } catch (error) {
-      await this.prisma.disputa.update({
-        where: { id: disputaId },
-        data: { status: DisputaStatus.ERRO },
-      });
-
-      await this.emitirEvento(disputaId, EventoDisputa.ERRO, {
-        disputaId,
-        evento: EventoDisputa.ERRO,
-        detalhe: error instanceof Error ? error.message : "Falha ao iniciar disputa",
-        timestamp: new Date(),
-      });
-
-      throw error;
+    if (!disputa) {
+      throw new NotFoundException("Disputa não encontrada");
     }
+
+    return disputa;
+  }
+
+  async atualizarStatus(disputaId: string, status: DisputaStatus) {
+    const updateData: Prisma.DisputaUpdateInput = { status };
+    if (status === DisputaStatus.INICIANDO) {
+      updateData.iniciadoEm = new Date();
+    }
+    if (status === DisputaStatus.ENCERRADA) {
+      updateData.encerradoEm = new Date();
+    }
+
+    return this.prisma.disputa.update({
+      where: { id: disputaId },
+      data: updateData,
+    });
+  }
+
+  // USO INTERNO — nunca expor via REST
+  descriptografarSenhaInterno(hash: string): string {
+    return this.descriptografarSenha(hash);
   }
 
   private async obterDisputaPorEmpresa(id: string, empresaId: string) {
