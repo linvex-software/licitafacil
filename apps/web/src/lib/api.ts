@@ -112,6 +112,126 @@ export async function getEventosAgenda(
   return data;
 }
 
+export type PortalDisputa = "COMPRASNET" | "BNC";
+export type EstrategiaDisputa = "AGRESSIVA" | "CONSERVADORA" | "POR_MARGEM";
+export type DisputaStatus =
+  | "AGENDADA"
+  | "INICIANDO"
+  | "AO_VIVO"
+  | "PAUSADA"
+  | "ENCERRADA"
+  | "CANCELADA"
+  | "ERRO";
+
+export interface DisputaConfiguracao {
+  id: string;
+  itemNumero: number;
+  itemDescricao?: string | null;
+  valorMaximo: number;
+  valorMinimo: number;
+  estrategia: EstrategiaDisputa;
+  ativo: boolean;
+}
+
+export interface DisputaCredencialPublica {
+  id: string;
+  cnpj: string;
+  portal: PortalDisputa;
+}
+
+export interface DisputaBidResumo {
+  id: string;
+  title: string;
+  agency: string;
+}
+
+export interface Disputa {
+  id: string;
+  bidId: string | null;
+  bid?: DisputaBidResumo | null;
+  portal: PortalDisputa;
+  status: DisputaStatus;
+  agendadoPara?: string | null;
+  iniciadoEm?: string | null;
+  encerradoEm?: string | null;
+  credencial: DisputaCredencialPublica;
+  configuracoes: DisputaConfiguracao[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CriarDisputaInput {
+  bidId?: string;
+  portal: PortalDisputa;
+  agendadoPara?: string;
+  credencial: {
+    cnpj: string;
+    senha: string;
+  };
+  configuracoes: Array<{
+    itemNumero: number;
+    itemDescricao?: string;
+    valorMaximo: number;
+    valorMinimo: number;
+    estrategia: EstrategiaDisputa;
+    ativo?: boolean;
+  }>;
+}
+
+export interface LicitacaoResumo {
+  id: string;
+  title: string;
+  agency: string;
+}
+
+export async function buscarLicitacoes(): Promise<LicitacaoResumo[]> {
+  const { data } = await api.get("/bids", { params: { page: 1, limit: 100 } });
+  return data?.data ?? [];
+}
+
+export async function listarDisputas(): Promise<Disputa[]> {
+  const { data } = await api.get("/disputa");
+  return data;
+}
+
+export async function buscarDisputa(id: string): Promise<Disputa> {
+  const { data } = await api.get(`/disputa/${id}`);
+  return data;
+}
+
+export async function criarDisputa(payload: CriarDisputaInput): Promise<Disputa> {
+  const { data } = await api.post("/disputa", payload);
+  return data;
+}
+
+export async function pausarDisputa(id: string) {
+  const { data } = await api.patch(`/disputa/${id}/pausar`);
+  return data;
+}
+
+export async function retomarDisputa(id: string) {
+  const { data } = await api.patch(`/disputa/${id}/retomar`);
+  return data;
+}
+
+export async function encerrarDisputa(id: string, detalhe?: string) {
+  const { data } = await api.patch(`/disputa/${id}/encerrar`, { detalhe });
+  return data;
+}
+
+export async function cancelarDisputa(id: string) {
+  const { data } = await api.delete(`/disputa/${id}`);
+  return data;
+}
+
+export async function enviarLanceManual(
+  id: string,
+  payload: { itemNumero: number; valor: number },
+) {
+  const { data } = await api.patch(`/disputa/${id}/lance-manual`, payload);
+  return data;
+}
+
 // --- Jurídico (petições) ---
 export type TipoPeticao =
   | "IMPUGNACAO"
