@@ -53,6 +53,10 @@ model Empresa {
   chatHistoricos     ChatHistorico[]
   // Relacionamento: Uma empresa tem muitas análises preditivas de licitações
   bidPredictions     BidPrediction[]
+  // Relacionamento: Uma empresa tem muitas disputas
+  disputas           Disputa[]
+  // Relacionamento: Uma empresa tem muitas credenciais de portal
+  credenciaisPortal  CredencialPortal[]
 
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("empresas")
@@ -175,6 +179,8 @@ model Bid {
   chatHistoricos ChatHistorico[]
   // Relacionamento: Uma licitação pode ter várias análises preditivas
   bidPredictions BidPrediction[]
+  // Relacionamento: Uma licitação pode ter várias disputas
+  disputas       Disputa[]
 
   @@index([empresaId])
   @@index([empresaId, operationalState]) // Consultas por empresa e estado operacional
@@ -775,4 +781,93 @@ model DiarioOficial {
   @@index([estado, municipio])
   @@index([deletedAt])
   @@map("diarios_oficiais")
+}
+
+model Disputa {
+  id            String             @id @default(uuid())
+  empresaId     String
+  empresa       Empresa            @relation(fields: [empresaId], references: [id])
+  bidId         String?
+  bid           Bid?               @relation(fields: [bidId], references: [id])
+  portal        PortalLicitacao
+  status        DisputaStatus      @default(AGENDADA)
+  agendadoPara  DateTime?
+  iniciadoEm    DateTime?
+  encerradoEm   DateTime?
+  credencialId  String
+  credencial    CredencialPortal   @relation(fields: [credencialId], references: [id])
+  configuracoes ConfiguracaoLance[]
+  historico     HistoricoLance[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+}
+
+model CredencialPortal {
+  id        String           @id @default(uuid())
+  empresaId String
+  empresa   Empresa          @relation(fields: [empresaId], references: [id])
+  portal    PortalLicitacao
+  cnpj      String
+  senhaHash String // AES-256 criptografado
+  disputas  Disputa[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+}
+
+model ConfiguracaoLance {
+  id            String          @id @default(uuid())
+  disputaId     String
+  disputa       Disputa         @relation(fields: [disputaId], references: [id])
+  itemNumero    Int
+  itemDescricao String?
+  valorMaximo   Decimal         @db.Decimal(15, 2)
+  valorMinimo   Decimal         @db.Decimal(15, 2)
+  estrategia    EstrategiaLance
+  ativo         Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+}
+
+model HistoricoLance {
+  id           String       @id @default(uuid())
+  disputaId    String
+  disputa      Disputa      @relation(fields: [disputaId], references: [id])
+  itemNumero   Int
+  valorEnviado Decimal?     @db.Decimal(15, 2)
+  melhorLance  Decimal?     @db.Decimal(15, 2)
+  posicao      Int?
+  evento       EventoDisputa
+  detalhe      String?
+  timestamp    DateTime     @default(now())
+}
+
+enum PortalLicitacao {
+  COMPRASNET
+  BNC
+}
+
+enum DisputaStatus {
+  AGENDADA
+  INICIANDO
+  AO_VIVO
+  PAUSADA
+  ENCERRADA
+  CANCELADA
+  ERRO
+}
+
+enum EstrategiaLance {
+  AGRESSIVA
+  CONSERVADORA
+  POR_MARGEM
+}
+
+enum EventoDisputa {
+  LANCE_ENVIADO
+  POSICAO_ATUALIZADA
+  SESSAO_ENCERRADA
+  CAPTCHA_DETECTADO
+  ERRO
+  PAUSADA
+  RETOMADA
+  LANCE_MANUAL
 }
