@@ -3,6 +3,7 @@ import { DisputaStatus, EventoDisputa, PortalLicitacao } from "@prisma/client";
 import { Job } from "bull";
 import { DisputaService } from "./disputa.service";
 import { FaseSessao } from "./robos/base-robo";
+import { MockRobo } from "./robos/mock.robo";
 import { selecionarEstrategia } from "./robos/comprasnet/comprasnet.estrategias";
 import { ComprasnetRobo } from "./robos/comprasnet/comprasnet.robo";
 
@@ -14,12 +15,21 @@ export class DisputaProcessor {
   async processarDisputa(job: Job<{ disputaId: string }>) {
     const { disputaId } = job.data;
     const disputa = await this.disputaService.buscarComConfiguracoes(disputaId);
+    const usarMock = process.env.DISPUTA_MOCK === "true";
 
     const robo =
-      disputa.portal === PortalLicitacao.COMPRASNET ? new ComprasnetRobo() : null;
+      usarMock
+        ? new MockRobo()
+        : disputa.portal === PortalLicitacao.COMPRASNET
+          ? new ComprasnetRobo()
+          : null;
 
     if (!robo) {
       throw new Error(`Portal ${disputa.portal} não suportado ainda`);
+    }
+
+    if (robo instanceof MockRobo) {
+      robo.configurarItens(disputa.configuracoes);
     }
 
     await robo.iniciarBrowser();

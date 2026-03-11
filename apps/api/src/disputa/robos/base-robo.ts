@@ -18,6 +18,7 @@ export abstract class BaseRobo {
   abstract enviarLance(valor: number, itemNumero: number): Promise<boolean>;
   abstract obterMelhorLance(itemNumero: number): Promise<number>;
   abstract obterPosicaoAtual(itemNumero: number): Promise<number>;
+  abstract obterTempoRestante(): Promise<number>;
   abstract detectarCaptcha(): Promise<boolean>;
   abstract encerrar(): Promise<void>;
 

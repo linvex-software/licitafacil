@@ -8,6 +8,7 @@ import {
     Globe, ShieldCheck, ChevronDown, ClipboardList,
     BarChart2, Briefcase,
     Building2,
+    Swords,
     TrendingUp, History, Tag as TagIcon,
     CalendarDays, Users, HelpCircle,
 } from "lucide-react";
@@ -67,6 +68,9 @@ const navGroups: NavGroup[] = [
                     { label: "Funil de licitações (Kanban)", href: "/negocios/funil", icon: TrendingUp },
                     { label: "Agenda", href: "/negocios/agenda", icon: CalendarDays },
                 ]
+            },
+            {
+                label: "Disputa", icon: Swords, href: "/disputa",
             },
             {
                 label: "Buscar", icon: Globe, href: "/integracoes/comprasnet",
