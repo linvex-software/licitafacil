@@ -16,6 +16,7 @@ import { DisputaGateway } from "./disputa.gateway";
 
 type DisputaCompleta = Prisma.DisputaGetPayload<{
   include: {
+    bid: true;
     credencial: true;
     configuracoes: true;
   };
@@ -30,7 +31,10 @@ export class DisputaService {
   ) {}
 
   async criarDisputa(dto: CreateDisputaDto, empresaId: string) {
-    const agendadoPara = dto.agendadoPara ? new Date(dto.agendadoPara) : null;
+    const agendadoParaInput = dto.agendadoPara;
+    const agendada = agendadoParaInput != null && agendadoParaInput !== undefined;
+    const status = agendada ? DisputaStatus.AGENDADA : DisputaStatus.AO_VIVO;
+    const agendadoPara = agendada ? new Date(agendadoParaInput as string) : null;
     if (agendadoPara && Number.isNaN(agendadoPara.getTime())) {
       throw new BadRequestException("Data de agendamento inválida");
     }
@@ -52,6 +56,7 @@ export class DisputaService {
             }
           : undefined,
         portal: dto.portal,
+        status,
         agendadoPara,
         credencial: {
           create: {
@@ -75,13 +80,14 @@ export class DisputaService {
         },
       },
       include: {
+        bid: true,
         credencial: true,
         configuracoes: true,
       },
     });
 
-    if (agendadoPara) {
-      const delay = Math.max(0, agendadoPara.getTime() - Date.now());
+    if (agendada) {
+      const delay = Math.max(0, agendadoPara!.getTime() - Date.now());
       await this.disputaQueue.add(
         "iniciar",
         { disputaId: disputa.id },
@@ -92,7 +98,14 @@ export class DisputaService {
         },
       );
     } else {
-      await this.processarDisputaAgendada(disputa.id);
+      await this.disputaQueue.add(
+        "iniciar",
+        { disputaId: disputa.id },
+        {
+          removeOnComplete: true,
+          removeOnFail: false,
+        },
+      );
     }
 
     return this.sanitizarDisputa(disputa);
@@ -102,6 +115,7 @@ export class DisputaService {
     const disputas = await this.prisma.disputa.findMany({
       where: { empresaId },
       include: {
+        bid: true,
         credencial: true,
         configuracoes: true,
       },
@@ -115,6 +129,7 @@ export class DisputaService {
     const disputa = await this.prisma.disputa.findFirst({
       where: { id, empresaId },
       include: {
+        bid: true,
         credencial: true,
         configuracoes: true,
       },
@@ -128,57 +143,42 @@ export class DisputaService {
   }
 
   async pausarDisputa(id: string, empresaId: string) {
-    const disputa = await this.obterDisputaPorEmpresa(id, empresaId);
-    if (disputa.status !== DisputaStatus.AO_VIVO && disputa.status !== DisputaStatus.INICIANDO) {
-      throw new BadRequestException("Apenas disputas em andamento podem ser pausadas");
+    const disputa = await this.prisma.disputa.findFirst({
+      where: { id, empresaId },
+    });
+    if (!disputa) {
+      throw new NotFoundException("Disputa não encontrada");
     }
 
-    const atualizada = await this.prisma.disputa.update({
+    return this.prisma.disputa.update({
       where: { id },
       data: { status: DisputaStatus.PAUSADA },
-      include: {
-        credencial: true,
-        configuracoes: true,
-      },
     });
-
-    await this.emitirEvento(id, EventoDisputa.PAUSADA, {
-      disputaId: id,
-      evento: EventoDisputa.PAUSADA,
-      detalhe: "Disputa pausada manualmente",
-      timestamp: new Date(),
-    });
-
-    return this.sanitizarDisputa(atualizada);
   }
 
   async retomarDisputa(id: string, empresaId: string) {
-    const disputa = await this.obterDisputaPorEmpresa(id, empresaId);
-    if (disputa.status !== DisputaStatus.PAUSADA) {
-      throw new BadRequestException("Apenas disputas pausadas podem ser retomadas");
+    const disputa = await this.prisma.disputa.findFirst({
+      where: { id, empresaId },
+    });
+    if (!disputa) {
+      throw new NotFoundException("Disputa não encontrada");
     }
 
-    const atualizada = await this.prisma.disputa.update({
+    return this.prisma.disputa.update({
       where: { id },
       data: { status: DisputaStatus.AO_VIVO },
-      include: {
-        credencial: true,
-        configuracoes: true,
-      },
     });
-
-    await this.emitirEvento(id, EventoDisputa.RETOMADA, {
-      disputaId: id,
-      evento: EventoDisputa.RETOMADA,
-      detalhe: "Disputa retomada",
-      timestamp: new Date(),
-    });
-
-    return this.sanitizarDisputa(atualizada);
   }
 
-  async encerrarDisputa(id: string, empresaId: string, dto?: UpdateDisputaDto) {
-    await this.obterDisputaPorEmpresa(id, empresaId);
+  async encerrarDisputa(id: string, empresaId?: string, dto?: UpdateDisputaDto) {
+    if (empresaId) {
+      await this.obterDisputaPorEmpresa(id, empresaId);
+    } else {
+      const disputa = await this.prisma.disputa.findUnique({ where: { id } });
+      if (!disputa) {
+        throw new NotFoundException("Disputa não encontrada");
+      }
+    }
 
     const atualizada = await this.prisma.disputa.update({
       where: { id },
@@ -187,6 +187,7 @@ export class DisputaService {
         encerradoEm: new Date(),
       },
       include: {
+        bid: true,
         credencial: true,
         configuracoes: true,
       },
@@ -212,6 +213,7 @@ export class DisputaService {
       where: { id },
       data: { status: DisputaStatus.CANCELADA },
       include: {
+        bid: true,
         credencial: true,
         configuracoes: true,
       },
@@ -225,6 +227,52 @@ export class DisputaService {
     });
 
     return this.sanitizarDisputa(atualizada);
+  }
+
+  async registrarLanceManual(
+    disputaId: string,
+    itemNumero: number,
+    valor: number,
+    empresaId: string,
+  ) {
+    if (!Number.isFinite(valor) || valor <= 0) {
+      throw new BadRequestException("Valor do lance manual inválido");
+    }
+
+    const disputa = await this.prisma.disputa.findFirst({
+      where: { id: disputaId, empresaId },
+    });
+    if (!disputa) {
+      throw new NotFoundException("Disputa não encontrada");
+    }
+
+    await this.prisma.historicoLance.create({
+      data: {
+        disputaId,
+        itemNumero,
+        evento: EventoDisputa.LANCE_ENVIADO,
+        valorEnviado: valor,
+        detalhe: "Lance manual enviado pelo operador (origem: MANUAL)",
+        timestamp: new Date(),
+      },
+    });
+
+    this.disputaGateway.emitirEvento(disputaId, EventoDisputa.LANCE_ENVIADO, {
+      tipo: "LANCE_ENVIADO",
+      itemNumero,
+      valorEnviado: valor,
+      detalhe: "Lance manual enviado pelo operador",
+      timestamp: new Date(),
+    });
+    this.disputaGateway.emitirCanal(disputaId, "disputa:evento", {
+      tipo: "LANCE_ENVIADO",
+      descricao: `Lance manual enviado: R$ ${valor.toFixed(2)}`,
+      valor,
+      itemId: String(itemNumero),
+      timestamp: new Date().toISOString(),
+    });
+
+    return { ok: true };
   }
 
   async emitirEvento(disputaId: string, evento: EventoDisputa, payload: DisputaEventoPayload) {
@@ -245,7 +293,7 @@ export class DisputaService {
     return historico;
   }
 
-  async processarDisputaAgendada(disputaId: string) {
+  async buscarComConfiguracoes(disputaId: string) {
     const disputa = await this.prisma.disputa.findUnique({
       where: { id: disputaId },
       include: {
@@ -255,54 +303,43 @@ export class DisputaService {
     });
 
     if (!disputa) {
-      throw new NotFoundException("Disputa agendada não encontrada");
+      throw new NotFoundException("Disputa não encontrada");
     }
 
-    try {
-      // A senha é descriptografada apenas para uso interno do fluxo de automação.
-      this.descriptografarSenha(disputa.credencial.senhaHash);
+    return disputa;
+  }
 
-      await this.prisma.disputa.update({
-        where: { id: disputaId },
-        data: {
-          status: DisputaStatus.INICIANDO,
-          iniciadoEm: disputa.iniciadoEm ?? new Date(),
-        },
-      });
+  async buscarStatus(disputaId: string) {
+    const disputa = await this.prisma.disputa.findUnique({
+      where: { id: disputaId },
+      select: { id: true, status: true },
+    });
 
-      await this.emitirEvento(disputaId, EventoDisputa.POSICAO_ATUALIZADA, {
-        disputaId,
-        evento: EventoDisputa.POSICAO_ATUALIZADA,
-        detalhe: "Disputa iniciando (simulação da infraestrutura)",
-        timestamp: new Date(),
-      });
-
-      await this.prisma.disputa.update({
-        where: { id: disputaId },
-        data: { status: DisputaStatus.AO_VIVO },
-      });
-
-      await this.emitirEvento(disputaId, EventoDisputa.RETOMADA, {
-        disputaId,
-        evento: EventoDisputa.RETOMADA,
-        detalhe: "Disputa iniciada em modo de simulação",
-        timestamp: new Date(),
-      });
-    } catch (error) {
-      await this.prisma.disputa.update({
-        where: { id: disputaId },
-        data: { status: DisputaStatus.ERRO },
-      });
-
-      await this.emitirEvento(disputaId, EventoDisputa.ERRO, {
-        disputaId,
-        evento: EventoDisputa.ERRO,
-        detalhe: error instanceof Error ? error.message : "Falha ao iniciar disputa",
-        timestamp: new Date(),
-      });
-
-      throw error;
+    if (!disputa) {
+      throw new NotFoundException("Disputa não encontrada");
     }
+
+    return disputa;
+  }
+
+  async atualizarStatus(disputaId: string, status: DisputaStatus) {
+    const updateData: Prisma.DisputaUpdateInput = { status };
+    if (status === DisputaStatus.INICIANDO) {
+      updateData.iniciadoEm = new Date();
+    }
+    if (status === DisputaStatus.ENCERRADA) {
+      updateData.encerradoEm = new Date();
+    }
+
+    return this.prisma.disputa.update({
+      where: { id: disputaId },
+      data: updateData,
+    });
+  }
+
+  // USO INTERNO — nunca expor via REST
+  descriptografarSenhaInterno(hash: string): string {
+    return this.descriptografarSenha(hash);
   }
 
   private async obterDisputaPorEmpresa(id: string, empresaId: string) {

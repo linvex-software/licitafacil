@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Request, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { Tenant } from "../common/decorators/tenant.decorator";
 import { CreateDisputaDto } from "./dto/create-disputa.dto";
@@ -26,13 +26,15 @@ export class DisputaController {
   }
 
   @Patch(":id/pausar")
-  async pausarDisputa(@Param("id") id: string, @Tenant() empresaId: string) {
-    return this.disputaService.pausarDisputa(id, empresaId);
+  @UseGuards(JwtAuthGuard)
+  pausar(@Param("id") id: string, @Request() req: { user: { empresaId: string } }) {
+    return this.disputaService.pausarDisputa(id, req.user.empresaId);
   }
 
   @Patch(":id/retomar")
-  async retomarDisputa(@Param("id") id: string, @Tenant() empresaId: string) {
-    return this.disputaService.retomarDisputa(id, empresaId);
+  @UseGuards(JwtAuthGuard)
+  retomar(@Param("id") id: string, @Request() req: { user: { empresaId: string } }) {
+    return this.disputaService.retomarDisputa(id, req.user.empresaId);
   }
 
   @Patch(":id/encerrar")
@@ -47,5 +49,20 @@ export class DisputaController {
   @Delete(":id")
   async cancelarDisputa(@Param("id") id: string, @Tenant() empresaId: string) {
     return this.disputaService.cancelarDisputa(id, empresaId);
+  }
+
+  @Patch(":id/lance-manual")
+  @UseGuards(JwtAuthGuard)
+  async lanceManual(
+    @Param("id") id: string,
+    @Body() body: { itemNumero: number; valor: number },
+    @Request() req: { user: { empresaId: string } },
+  ) {
+    return this.disputaService.registrarLanceManual(
+      id,
+      body.itemNumero,
+      body.valor,
+      req.user.empresaId,
+    );
   }
 }
