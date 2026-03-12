@@ -1,9 +1,23 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Request, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Request,
+  Res,
+  UseGuards,
+} from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { Tenant } from "../common/decorators/tenant.decorator";
 import { CreateDisputaDto } from "./dto/create-disputa.dto";
 import { UpdateDisputaDto } from "./dto/update-disputa.dto";
 import { DisputaService } from "./disputa.service";
+import { GetHistoricoDisputaQueryDto } from "./dto/historico-disputa.dto";
+import type { Response } from "express";
 
 @UseGuards(JwtAuthGuard)
 @Controller("disputa")
@@ -18,6 +32,44 @@ export class DisputaController {
   @Get()
   async listarDisputas(@Tenant() empresaId: string) {
     return this.disputaService.listarDisputas(empresaId);
+  }
+
+  /**
+   * Histórico de disputas encerradas 
+   * GET /disputa/historico
+   */
+  @Get("historico")
+  async listarHistorico(
+    @Tenant() empresaId: string,
+    @Query() query: GetHistoricoDisputaQueryDto,
+  ) {
+    return this.disputaService.listarHistorico(empresaId, query);
+  }
+
+  /**
+   * Detalhes de uma disputa encerrada 
+   * GET /disputa/historico/:id
+   */
+  @Get("historico/:id")
+  async detalheHistorico(@Param("id") id: string, @Tenant() empresaId: string) {
+    return this.disputaService.buscarHistoricoDetalhe(id, empresaId);
+  }
+
+  /**
+   * Exporta PDF do histórico da disputa 
+   * GET /disputa/historico/:id/pdf
+   */
+  @Get("historico/:id/pdf")
+  async exportarHistoricoPdf(
+    @Param("id") id: string,
+    @Tenant() empresaId: string,
+    @Res() res: Response,
+  ) {
+    const { buffer, fileName } = await this.disputaService.gerarHistoricoPdf(id, empresaId);
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename=\"${fileName}\"`);
+    res.send(buffer);
   }
 
   @Get(":id")
