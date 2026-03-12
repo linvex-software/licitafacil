@@ -24,6 +24,9 @@ import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem,
     DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import { SupportDrawer } from "@/components/SupportDrawer";
@@ -31,7 +34,7 @@ import { Logo } from "@/components/logo";
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface SubItem { label: string; href: string; icon?: any; }
-interface NavItem { label: string; icon: any; href: string; subItems?: SubItem[]; }
+interface NavItem { label: string; icon: any; href: string; subItems?: SubItem[]; emDesenvolvimento?: boolean; }
 interface NavGroup { group: string; items: NavItem[]; }
 
 /* ─── Nav structure ──────────────────────────────────────── */
@@ -70,7 +73,7 @@ const navGroups: NavGroup[] = [
                 ]
             },
             {
-                label: "Disputa", icon: Swords, href: "/disputa",
+                label: "Disputa", icon: Swords, href: "/disputa", emDesenvolvimento: true,
             },
             {
                 label: "Buscar", icon: Globe, href: "/integracoes/comprasnet",
@@ -149,13 +152,30 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
     );
 }
 
+/* ─── Nav item "Em desenvolvimento" (abre popup em vez de navegar) ─── */
+function NavItemEmDesenvolvimento({ item, onOpen }: { item: NavItem; onOpen: () => void }) {
+    return (
+        <button
+            type="button"
+            onClick={onOpen}
+            className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-150",
+                "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+            )}
+        >
+            {item.label}
+        </button>
+    );
+}
+
 /* ─── Mobile sidebar content ─────────────────────────────── */
 function MobileSidebarContent({
-    pathname, user, logout,
+    pathname, user, logout, onOpenEmDev,
 }: {
     pathname: string;
     user: any;
     logout: () => void;
+    onOpenEmDev?: () => void;
 }) {
     const isEmpresaAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
     const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
@@ -199,6 +219,17 @@ function MobileSidebarContent({
                                             <item.icon className={cn("w-4 h-4 shrink-0", isActive || isSubItemActive ? "text-primary dark:text-primary-300" : "text-gray-400 dark:text-gray-500")} />
                                             <span className="flex-1 text-left">{item.label}</span>
                                             <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", isSubmenuOpen ? "rotate-180" : "")} />
+                                        </button>
+                                    ) : item.emDesenvolvimento && onOpenEmDev ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => onOpenEmDev()}
+                                            className={cn("flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-colors",
+                                                "text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
+                                            )}
+                                        >
+                                            <item.icon className="w-4 h-4 shrink-0 text-gray-400 dark:text-gray-500" />
+                                            {item.label}
                                         </button>
                                     ) : (
                                         <Link href={item.href}
@@ -275,6 +306,7 @@ export function Layout({ children, fullWidth = false }: {
     const pathname = usePathname();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [supportOpen, setSupportOpen] = useState(false);
+    const [emDevDialogOpen, setEmDevDialogOpen] = useState(false);
     const { user, logout } = useAuth();
     const isEmpresaAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
 
@@ -298,9 +330,11 @@ export function Layout({ children, fullWidth = false }: {
                 <nav className="hidden lg:flex items-center justify-center gap-0.5 flex-1">
                     {/* Simple items */}
                     {principalItems.map(item => (
-                        item.subItems
-                            ? <NavDropdown key={item.label} item={item} pathname={pathname} />
-                            : <NavLink key={item.href} item={item} pathname={pathname} />
+                        item.emDesenvolvimento
+                            ? <NavItemEmDesenvolvimento key={item.label} item={item} onOpen={() => setEmDevDialogOpen(true)} />
+                            : item.subItems
+                                ? <NavDropdown key={item.label} item={item} pathname={pathname} />
+                                : <NavLink key={item.href} item={item} pathname={pathname} />
                     ))}
 
                     {/* Divider */}
@@ -308,9 +342,11 @@ export function Layout({ children, fullWidth = false }: {
 
                     {/* Module items with dropdowns */}
                     {moduleItems.map(item => (
-                        item.subItems
-                            ? <NavDropdown key={item.label} item={item} pathname={pathname} />
-                            : <NavLink key={item.href} item={item} pathname={pathname} />
+                        item.emDesenvolvimento
+                            ? <NavItemEmDesenvolvimento key={item.label} item={item} onOpen={() => setEmDevDialogOpen(true)} />
+                            : item.subItems
+                                ? <NavDropdown key={item.label} item={item} pathname={pathname} />
+                                : <NavLink key={item.href} item={item} pathname={pathname} />
                     ))}
 
                     {isEmpresaAdmin && (
@@ -390,11 +426,29 @@ export function Layout({ children, fullWidth = false }: {
                                 pathname={pathname}
                                 user={user}
                                 logout={logout}
+                                onOpenEmDev={() => { setEmDevDialogOpen(true); setIsMobileOpen(false); }}
                             />
                         </SheetContent>
                     </Sheet>
                 </div>
             </header>
+
+            {/* Popup "Em desenvolvimento" (ex.: Disputa) */}
+            <Dialog open={emDevDialogOpen} onOpenChange={setEmDevDialogOpen}>
+                <DialogContent className="sm:max-w-md bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+                    <DialogHeader className="text-center space-y-2">
+                        <DialogTitle className="text-base font-semibold text-center">Em manutenção</DialogTitle>
+                        <DialogDescription className="text-center">
+                            O módulo de Disputa está em desenvolvimento. Estamos organizando a arquitetura do robô de lances. Em breve você poderá criar e acompanhar disputas automatizadas por aqui.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="justify-center">
+                        <Button variant="outline" onClick={() => setEmDevDialogOpen(false)}>
+                            Entendi
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* ── Page content ────────────────────────────────── */}
             <main className={cn("flex-1 overflow-y-auto", fullWidth ? "p-4" : "p-5 md:p-7")}>
