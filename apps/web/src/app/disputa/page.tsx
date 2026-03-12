@@ -85,7 +85,12 @@ export default function DisputaPage() {
               <h1 className="text-3xl font-heading font-extrabold text-gray-900 dark:text-gray-100">Disputas</h1>
               <p className="text-gray-500 dark:text-gray-400">Gerencie e monitore suas sessões de lance automático</p>
             </div>
-            <NovaDisputaModal onSuccess={() => void refetch()} />
+            <div className="flex gap-3">
+              <Link href="/disputa/historico">
+                <Button variant="outline">Histórico</Button>
+              </Link>
+              <NovaDisputaModal onSuccess={() => void refetch()} />
+            </div>
           </div>
 
           <Tabs value={aba} onValueChange={(value) => setAba(value as AbaStatus)}>
