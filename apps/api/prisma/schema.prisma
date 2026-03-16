@@ -57,6 +57,8 @@ model Empresa {
   disputas           Disputa[]
   // Relacionamento: Uma empresa tem muitas credenciais de portal
   credenciaisPortal  CredencialPortal[]
+  // Relacionamento: Uma empresa tem muitos pregões monitorados
+  pregoesMonitorados PregaoMonitorado[]
 
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("empresas")
@@ -794,12 +796,14 @@ model Disputa {
   agendadoPara  DateTime?
   iniciadoEm    DateTime?
   encerradoEm   DateTime?
-  credencialId  String
-  credencial    CredencialPortal   @relation(fields: [credencialId], references: [id])
-  configuracoes ConfiguracaoLance[]
-  historico     HistoricoLance[]
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
+  credencialId    String
+  credencial      CredencialPortal   @relation(fields: [credencialId], references: [id])
+  resultado       ResultadoDisputa   @default(EM_ANDAMENTO)
+  economiaGerada  Float?
+  configuracoes   ConfiguracaoLance[]
+  historico       HistoricoLance[]
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
 }
 
 model CredencialPortal {
@@ -870,4 +874,48 @@ enum EventoDisputa {
   PAUSADA
   RETOMADA
   LANCE_MANUAL
+}
+
+enum ResultadoDisputa {
+  EM_ANDAMENTO
+  GANHOU
+  PERDEU
+  CANCELADO
+}
+
+enum PortalMonitoramento {
+  PNCP
+  COMPRASNET
+  LICITAR_DIGITAL
+  BNC
+}
+
+enum StatusPregao {
+  AGUARDANDO
+  EM_DISPUTA
+  ENCERRADO
+  CANCELADO
+}
+
+model PregaoMonitorado {
+  id             String              @id @default(uuid())
+  empresaId      String
+  portal         PortalMonitoramento
+  status         StatusPregao        @default(AGUARDANDO)
+  numeroPregao   String
+  objeto         String
+  orgao          String?
+  horarioInicio  DateTime
+  horarioFim     DateTime?
+  urlSalaDisputa String
+  linkPncp       String?
+  melhorLance    Float?
+  alertaEnviado  Boolean             @default(false)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  empresa        Empresa             @relation(fields: [empresaId], references: [id])
+
+  @@index([empresaId, status])
+  @@index([horarioInicio])
 }
