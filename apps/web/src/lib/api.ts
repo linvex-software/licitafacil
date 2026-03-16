@@ -602,6 +602,32 @@ export async function markAlertResolved(id: string) {
   return data;
 }
 
+// --- Monitoramento Multi-Portal ---
+export async function listarPregoesPncp(data?: string): Promise<any[]> {
+  const { data: res } = await api.get('/monitoramento/pregoes/pncp', { params: data ? { data } : {} })
+  return Array.isArray(res) ? res : []
+}
+
+export async function listarPregoesMonitorados(filtros?: {
+  data?: string
+  portal?: string
+  status?: string
+}): Promise<any[]> {
+  const { data: res } = await api.get('/monitoramento/pregoes', { params: filtros })
+  return Array.isArray(res) ? res : []
+}
+
+export async function cadastrarPregaoMonitorado(url: string): Promise<any> {
+  const { data: res } = await api.post('/monitoramento/pregoes', { url })
+  return res
+}
+
+export async function removerPregaoMonitorado(id: string): Promise<any> {
+  const { data: res } = await api.delete(`/monitoramento/pregoes/${id}`)
+  return res
+}
+
+
 // --- Checklist Items (Adicional) ---
 export async function updateChecklistItem(id: string, body: { titulo?: string; descricao?: string; exigeEvidencia?: boolean }) {
   const { data } = await api.patch(`/checklist-items/${id}`, body);
