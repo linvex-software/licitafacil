@@ -10,7 +10,7 @@ import {
     Building2,
     Swords,
     TrendingUp, History, Tag as TagIcon,
-    CalendarDays, Users, HelpCircle,
+    CalendarDays, Users, HelpCircle, Radio,
 } from "lucide-react";
 
 import { AlertsDropdown } from "@/components/AlertsDropdown";
@@ -70,6 +70,7 @@ const navGroups: NavGroup[] = [
                 subItems: [
                     { label: "Funil de licitações (Kanban)", href: "/negocios/funil", icon: TrendingUp },
                     { label: "Agenda", href: "/negocios/agenda", icon: CalendarDays },
+                    { label: "Monitoramento", href: "/monitoramento", icon: Radio },
                 ]
             },
             {

@@ -9,7 +9,6 @@ export class PncpAdapter implements PortalAdapter {
 
   private detectarPortal(link: string): PortalMonitoramento {
     if (link.includes('comprasnet') || link.includes('compras.gov')) return PortalMonitoramento.COMPRASNET
-    if (link.includes('licitardigital')) return PortalMonitoramento.LICITAR_DIGITAL
     if (link.includes('bnc') || link.includes('bnccompras')) return PortalMonitoramento.BNC
     return PortalMonitoramento.PNCP
   }
