@@ -8,7 +8,6 @@ import { listarPregoesPncp, cadastrarPregaoMonitorado, sugerirVinculoPregao } fr
 import { useAuth } from '@/contexts/auth-context'
 import { AuthGuard } from '@/components/AuthGuard'
 import { Layout } from '@/components/layout'
-import { useRouter } from 'next/navigation'
 import {
   Select,
   SelectContent,
@@ -17,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const ITENS_POR_PAGINA = 50
+const ITENS_POR_PAGINA = 20
 
 function formatarOpcaoLicitacao(title?: string, agency?: string) {
   const raw = `${title ?? ''} — ${agency ?? ''}`
@@ -29,11 +28,9 @@ function formatarOpcaoLicitacao(title?: string, agency?: string) {
 
 function MonitoramentoContent() {
   const { user } = useAuth()
-  const router = useRouter()
   const [pregoes, setPregoes] = useState<PregaoMonitorado[]>([])
   const [carregando, setCarregando] = useState(true)
   const [filtroPortal, setFiltroPortal] = useState('')
-  const [filtroStatus, setFiltroStatus] = useState('')
   const [dataFiltro, setDataFiltro] = useState(new Date().toISOString().slice(0, 10))
   const [busca, setBusca] = useState('')
   const [pagina, setPagina] = useState(1)
@@ -85,7 +82,7 @@ function MonitoramentoContent() {
 
   useEffect(() => { carregar() }, [carregar])
 
-  useEffect(() => { setPagina(1) }, [filtroPortal, filtroStatus, dataFiltro, busca])
+  useEffect(() => { setPagina(1) }, [filtroPortal, dataFiltro, busca])
 
   useEffect(() => {
     if (!mostrarAdicionar) return
@@ -130,7 +127,6 @@ function MonitoramentoContent() {
 
   const pregoesFiltrados = pregoes.filter(p => {
     if (filtroPortal && p.portal !== filtroPortal) return false
-    if (filtroStatus && p.status !== filtroStatus) return false
     if (busca.trim()) {
       const q = busca.toLowerCase()
       if (!p.objeto?.toLowerCase().includes(q) &&
@@ -170,21 +166,6 @@ function MonitoramentoContent() {
     } finally {
       setAdicionando(false)
     }
-  }
-
-  const handleCriarLicitacao = (pregao: PregaoMonitorado) => {
-    const params = new URLSearchParams({
-      numero: pregao.numeroPregao,
-      objeto: pregao.objeto?.slice(0, 200) || '',
-      orgao: pregao.orgao || '',
-    })
-    router.push(`/licitacoes?criar=true&${params.toString()}`)
-  }
-
-  const handleAnalisarEdital = (pregao: PregaoMonitorado) => {
-    const url = pregao.urlFallbackPncp || pregao.urlSalaDisputa
-    window.open(url, '_blank')
-    router.push('/licitacoes')
   }
 
   return (
@@ -328,16 +309,6 @@ function MonitoramentoContent() {
           <option value="BNC">BNC</option>
           <option value="PNCP">PNCP</option>
         </select>
-        <select
-          value={filtroStatus}
-          onChange={e => setFiltroStatus(e.target.value)}
-          className="px-3 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
-        >
-          <option value="">Todos os status</option>
-          <option value="AGUARDANDO">Aguardando</option>
-          <option value="EM_DISPUTA">Em disputa</option>
-          <option value="ENCERRADO">Encerrado</option>
-        </select>
         <span className="text-xs text-muted-foreground ml-auto">
           {carregando
             ? 'Buscando pregões...'
@@ -376,8 +347,6 @@ function MonitoramentoContent() {
               <CardPregao
                 key={p.id ?? `${p.numeroPregao}-${i}`}
                 pregao={p}
-                onCriarLicitacao={handleCriarLicitacao}
-                onAnalisarEdital={handleAnalisarEdital}
               />
             ))}
           </div>
