@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
-import { AccessibilityProvider } from "@/contexts/accessibility-context";
+import { VLibrasWidget } from "@/components/VLibrasWidget";
 
 export const metadata: Metadata = {
   title: "Licitafacil - Gestão de Licitações",
@@ -22,11 +22,11 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className="antialiased font-sans" suppressHydrationWarning>
-        <AccessibilityProvider>
-          <Providers>
-            {children}
-          </Providers>
-        </AccessibilityProvider>
+        <Providers>
+          {children}
+        </Providers>
+        {/* VLibras - Widget oficial de acessibilidade do Governo Federal */}
+        <VLibrasWidget />
       </body>
     </html>
   );

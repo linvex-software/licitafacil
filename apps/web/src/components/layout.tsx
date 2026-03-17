@@ -7,7 +7,6 @@ import {
     User, LogOut, Menu, FileText, BarChart3,
     Globe, ShieldCheck, ChevronDown, ClipboardList,
     BarChart2, Briefcase,
-    Building2,
     Swords,
     TrendingUp, History, Tag as TagIcon,
     CalendarDays, Users, HelpCircle, Radio,
@@ -15,7 +14,6 @@ import {
 
 import { AlertsDropdown } from "@/components/AlertsDropdown";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { FontSizeControl } from "@/components/accessibility/FontSizeControl";
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -61,7 +59,6 @@ const navGroups: NavGroup[] = [
 
                 subItems: [
                     { label: "Histórico de Compras", href: "/analise/historico-compras", icon: History },
-                    { label: "Concorrentes", href: "/analise/concorrentes", icon: Building2 },
                     { label: "Produtos", href: "/analise/produtos", icon: TagIcon },
                 ]
             },
@@ -283,12 +280,6 @@ function MobileSidebarContent({
                     </div>
                 )}
             </nav>
-            <div className="px-3 pb-3">
-                <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-800/40 p-3">
-                    <p className="section-label mb-2">Tamanho do texto</p>
-                    <FontSizeControl />
-                </div>
-            </div>
             <div className="p-3 border-t border-gray-100 dark:border-gray-800">
                 <button onClick={logout}
                     className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-[13px] font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950 transition-colors">
@@ -369,9 +360,6 @@ export function Layout({ children, fullWidth = false }: {
                 {/* Right side */}
                 <div className="ml-auto flex items-center gap-1 shrink-0">
                     <ThemeToggle />
-                    <div className="hidden md:flex">
-                        <FontSizeControl />
-                    </div>
                     <div className="hidden md:block h-5 w-px bg-gray-100 dark:bg-gray-800 mx-1" />
                     <AlertsDropdown />
                     <div className="hidden md:block h-5 w-px bg-gray-100 dark:bg-gray-800 mx-1" />
