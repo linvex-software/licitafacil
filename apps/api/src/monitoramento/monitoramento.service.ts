@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common'
+import { Injectable, BadRequestException, Logger } from '@nestjs/common'
 import { InjectQueue } from '@nestjs/bull'
 import { Queue } from 'bull'
 import { PrismaService } from '../prisma/prisma.service'
@@ -9,10 +9,13 @@ import { Prisma } from '@prisma/client'
 
 @Injectable()
 export class MonitoramentoService {
+  private readonly logger = new Logger(MonitoramentoService.name)
+
   constructor(
     private prisma: PrismaService,
     private pncpAdapter: PncpAdapter,
     @InjectQueue('monitoramento') private monitoramentoQueue: Queue,
+    @InjectQueue('monitoramento-alertas') private alertasQueue: Queue,
   ) {}
 
   async listarPregoes(empresaId: string, filtros: FiltrosPregaoDto) {
@@ -101,6 +104,24 @@ export class MonitoramentoService {
       { pregaoId: pregao.id, empresaId },
       { repeat: { every: 60000 }, jobId: `monitor-${pregao.id}` },
     )
+
+    // Agendar alerta por email
+    const empresa = await this.prisma.empresa.findUnique({
+      where: { id: empresaId },
+      select: { minutosAlertaPregao: true },
+    })
+    const minutosAntes = empresa?.minutosAlertaPregao ?? 15
+    const horarioAlerta = new Date(pregao.horarioInicio)
+    horarioAlerta.setMinutes(horarioAlerta.getMinutes() - minutosAntes)
+    const delay = horarioAlerta.getTime() - Date.now()
+    if (delay > 0) {
+      await this.alertasQueue.add(
+        'enviar-alerta-pregao',
+        { pregaoId: pregao.id, empresaId },
+        { delay, attempts: 2 },
+      )
+      this.logger.log(`Alerta agendado para ${minutosAntes}min antes do pregão ${pregao.id}`)
+    }
 
     return pregao
   }

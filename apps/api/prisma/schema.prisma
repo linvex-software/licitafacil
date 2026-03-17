@@ -60,6 +60,8 @@ model Empresa {
   // Relacionamento: Uma empresa tem muitos pregões monitorados
   pregoesMonitorados PregaoMonitorado[]
 
+  minutosAlertaPregao Int @default(15)
+
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("empresas")
 }

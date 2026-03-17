@@ -9,6 +9,8 @@ import {
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
+import { getConfigAlertaPregao, saveConfigAlertaPregao } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 /* ─── Theme helper ─────────────────────────────────────────── */
 type ThemeOption = "light" | "dark" | "system";
@@ -79,11 +81,27 @@ function SectionCard({
 
 export default function ConfiguracoesPage() {
     const { user } = useAuth();
+    const { toast } = useToast();
     const [theme, setTheme] = useState<ThemeOption>("system");
+    const [minutosAlerta, setMinutosAlerta] = useState(15);
+    const [salvandoAlerta, setSalvandoAlerta] = useState(false);
 
     useEffect(() => {
         setTheme(getStoredTheme());
+        getConfigAlertaPregao().then(r => setMinutosAlerta(r.minutosAlertaPregao)).catch(() => {});
     }, []);
+
+    async function salvarAlerta() {
+        setSalvandoAlerta(true);
+        try {
+            await saveConfigAlertaPregao(minutosAlerta);
+            toast({ title: "Configuração salva", description: "Alerta de pregão atualizado." });
+        } catch {
+            toast({ title: "Erro", description: "Não foi possível salvar.", variant: "destructive" });
+        } finally {
+            setSalvandoAlerta(false);
+        }
+    }
 
     function handleThemeChange(t: ThemeOption) {
         setTheme(t);
@@ -197,6 +215,54 @@ export default function ConfiguracoesPage() {
                                 </button>
                             ))}
                         </div>
+                    </div>
+                </div>
+
+                {/* Section: Alertas de Pregão */}
+                <div className="space-y-3">
+                    <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-1">
+                        Monitoramento
+                    </p>
+                    <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 space-y-4">
+                        <div>
+                            <p className="font-semibold text-slate-900 dark:text-slate-100 text-[15px] mb-0.5">Alertas de Pregão</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                Receba um email antes do horário de início dos pregões monitorados.
+                            </p>
+                        </div>
+                        <div className="space-y-3">
+                            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                Alertar quantos minutos antes?
+                            </p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                                {[5, 10, 15, 30, 60].map(min => (
+                                    <button
+                                        key={min}
+                                        onClick={() => setMinutosAlerta(min)}
+                                        className={cn(
+                                            "px-4 py-2 rounded-lg text-sm font-medium border transition-all duration-150",
+                                            minutosAlerta === min
+                                                ? "bg-blue-600 text-white border-blue-600"
+                                                : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-600"
+                                        )}
+                                    >
+                                        {min >= 60 ? "1h" : `${min}min`}
+                                    </button>
+                                ))}
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                Você receberá um email{" "}
+                                {minutosAlerta >= 60 ? "1 hora" : `${minutosAlerta} minutos`}{" "}
+                                antes do início de cada pregão que você monitorar.
+                            </p>
+                        </div>
+                        <button
+                            onClick={salvarAlerta}
+                            disabled={salvandoAlerta}
+                            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                        >
+                            {salvandoAlerta ? "Salvando..." : "Salvar configuração"}
+                        </button>
                     </div>
                 </div>
 

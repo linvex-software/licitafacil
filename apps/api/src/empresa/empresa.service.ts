@@ -83,4 +83,21 @@ export class EmpresaService {
 
     return !!empresa;
   }
+
+  async getConfigAlerta(empresaId: string): Promise<{ minutosAlertaPregao: number }> {
+    const empresa = await this.prisma.empresa.findUnique({
+      where: { id: empresaId },
+      select: { minutosAlertaPregao: true },
+    });
+    return { minutosAlertaPregao: empresa?.minutosAlertaPregao ?? 15 };
+  }
+
+  async updateConfigAlerta(empresaId: string, minutos: number): Promise<{ minutosAlertaPregao: number }> {
+    const empresa = await this.prisma.empresa.update({
+      where: { id: empresaId },
+      data: { minutosAlertaPregao: minutos },
+      select: { minutosAlertaPregao: true },
+    });
+    return { minutosAlertaPregao: empresa.minutosAlertaPregao };
+  }
 }
