@@ -80,6 +80,7 @@ export class PncpAdapter implements PortalAdapter {
             numeroPregao: item.numeroCompra || numeroControle || '',
             objeto: item.objetoCompra || '',
             orgao: item.orgaoEntidade?.razaoSocial || item.unidadeOrgao?.nomeUnidade || '',
+            uf: item.unidadeOrgao?.ufSigla || item.orgaoEntidade?.ufSigla || '',
             horarioInicio: new Date(item.dataAberturaProposta || item.dataPublicacaoPncp),
             urlSalaDisputa: link || urlFallbackPncp,
             urlFallbackPncp,

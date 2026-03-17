@@ -643,3 +643,13 @@ export async function updateChecklistItem(id: string, body: { titulo?: string; d
 export async function deleteChecklistItem(id: string): Promise<void> {
   await api.delete(`/checklist-items/${id}`);
 }
+
+// --- Config alertas pregão ---
+export async function getConfigAlertaPregao(): Promise<{ minutosAlertaPregao: number }> {
+  const { data } = await api.get('/empresas/configuracoes/alertas');
+  return data;
+}
+
+export async function saveConfigAlertaPregao(minutos: number): Promise<void> {
+  await api.patch('/empresas/configuracoes/alertas', { minutosAlertaPregao: minutos });
+}

@@ -7,6 +7,7 @@ export interface PregaoMonitorado {
   numeroPregao: string
   objeto: string
   orgao: string
+  uf?: string
   portal: string
   status: string
   horarioInicio: string
@@ -99,6 +100,7 @@ export function CardPregao({ pregao }: CardPregaoProps) {
         </p>
         <p className="text-xs text-muted-foreground mt-0.5">
           {pregao.numeroPregao} · {pregao.orgao}
+          {pregao.uf && <span className="ml-1 text-muted-foreground/60">· {pregao.uf}</span>}
         </p>
       </div>
 

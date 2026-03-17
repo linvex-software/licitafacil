@@ -31,6 +31,7 @@ function MonitoramentoContent() {
   const [pregoes, setPregoes] = useState<PregaoMonitorado[]>([])
   const [carregando, setCarregando] = useState(true)
   const [filtroPortal, setFiltroPortal] = useState('')
+  const [filtroUf, setFiltroUf] = useState('')
   const [dataFiltro, setDataFiltro] = useState(new Date().toISOString().slice(0, 10))
   const [busca, setBusca] = useState('')
   const [pagina, setPagina] = useState(1)
@@ -82,7 +83,7 @@ function MonitoramentoContent() {
 
   useEffect(() => { carregar() }, [carregar])
 
-  useEffect(() => { setPagina(1) }, [filtroPortal, dataFiltro, busca])
+  useEffect(() => { setPagina(1) }, [filtroPortal, filtroUf, dataFiltro, busca])
 
   useEffect(() => {
     if (!mostrarAdicionar) return
@@ -127,6 +128,7 @@ function MonitoramentoContent() {
 
   const pregoesFiltrados = pregoes.filter(p => {
     if (filtroPortal && p.portal !== filtroPortal) return false
+    if (filtroUf && p.uf !== filtroUf) return false
     if (busca.trim()) {
       const q = busca.toLowerCase()
       if (!p.objeto?.toLowerCase().includes(q) &&
@@ -283,6 +285,34 @@ function MonitoramentoContent() {
         </div>
       )}
 
+      {!carregando && pregoes.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { label: 'Total hoje', valor: pregoes.length, cor: 'text-foreground' },
+            {
+              label: 'Com link direto',
+              valor: pregoes.filter(p => p.urlSalaDisputa && !p.urlSalaDisputa.includes('pncp.gov.br')).length,
+              cor: 'text-green-400',
+            },
+            {
+              label: 'Portais',
+              valor: [...new Set(pregoes.map(p => p.portal))].length,
+              cor: 'text-blue-400',
+            },
+            {
+              label: 'Estados',
+              valor: [...new Set(pregoes.map(p => p.uf).filter(Boolean))].length,
+              cor: 'text-purple-400',
+            },
+          ].map(item => (
+            <div key={item.label} className="bg-card border border-border rounded-lg p-3 text-center">
+              <p className={`text-2xl font-bold ${item.cor}`}>{item.valor}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{item.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -308,6 +338,16 @@ function MonitoramentoContent() {
           <option value="">Todos os portais</option>
           <option value="BNC">BNC</option>
           <option value="PNCP">PNCP</option>
+        </select>
+        <select
+          value={filtroUf}
+          onChange={e => { setFiltroUf(e.target.value); setPagina(1) }}
+          className="px-3 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+        >
+          <option value="">Todos os estados</option>
+          {['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT',
+            'PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO']
+            .map(uf => <option key={uf} value={uf}>{uf}</option>)}
         </select>
         <span className="text-xs text-muted-foreground ml-auto">
           {carregando

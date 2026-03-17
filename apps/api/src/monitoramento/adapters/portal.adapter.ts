@@ -4,6 +4,7 @@ export interface PregaoInfo {
   numeroPregao: string
   objeto: string
   orgao: string
+  uf?: string
   horarioInicio: Date
   urlSalaDisputa: string
   urlFallbackPncp?: string
