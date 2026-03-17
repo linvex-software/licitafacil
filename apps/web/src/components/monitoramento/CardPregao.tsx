@@ -1,6 +1,6 @@
 'use client'
-import { useEffect, useState } from 'react'
-import { ExternalLink, Clock, TrendingDown, Plus, Sparkles } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { ExternalLink, Clock, TrendingDown } from 'lucide-react'
 
 export interface PregaoMonitorado {
   id?: string
@@ -17,8 +17,6 @@ export interface PregaoMonitorado {
 
 interface CardPregaoProps {
   pregao: PregaoMonitorado
-  onCriarLicitacao?: (pregao: PregaoMonitorado) => void
-  onAnalisarEdital?: (pregao: PregaoMonitorado) => void
 }
 
 const CORES_PORTAL: Record<string, string> = {
@@ -35,7 +33,20 @@ const LABEL_PORTAL: Record<string, string> = {
 
 function useCountdown(horario: string) {
   const [texto, setTexto] = useState('')
+  const ref = useRef<HTMLDivElement>(null)
+  const [visivel, setVisivel] = useState(false)
+
   useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => setVisivel(entry.isIntersecting),
+      { threshold: 0.1 }
+    )
+    if (ref.current) observer.observe(ref.current)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (!visivel) return
     function calcular() {
       const diff = new Date(horario).getTime() - Date.now()
       if (diff <= 0) { setTexto('Iniciado'); return }
@@ -47,26 +58,13 @@ function useCountdown(horario: string) {
     calcular()
     const t = setInterval(calcular, 1000)
     return () => clearInterval(t)
-  }, [horario])
-  return texto
+  }, [horario, visivel])
+
+  return { texto, ref }
 }
 
-export function CardPregao({ pregao, onCriarLicitacao, onAnalisarEdital }: CardPregaoProps) {
-  const countdown = useCountdown(pregao.horarioInicio)
-
-  const badgeStatus = {
-    AGUARDANDO: 'bg-muted text-muted-foreground',
-    EM_DISPUTA: 'bg-green-500/20 text-green-400 border border-green-500/30 animate-pulse',
-    ENCERRADO: 'bg-muted/50 text-muted-foreground',
-    CANCELADO: 'bg-red-500/20 text-red-400',
-  }[pregao.status] ?? 'bg-muted text-muted-foreground'
-
-  const labelStatus = {
-    AGUARDANDO: 'Aguardando',
-    EM_DISPUTA: '● Em disputa',
-    ENCERRADO: 'Encerrado',
-    CANCELADO: 'Cancelado',
-  }[pregao.status] ?? pregao.status
+export function CardPregao({ pregao }: CardPregaoProps) {
+  const { texto: countdown, ref: cardRef } = useCountdown(pregao.horarioInicio)
 
   const temUrlPortal = pregao.urlSalaDisputa &&
     !pregao.urlSalaDisputa.includes('pncp.gov.br') &&
@@ -79,7 +77,7 @@ export function CardPregao({ pregao, onCriarLicitacao, onAnalisarEdital }: CardP
   const urlAbrir = pregao.urlSalaDisputa || pregao.urlFallbackPncp || '#'
 
   return (
-    <div className={`bg-card border rounded-lg p-4 flex flex-col gap-3 transition-all
+    <div ref={cardRef} className={`bg-card border rounded-lg p-4 flex flex-col gap-3 transition-all
       ${pregao.status === 'EM_DISPUTA' ? 'border-green-500/40 ring-1 ring-green-500/20' : 'border-border'}
       ${pregao.status === 'ENCERRADO' ? 'opacity-60' : ''}
     `}>
@@ -87,9 +85,6 @@ export function CardPregao({ pregao, onCriarLicitacao, onAnalisarEdital }: CardP
         <div className="flex items-center gap-2 flex-wrap">
           <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${CORES_PORTAL[pregao.portal] ?? 'bg-muted text-muted-foreground border-border'}`}>
             {LABEL_PORTAL[pregao.portal] ?? pregao.portal}
-          </span>
-          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badgeStatus}`}>
-            {labelStatus}
           </span>
         </div>
         <div className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap">
@@ -126,22 +121,6 @@ export function CardPregao({ pregao, onCriarLicitacao, onAnalisarEdital }: CardP
         </a>
       </div>
 
-      <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-border">
-        <button
-          onClick={() => onCriarLicitacao?.(pregao)}
-          className="text-xs px-2 py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:border-primary transition-colors flex items-center gap-1"
-          title="Criar licitação no sistema a partir deste pregão"
-        >
-          <Plus className="h-3 w-3" /> Criar licitação
-        </button>
-        <button
-          onClick={() => onAnalisarEdital?.(pregao)}
-          className="text-xs px-2 py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:border-purple-400 transition-colors flex items-center gap-1"
-          title="Analisar edital com IA"
-        >
-          <Sparkles className="h-3 w-3" /> Analisar IA
-        </button>
-      </div>
     </div>
   )
 }

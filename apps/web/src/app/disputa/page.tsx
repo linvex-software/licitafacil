@@ -43,11 +43,12 @@ export default function DisputaPage() {
   const [aba, setAba] = useState<AbaStatus>("ATIVAS");
   const [cancelandoId, setCancelandoId] = useState<string | null>(null);
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["disputas"],
     queryFn: listarDisputas,
     staleTime: 8000,
     refetchInterval: 10000,
+    retry: 1,
     placeholderData: (previousData) => previousData,
     refetchIntervalInBackground: false,
   });
@@ -75,6 +76,20 @@ export default function DisputaPage() {
       setCancelandoId(null);
     }
   };
+
+  if (error) {
+    return (
+      <AuthGuard>
+        <Layout>
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <p className="text-sm text-muted-foreground">
+              Não foi possível carregar as disputas. Verifique se o serviço está ativo.
+            </p>
+          </div>
+        </Layout>
+      </AuthGuard>
+    );
+  }
 
   return (
     <AuthGuard>

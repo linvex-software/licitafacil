@@ -7,7 +7,6 @@ import {
     User, LogOut, Menu, FileText, BarChart3,
     Globe, ShieldCheck, ChevronDown, ClipboardList,
     BarChart2, Briefcase,
-    Swords,
     TrendingUp, History, Tag as TagIcon,
     CalendarDays, Users, HelpCircle, Radio,
 } from "lucide-react";
@@ -69,9 +68,6 @@ const navGroups: NavGroup[] = [
                     { label: "Agenda", href: "/negocios/agenda", icon: CalendarDays },
                     { label: "Monitoramento", href: "/monitoramento", icon: Radio },
                 ]
-            },
-            {
-                label: "Disputa", icon: Swords, href: "/disputa", emDesenvolvimento: true,
             },
             {
                 label: "Buscar", icon: Globe, href: "/integracoes/comprasnet",
