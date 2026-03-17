@@ -6,6 +6,28 @@ import { PortalAdapter, PregaoInfo } from './portal.adapter'
 export class PncpAdapter implements PortalAdapter {
   private readonly logger = new Logger(PncpAdapter.name)
   private readonly BASE_URL = 'https://pncp.gov.br/api/consulta/v1'
+  private readonly TIMEOUT_MS = 8000
+
+  private async fetchJson(url: string) {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), this.TIMEOUT_MS)
+    try {
+      const res = await fetch(url, {
+        headers: { accept: 'application/json' },
+        signal: controller.signal,
+      })
+      if (!res.ok) return null
+      return await res.json()
+    } catch (err) {
+      const msg = (err as Error)?.name === 'AbortError'
+        ? `Timeout ${this.TIMEOUT_MS}ms`
+        : (err as Error)?.message
+      this.logger.warn(`PNCP fetch falhou: ${msg}`)
+      return null
+    } finally {
+      clearTimeout(timeout)
+    }
+  }
 
   private detectarPortal(link: string): PortalMonitoramento {
     if (link.includes('comprasnet') || link.includes('compras.gov')) return PortalMonitoramento.COMPRASNET
@@ -26,15 +48,15 @@ export class PncpAdapter implements PortalAdapter {
     const resultados: PregaoInfo[] = []
     let pagina = 1
     let continuar = true
+    const isDev = process.env.NODE_ENV !== 'production'
+    const tamanhoPagina = isDev ? 20 : 50
+    const maxPaginas = isDev ? 3 : 10
 
     while (continuar) {
       try {
-        const url = `${this.BASE_URL}/contratacoes/publicacao?dataInicial=${dataStr}&dataFinal=${dataStr}&codigoModalidadeContratacao=8&pagina=${pagina}&tamanhoPagina=50`
-        const res = await fetch(url, { headers: { accept: 'application/json' } })
-
-        if (!res.ok) break
-
-        const dados = await res.json()
+        const url = `${this.BASE_URL}/contratacoes/publicacao?dataInicial=${dataStr}&dataFinal=${dataStr}&codigoModalidadeContratacao=8&pagina=${pagina}&tamanhoPagina=${tamanhoPagina}`
+        const dados = await this.fetchJson(url)
+        if (!dados) break
         const items: any[] = dados?.data ?? dados ?? []
 
         if (!Array.isArray(items) || items.length === 0) {
@@ -67,7 +89,7 @@ export class PncpAdapter implements PortalAdapter {
           })
         }
 
-        if (pagina >= 10 || items.length < 50) continuar = false
+        if (pagina >= maxPaginas || items.length < tamanhoPagina) continuar = false
         else pagina++
       } catch (err) {
         this.logger.error(`Erro ao buscar PNCP página ${pagina}: ${(err as Error).message}`)
@@ -84,13 +106,8 @@ export class PncpAdapter implements PortalAdapter {
       if (!match) return null
 
       const [, cnpj, ano, seq] = match
-      const res = await fetch(
-        `${this.BASE_URL}/orgaos/${cnpj}/compras/${ano}/${seq}`,
-        { headers: { accept: 'application/json' } },
-      )
-      if (!res.ok) return null
-
-      const item = await res.json()
+      const item = await this.fetchJson(`${this.BASE_URL}/orgaos/${cnpj}/compras/${ano}/${seq}`)
+      if (!item) return null
       const link: string = item.linkSistemaOrigem || url
 
       return {

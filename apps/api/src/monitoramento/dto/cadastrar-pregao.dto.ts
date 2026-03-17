@@ -6,5 +6,9 @@ export class CadastrarPregaoDto {
 
   @IsOptional()
   @IsString()
+  bidId?: string
+
+  @IsOptional()
+  @IsString()
   numeroPregao?: string
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Layout } from "@/components/layout";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,54 @@ import { PredictionModal } from "@/components/licitacoes/prediction-modal";
 import { PredictiveAnalysis } from "@/components/licitacoes/PredictiveAnalysis";
 import { EditarLicitacaoModal } from "@/components/licitacoes/EditarLicitacaoModal";
 import type { Bid } from "@licitafacil/shared";
+import { useQuery } from "@tanstack/react-query";
+import { listarPregoesMonitorados } from "@/lib/api";
+
+type PregaoVinculado = {
+  id: string;
+  portal: string;
+  status: string;
+  numeroPregao: string;
+  horarioInicio: string;
+  urlSalaDisputa: string;
+  linkPncp?: string | null;
+};
+
+function useCountdown(horarioInicio?: string | null, status?: string | null) {
+  const [texto, setTexto] = useState<string>("");
+
+  useEffect(() => {
+    if (!horarioInicio) {
+      setTexto("");
+      return;
+    }
+
+    function tick() {
+      if (status === "EM_DISPUTA") {
+        setTexto("🟢 AO VIVO AGORA");
+        return;
+      }
+
+      const start = new Date(horarioInicio ?? "").getTime();
+      const diff = start - Date.now();
+      if (diff <= 0) {
+        setTexto("🟢 AO VIVO AGORA");
+        return;
+      }
+
+      const totalMin = Math.floor(diff / 60000);
+      const h = Math.floor(totalMin / 60);
+      const m = totalMin % 60;
+      setTexto(h > 0 ? `Começa em ${h}h ${m}m` : `Começa em ${m}m`);
+    }
+
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, [horarioInicio, status]);
+
+  return texto;
+}
 
 function getStatusBadge(licitacao: Bid) {
   if (licitacao.operationalState === "SUSPENSA") {
@@ -77,6 +125,39 @@ export default function LicitacaoDetailPage() {
   const { mutateAsync: updateBid, isPending } = useUpdateBid();
   const { toast } = useToast();
 
+  const { data: pregoesVinculados = [] } = useQuery({
+    queryKey: ["pregoes-monitorados", "bid", id],
+    queryFn: async () => {
+      const res = await listarPregoesMonitorados({ bidId: id });
+      return (Array.isArray(res) ? res : []) as PregaoVinculado[];
+    },
+    enabled: Boolean(id),
+  });
+
+  const proximoPregao = useMemo(() => {
+    const validos = [...pregoesVinculados].filter((p) => Boolean(p?.horarioInicio));
+    validos.sort((a, b) => new Date(a.horarioInicio).getTime() - new Date(b.horarioInicio).getTime());
+
+    // 1) Se tiver em disputa, prioriza
+    const aoVivo = validos.find((p) => p.status === "EM_DISPUTA");
+    if (aoVivo) return aoVivo;
+
+    // 2) Próximo que ainda não começou
+    const now = Date.now();
+    const futuro = validos.find((p) => new Date(p.horarioInicio).getTime() >= now);
+    if (futuro) return futuro;
+
+    // 3) Fallback: se o pregão começou há pouco (timezone/latência), ainda faz sentido mostrar no card
+    const janelaMs = 6 * 60 * 60 * 1000; // 6h
+    const recentes = [...validos].reverse().find((p) => {
+      const t = new Date(p.horarioInicio).getTime();
+      return now - t >= 0 && now - t <= janelaMs;
+    });
+    return recentes ?? null;
+  }, [pregoesVinculados]);
+
+  const countdown = useCountdown(proximoPregao?.horarioInicio, proximoPregao?.status);
+
   // Análise preditiva
   const [predictionModalOpen, setPredictionModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -101,12 +182,6 @@ export default function LicitacaoDetailPage() {
       icon: Scale,
       label: "Jurídico",
       description: "Gere petições e acompanhe o histórico jurídico",
-    },
-    {
-      href: `/licitacoes/${id}/disputa`,
-      icon: Swords,
-      label: "Disputa",
-      description: "Simule lances e acompanhe o histórico da disputa",
     },
     {
       href: `/licitacoes/${id}/perguntas`,
@@ -313,6 +388,52 @@ export default function LicitacaoDetailPage() {
             </div>
           </div>
         </div>
+
+        {proximoPregao && (
+          <div className="mb-5">
+            <Card className="border-amber-200 bg-amber-50/70 shadow-sm dark:border-amber-800/40 dark:bg-amber-950/30">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-heading flex items-center gap-2 text-amber-900 dark:text-amber-200">
+                  <Swords className="w-5 h-5" />
+                  Próxima disputa
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    {proximoPregao.portal} • {proximoPregao.numeroPregao}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5" />
+                      {new Date(proximoPregao.horarioInicio).toLocaleString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                    {countdown && (
+                      <span className="rounded-full border border-amber-200 bg-white/60 px-2.5 py-0.5 font-semibold text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
+                        {countdown}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <a
+                  href={proximoPregao.urlSalaDisputa || proximoPregao.linkPncp || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 transition-colors"
+                >
+                  Abrir sala
+                  <ChevronRight className="ml-1.5 h-4 w-4" />
+                </a>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {licitacao.janelaIntencaoRecursoTermino &&
           new Date() < new Date(licitacao.janelaIntencaoRecursoTermino) && (

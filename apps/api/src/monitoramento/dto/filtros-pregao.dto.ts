@@ -13,4 +13,8 @@ export class FiltrosPregaoDto {
   @IsOptional()
   @IsEnum(StatusPregao)
   status?: StatusPregao
+
+  @IsOptional()
+  @IsString()
+  bidId?: string
 }
