@@ -612,13 +612,19 @@ export async function listarPregoesMonitorados(filtros?: {
   data?: string
   portal?: string
   status?: string
+  bidId?: string
 }): Promise<any[]> {
   const { data: res } = await api.get('/monitoramento/pregoes', { params: filtros })
   return Array.isArray(res) ? res : []
 }
 
-export async function cadastrarPregaoMonitorado(url: string): Promise<any> {
-  const { data: res } = await api.post('/monitoramento/pregoes', { url })
+export async function sugerirVinculoPregao(q: string): Promise<Array<{ id: string; title: string; agency: string }>> {
+  const { data: res } = await api.get('/monitoramento/sugestoes-vinculo', { params: { q } })
+  return Array.isArray(res) ? res : []
+}
+
+export async function cadastrarPregaoMonitorado(body: { url: string; bidId?: string | null; numeroPregao?: string }): Promise<any> {
+  const { data: res } = await api.post('/monitoramento/pregoes', body)
   return res
 }
 

@@ -1,16 +1,31 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Plus, Radio, Bell, X, Search } from 'lucide-react'
 import { CardPregao } from '@/components/monitoramento/CardPregao'
 import type { PregaoMonitorado } from '@/components/monitoramento/CardPregao'
 import { useMonitoramentoSocket } from '@/hooks/useMonitoramentoSocket'
-import { listarPregoesPncp, cadastrarPregaoMonitorado } from '@/lib/api'
+import { listarPregoesPncp, cadastrarPregaoMonitorado, sugerirVinculoPregao } from '@/lib/api'
 import { useAuth } from '@/contexts/auth-context'
 import { AuthGuard } from '@/components/AuthGuard'
 import { Layout } from '@/components/layout'
 import { useRouter } from 'next/navigation'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const ITENS_POR_PAGINA = 50
+
+function formatarOpcaoLicitacao(title?: string, agency?: string) {
+  const raw = `${title ?? ''} — ${agency ?? ''}`
+  const oneLine = raw.replace(/\\s+/g, ' ').trim()
+  const max = 90
+  if (oneLine.length <= max) return oneLine
+  return `${oneLine.slice(0, max - 1)}…`
+}
 
 function MonitoramentoContent() {
   const { user } = useAuth()
@@ -26,8 +41,35 @@ function MonitoramentoContent() {
   const [adicionando, setAdicionando] = useState(false)
   const [erroAdicionar, setErroAdicionar] = useState('')
   const [mostrarAdicionar, setMostrarAdicionar] = useState(false)
+  const [sugestoes, setSugestoes] = useState<Array<{ id: string; title: string; agency: string }>>([])
+  const [sugestoesLoading, setSugestoesLoading] = useState(false)
+  const [bidIdSelecionado, setBidIdSelecionado] = useState<string>('')
+  const [vinculoQuery, setVinculoQuery] = useState<string>('')
 
   const { conectado, reconectando, updates, alertas } = useMonitoramentoSocket(user?.empresaId)
+
+  const numeroDetectado = useMemo(() => {
+    const url = urlManual.trim()
+    if (!url) return ''
+    // 1) Preferir parâmetro ref=123/2026 (evita pegar pedaço do CNPJ/ano do caminho)
+    try {
+      const u = new URL(url)
+      const ref = (u.searchParams.get('ref') || '').trim()
+      if (ref.match(/^\d{1,6}\/\d{4}$/)) return ref
+    } catch {
+      // ignore URL parse failures
+    }
+
+    // 2) Fallback: pegar a ÚLTIMA ocorrência do padrão na string
+    const matches = [...url.matchAll(/(\d{1,6}\/\d{4})/g)]
+    return matches.length > 0 ? (matches[matches.length - 1][1] ?? '') : ''
+  }, [urlManual])
+
+  useEffect(() => {
+    if (!mostrarAdicionar) return
+    // Prefill: usa o número detectado quando existir, mas permite texto livre
+    if (numeroDetectado) setVinculoQuery(numeroDetectado)
+  }, [numeroDetectado, mostrarAdicionar])
 
   const carregar = useCallback(async () => {
     setCarregando(true)
@@ -44,6 +86,35 @@ function MonitoramentoContent() {
   useEffect(() => { carregar() }, [carregar])
 
   useEffect(() => { setPagina(1) }, [filtroPortal, filtroStatus, dataFiltro, busca])
+
+  useEffect(() => {
+    if (!mostrarAdicionar) return
+
+    const q = vinculoQuery.trim()
+    if (!q) {
+      setSugestoes([])
+      setBidIdSelecionado('')
+      return
+    }
+
+    let cancelled = false
+    setSugestoesLoading(true)
+    const t = setTimeout(async () => {
+      try {
+        const res = await sugerirVinculoPregao(q)
+        if (cancelled) return
+        setSugestoes(res)
+        if (res.length === 1) setBidIdSelecionado(res[0].id)
+      } finally {
+        if (!cancelled) setSugestoesLoading(false)
+      }
+    }, 450)
+
+    return () => {
+      cancelled = true
+      clearTimeout(t)
+    }
+  }, [vinculoQuery, mostrarAdicionar])
 
   useEffect(() => {
     if (updates.length === 0) return
@@ -84,8 +155,14 @@ function MonitoramentoContent() {
     setAdicionando(true)
     setErroAdicionar('')
     try {
-      await cadastrarPregaoMonitorado(urlManual)
+      await cadastrarPregaoMonitorado({
+        url: urlManual,
+        bidId: bidIdSelecionado && bidIdSelecionado !== '__none__' ? bidIdSelecionado : undefined,
+        numeroPregao: numeroDetectado || undefined,
+      })
       setUrlManual('')
+      setSugestoes([])
+      setBidIdSelecionado('')
       setMostrarAdicionar(false)
       carregar()
     } catch (e: any) {
@@ -156,14 +233,60 @@ function MonitoramentoContent() {
         <div className="bg-card border border-border rounded-lg p-4 space-y-3">
           <p className="text-sm font-medium">Adicionar pregão para monitorar</p>
           <p className="text-xs text-muted-foreground">Cole a URL do edital no PNCP ou da sala de disputa do portal</p>
-          <div className="flex gap-2">
-            <input
-              type="url"
-              value={urlManual}
-              onChange={e => setUrlManual(e.target.value)}
-              placeholder="https://pncp.gov.br/app/editais/..."
-              className="flex-1 px-3 py-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
-            />
+          <div className="flex gap-2 items-start">
+            <div className="flex-1 space-y-2">
+              <input
+                type="url"
+                value={urlManual}
+                onChange={e => setUrlManual(e.target.value)}
+                placeholder="https://pncp.gov.br/app/editais/..."
+                className="w-full px-3 py-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">
+                  Vincular à licitação (opcional){numeroDetectado ? ` • detectado: ${numeroDetectado}` : ''}
+                </p>
+                <input
+                  type="text"
+                  value={vinculoQuery}
+                  onChange={(e) => setVinculoQuery(e.target.value)}
+                  placeholder="Buscar licitação por número, órgão ou palavras do objeto..."
+                  className="w-full px-3 py-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+                <Select
+                  value={bidIdSelecionado}
+                  onValueChange={(v) => setBidIdSelecionado(v)}
+                  disabled={!vinculoQuery.trim() || sugestoesLoading}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={
+                        sugestoesLoading
+                          ? "Buscando sugestões..."
+                          : sugestoes.length > 0
+                            ? "Selecione uma licitação sugerida (ou deixe em branco)"
+                            : vinculoQuery.trim()
+                              ? "Nenhuma sugestão encontrada (deixe em branco)"
+                              : "Digite para buscar sugestões"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent className="max-w-[92vw]">
+                    <SelectItem value="__none__">
+                      Deixar em branco
+                    </SelectItem>
+                    {sugestoes.map((b) => (
+                      <SelectItem key={b.id} value={b.id}>
+                        <span className="block max-w-[80vw] truncate">
+                          {formatarOpcaoLicitacao(b.title, b.agency)}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <button
               onClick={adicionarManual}
               disabled={adicionando}
@@ -202,7 +325,6 @@ function MonitoramentoContent() {
           className="px-3 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
         >
           <option value="">Todos os portais</option>
-          <option value="COMPRASNET">ComprasNet</option>
           <option value="BNC">BNC</option>
           <option value="PNCP">PNCP</option>
         </select>

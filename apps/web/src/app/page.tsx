@@ -3,7 +3,7 @@
 import { useAuth } from "@/contexts/auth-context";
 import { useLicitacoes } from "@/hooks/use-licitacoes";
 import { useBidOverviewStats } from "@/hooks/use-licitacoes";
-import { fetchDocuments, fetchUpcomingPrazos } from "@/lib/api";
+import { fetchDocuments, fetchUpcomingPrazos, listarPregoesMonitorados } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -67,6 +67,16 @@ export default function DashboardPage() {
     queryFn: () => fetchDocuments({ limit: 6, status: "EXPIRING_SOON", expiringDays: 30 }),
   });
   const criticalDocs = criticalDocsResponse?.data ?? [];
+
+  // Use data local (evita "virar o dia" em UTC e quebrar o filtro por data no backend)
+  const hoje = format(new Date(), "yyyy-MM-dd");
+  const { data: pregoesHoje = [] } = useQuery({
+    queryKey: ["pregoes-hoje", hoje],
+    queryFn: () => listarPregoesMonitorados({ data: hoje }),
+  });
+  const totalPregoesHoje = (pregoesHoje ?? []).filter((p: any) =>
+    ["AGUARDANDO", "EM_DISPUTA"].includes(p?.status)
+  ).length;
 
   const totalOpen = overviewStats?.emAndamento ?? 0;
   const totalAtRisk = overviewStats?.emRisco ?? 0;
@@ -181,6 +191,32 @@ export default function DashboardPage() {
 
           {/* ── Main grid ───────────────────────────────────── */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+
+            {/* Pregões hoje */}
+            <div
+              className="lg:col-span-5 rounded-xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 animate-fade-up"
+              style={{ animationDelay: "80ms" }}
+            >
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                    Pregões hoje
+                  </h2>
+                  <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-200">
+                    {totalPregoesHoje} pregão(ões) em andamento ou aguardando
+                  </p>
+                  <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+                    Acompanhe em tempo real
+                  </p>
+                </div>
+                <Link href="/monitoramento">
+                  <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#0078D1] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#0066b3] sm:text-sm">
+                    Ver monitoramento
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </Link>
+              </div>
+            </div>
 
             {/* Prazos */}
             <div className="lg:col-span-3 rounded-xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 animate-fade-up"

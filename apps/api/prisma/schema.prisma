@@ -183,6 +183,8 @@ model Bid {
   bidPredictions BidPrediction[]
   // Relacionamento: Uma licitação pode ter várias disputas
   disputas       Disputa[]
+  // Relacionamento: Uma licitação pode ter vários pregões monitorados
+  pregoesMonitorados PregaoMonitorado[]
 
   @@index([empresaId])
   @@index([empresaId, operationalState]) // Consultas por empresa e estado operacional
@@ -900,6 +902,7 @@ enum StatusPregao {
 model PregaoMonitorado {
   id             String              @id @default(uuid())
   empresaId      String
+  bidId          String?
   portal         PortalMonitoramento
   status         StatusPregao        @default(AGUARDANDO)
   numeroPregao   String
@@ -915,7 +918,9 @@ model PregaoMonitorado {
   updatedAt      DateTime            @updatedAt
 
   empresa        Empresa             @relation(fields: [empresaId], references: [id])
+  bid           Bid?                @relation(fields: [bidId], references: [id], onDelete: SetNull)
 
   @@index([empresaId, status])
   @@index([horarioInicio])
+  @@index([bidId])
 }

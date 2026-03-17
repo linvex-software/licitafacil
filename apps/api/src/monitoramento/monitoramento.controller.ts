@@ -20,6 +20,11 @@ export class MonitoramentoController {
     return this.service.buscarPregoesPncp(dataAlvo)
   }
 
+  @Get('sugestoes-vinculo')
+  async sugestoesVinculo(@Req() req: any, @Query('numero') numero?: string, @Query('q') q?: string) {
+    return this.service.sugestoesVinculo(req.user.empresaId, (q ?? numero ?? '').toString())
+  }
+
   @Post('pregoes')
   async cadastrar(@Req() req: any, @Body() dto: CadastrarPregaoDto) {
     return this.service.cadastrarPregao(req.user.empresaId, dto)
