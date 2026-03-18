@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Delete, Param, Query, Body, Req, UseGuards } from '@nestjs/common'
+import { Controller, Get, Post, Patch, Delete, Param, Query, Body, Req, UseGuards } from '@nestjs/common'
 import { MonitoramentoService } from './monitoramento.service'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { FiltrosPregaoDto } from './dto/filtros-pregao.dto'
 import { CadastrarPregaoDto } from './dto/cadastrar-pregao.dto'
+import { AtualizarPregaoDto } from './dto/atualizar-pregao.dto'
 
 @Controller('monitoramento')
 @UseGuards(JwtAuthGuard)
@@ -28,6 +29,11 @@ export class MonitoramentoController {
   @Post('pregoes')
   async cadastrar(@Req() req: any, @Body() dto: CadastrarPregaoDto) {
     return this.service.cadastrarPregao(req.user.empresaId, dto)
+  }
+
+  @Patch('pregoes/:id')
+  async atualizar(@Req() req: any, @Param('id') id: string, @Body() dto: AtualizarPregaoDto) {
+    return this.service.atualizarPregao(id, req.user.empresaId, dto)
   }
 
   @Delete('pregoes/:id')

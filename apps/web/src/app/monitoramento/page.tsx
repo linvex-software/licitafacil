@@ -8,6 +8,8 @@ import { listarPregoesPncp, cadastrarPregaoMonitorado, sugerirVinculoPregao } fr
 import { useAuth } from '@/contexts/auth-context'
 import { AuthGuard } from '@/components/AuthGuard'
 import { Layout } from '@/components/layout'
+import { useRouter } from 'next/navigation'
+import { useToast } from '@/hooks/use-toast'
 import {
   Select,
   SelectContent,
@@ -28,6 +30,8 @@ function formatarOpcaoLicitacao(title?: string, agency?: string) {
 
 function MonitoramentoContent() {
   const { user } = useAuth()
+  const router = useRouter()
+  const { toast } = useToast()
   const [pregoes, setPregoes] = useState<PregaoMonitorado[]>([])
   const [carregando, setCarregando] = useState(true)
   const [filtroPortal, setFiltroPortal] = useState('')
@@ -43,8 +47,46 @@ function MonitoramentoContent() {
   const [sugestoesLoading, setSugestoesLoading] = useState(false)
   const [bidIdSelecionado, setBidIdSelecionado] = useState<string>('')
   const [vinculoQuery, setVinculoQuery] = useState<string>('')
+  const [criandoLicitacaoKey, setCriandoLicitacaoKey] = useState<string>('')
 
   const { conectado, reconectando, updates, alertas } = useMonitoramentoSocket(user?.empresaId)
+
+  const handleCriarLicitacao = async (pregao: PregaoMonitorado) => {
+    const key = `${pregao.portal}::${pregao.numeroPregao}`
+    setCriandoLicitacaoKey(key)
+    try {
+      let pregaoId = pregao.id ?? ''
+      if (!pregaoId) {
+        // Se o item veio direto do PNCP (sem id), cria no banco primeiro para obter pregaoId e permitir vínculo pós-criação.
+        const url = pregao.urlFallbackPncp || pregao.urlSalaDisputa
+        const created = await cadastrarPregaoMonitorado({
+          url,
+          numeroPregao: pregao.numeroPregao,
+        })
+        pregaoId = created?.id ?? ''
+      }
+
+      const params = new URLSearchParams({
+        criar: "true",
+        numero: pregao.numeroPregao ?? "",
+        objeto: (pregao.objeto ?? "").slice(0, 500),
+        orgao: (pregao.orgao ?? "").slice(0, 200),
+        portal: pregao.portal ?? "",
+        data: pregao.horarioInicio ?? "",
+      })
+      if (pregaoId) params.set("pregaoId", pregaoId)
+      if (pregao.uf) params.set("uf", pregao.uf)
+      router.push(`/licitacoes?${params.toString()}`)
+    } catch (e: any) {
+      toast({
+        title: "Falha ao preparar licitação",
+        description: e?.response?.data?.message || e?.message || "Não foi possível criar o pregão monitorado para vincular.",
+        variant: "destructive",
+      })
+    } finally {
+      setCriandoLicitacaoKey('')
+    }
+  }
 
   const numeroDetectado = useMemo(() => {
     const url = urlManual.trim()
@@ -387,6 +429,8 @@ function MonitoramentoContent() {
               <CardPregao
                 key={p.id ?? `${p.numeroPregao}-${i}`}
                 pregao={p}
+                onCriarLicitacao={handleCriarLicitacao}
+                criandoLicitacao={criandoLicitacaoKey === `${p.portal}::${p.numeroPregao}`}
               />
             ))}
           </div>

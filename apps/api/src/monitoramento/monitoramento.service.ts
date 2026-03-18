@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma/prisma.service'
 import { PncpAdapter } from './adapters/pncp.adapter'
 import { FiltrosPregaoDto } from './dto/filtros-pregao.dto'
 import { CadastrarPregaoDto } from './dto/cadastrar-pregao.dto'
+import { AtualizarPregaoDto } from './dto/atualizar-pregao.dto'
 import { Prisma } from '@prisma/client'
 
 @Injectable()
@@ -230,5 +231,14 @@ export class MonitoramentoService {
     if (job) await this.monitoramentoQueue.removeRepeatableByKey(job.key)
 
     return this.prisma.pregaoMonitorado.delete({ where: { id, empresaId } })
+  }
+
+  async atualizarPregao(id: string, empresaId: string, dto: AtualizarPregaoDto) {
+    return this.prisma.pregaoMonitorado.update({
+      where: { id, empresaId },
+      data: {
+        ...(dto.bidId !== undefined ? { bidId: dto.bidId } : {}),
+      },
+    })
   }
 }
