@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { ExternalLink, Clock, TrendingDown, Plus } from 'lucide-react'
+import { ExternalLink, Clock, TrendingDown, Plus, ClipboardEdit } from 'lucide-react'
 
 export interface PregaoMonitorado {
   id?: string
@@ -14,12 +14,14 @@ export interface PregaoMonitorado {
   urlSalaDisputa: string
   urlFallbackPncp?: string
   melhorLance?: number
+  resultado?: string
 }
 
 interface CardPregaoProps {
   pregao: PregaoMonitorado
   onCriarLicitacao?: (pregao: PregaoMonitorado) => void
   criandoLicitacao?: boolean
+  onRegistrarResultado?: (pregao: PregaoMonitorado) => void
 }
 
 const CORES_PORTAL: Record<string, string> = {
@@ -66,7 +68,7 @@ function useCountdown(horario: string) {
   return { texto, ref }
 }
 
-export function CardPregao({ pregao, onCriarLicitacao, criandoLicitacao }: CardPregaoProps) {
+export function CardPregao({ pregao, onCriarLicitacao, criandoLicitacao, onRegistrarResultado }: CardPregaoProps) {
   const { texto: countdown, ref: cardRef } = useCountdown(pregao.horarioInicio)
 
   const temUrlPortal = pregao.urlSalaDisputa &&
@@ -138,6 +140,22 @@ export function CardPregao({ pregao, onCriarLicitacao, criandoLicitacao }: CardP
           </button>
           <span className="text-[11px] text-muted-foreground">
             Pré-preenche os dados automaticamente
+          </span>
+        </div>
+      )}
+
+      {onRegistrarResultado && pregao.id && (
+        <div className="flex items-center justify-between pt-1 border-t border-border">
+          <button
+            type="button"
+            onClick={() => onRegistrarResultado(pregao)}
+            className="text-xs px-2 py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:border-primary transition-colors flex items-center gap-1"
+            title="Registrar resultado deste pregão"
+          >
+            <ClipboardEdit className="h-3 w-3" /> Registrar resultado
+          </button>
+          <span className="text-[11px] text-muted-foreground">
+            Vai para a Central de Pregões
           </span>
         </div>
       )}
