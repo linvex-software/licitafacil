@@ -34,6 +34,7 @@ import { PredictionBadge } from "@/components/licitacoes/prediction-badge";
 import { PredictionModal } from "@/components/licitacoes/prediction-modal";
 import { PredictiveAnalysis } from "@/components/licitacoes/PredictiveAnalysis";
 import { EditarLicitacaoModal } from "@/components/licitacoes/EditarLicitacaoModal";
+import { CalculadoraLance } from "@/components/licitacoes/calculadora-lance";
 import type { Bid } from "@licitafacil/shared";
 import { useQuery } from "@tanstack/react-query";
 import { listarPregoesMonitorados } from "@/lib/api";
@@ -601,6 +602,13 @@ export default function LicitacaoDetailPage() {
               </div>
             </Link>
           ))}
+        </div>
+
+        {/* Calculadora de Lance */}
+        <div className="mb-8">
+          <CalculadoraLance
+            valorReferencia={(licitacao as Bid & { valorEstimado?: number | null }).valorEstimado}
+          />
         </div>
 
         {/* Alerta de Risco */}
