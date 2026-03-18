@@ -8,7 +8,7 @@ import {
     Globe, ShieldCheck, ChevronDown, ClipboardList,
     BarChart2, Briefcase,
     TrendingUp, History, Tag as TagIcon,
-    CalendarDays, Users, HelpCircle, Radio, UserSearch,
+    CalendarDays, Users, HelpCircle, Radio, UserSearch, PlayCircle,
 } from "lucide-react";
 
 import { AlertsDropdown } from "@/components/AlertsDropdown";
@@ -28,6 +28,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import { SupportDrawer } from "@/components/SupportDrawer";
 import { Logo } from "@/components/logo";
+import { OnboardingModal } from "@/components/onboarding/onboarding-modal";
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface SubItem { label: string; href: string; icon?: any; }
@@ -297,6 +298,7 @@ export function Layout({ children, fullWidth = false }: {
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [supportOpen, setSupportOpen] = useState(false);
     const [emDevDialogOpen, setEmDevDialogOpen] = useState(false);
+    const [tourOpen, setTourOpen] = useState(false);
     const { user, logout } = useAuth();
     const isEmpresaAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
 
@@ -393,6 +395,13 @@ export function Layout({ children, fullWidth = false }: {
                                 <HelpCircle className="mr-2 h-4 w-4" />
                                 Suporte
                             </DropdownMenuItem>
+                            <DropdownMenuItem
+                                className="rounded-lg cursor-pointer"
+                                onSelect={() => setTourOpen(true)}
+                            >
+                                <PlayCircle className="mr-2 h-4 w-4" />
+                                Tour do sistema
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={logout} className="text-red-600 focus:text-red-600 rounded-lg">
                                 <LogOut className="mr-2 h-4 w-4" /> Sair
@@ -444,6 +453,7 @@ export function Layout({ children, fullWidth = false }: {
                 </div>
             </main>
             <SupportDrawer open={supportOpen} onClose={() => setSupportOpen(false)} />
+            <OnboardingModal forceOpen={tourOpen} onForceClose={() => setTourOpen(false)} />
         </div>
     );
 }

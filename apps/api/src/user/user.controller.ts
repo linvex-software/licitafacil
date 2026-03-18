@@ -82,6 +82,17 @@ export class UserController {
   }
 
   /**
+   * Marca o onboarding como concluído para o usuário autenticado
+   * PATCH /users/onboarding-concluido
+   */
+  @Patch("onboarding-concluido")
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  async concluirOnboarding(@CurrentUser() currentUser: User): Promise<{ success: boolean }> {
+    await this.userService.marcarOnboardingConcluido(currentUser.id);
+    return { success: true };
+  }
+
+  /**
    * Cria um novo usuário na empresa
    * POST /users
    * Guard bloqueia se limite atingido

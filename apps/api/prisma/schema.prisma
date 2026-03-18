@@ -60,7 +60,8 @@ model Empresa {
   // Relacionamento: Uma empresa tem muitos pregões monitorados
   pregoesMonitorados PregaoMonitorado[]
 
-  minutosAlertaPregao Int @default(15)
+  minutosAlertaPregao Int     @default(15)
+  segmento            String?
 
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("empresas")
@@ -119,6 +120,9 @@ model User {
   receberRisco        Boolean @default(true)
   frequenciaEmail     String  @default("IMEDIATO") // IMEDIATO | DIARIO | OFF
   unsubscribeToken    String? @unique
+
+  // Onboarding
+  onboardingConcluido Boolean @default(false)
 
   // Reset de senha
   passwordResetToken   String?   @unique
