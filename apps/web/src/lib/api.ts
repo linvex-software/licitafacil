@@ -638,6 +638,96 @@ export async function vincularPregaoMonitorado(pregaoId: string, bidId: string):
   return res
 }
 
+export type ResultadoPregao = "GANHOU" | "PERDEU" | "DESISTIU" | "PENDENTE"
+export type FonteValorReferenciaPregao = "PNCP" | "EDITAL" | "MANUAL"
+
+export interface PregaoCentralItem {
+  id: string
+  bidId?: string | null
+  bid?: { id: string; title?: string | null; agency?: string | null } | null
+  portal: string
+  status: string
+  numeroPregao: string
+  objeto: string
+  orgao?: string | null
+  horarioInicio: string
+  urlSalaDisputa: string
+  melhorLance?: number | null
+  resultado?: ResultadoPregao
+  valorFinal?: number | null
+  valorReferencia?: number | null
+  fonteValorReferencia?: FonteValorReferenciaPregao | null
+  observacao?: string | null
+  finalizadoEm?: string | null
+}
+
+export async function listarResultadosPregoes(params?: {
+  portal?: string
+  resultado?: ResultadoPregao
+  periodoPor?: "INICIO" | "FINALIZACAO"
+  dataInicio?: string
+  dataFim?: string
+  licitacao?: string
+  page?: number
+  limit?: number
+}): Promise<{ page: number; limit: number; total: number; items: PregaoCentralItem[] }> {
+  const { data } = await api.get("/monitoramento/pregoes/resultados", { params })
+  return data
+}
+
+export async function metricasPregoes(params?: {
+  portal?: string
+  resultado?: ResultadoPregao
+  periodoPor?: "INICIO" | "FINALIZACAO"
+  dataInicio?: string
+  dataFim?: string
+  licitacao?: string
+}): Promise<{
+  total: number
+  totalFinalizados: number
+  totalComValorReferencia: number
+  porResultado: Record<string, number>
+  economiaTotal: number
+  baseEconomia: { totalComValores: number; somaValorReferencia: number; somaValorFinal: number }
+}> {
+  const { data } = await api.get("/monitoramento/pregoes/metricas", { params })
+  return data
+}
+
+export async function registrarResultadoPregao(
+  pregaoId: string,
+  body: {
+    resultado: ResultadoPregao
+    valorFinal?: number | null
+    valorReferencia?: number | null
+    fonteValorReferencia?: FonteValorReferenciaPregao | null
+    observacao?: string | null
+  },
+): Promise<any> {
+  const { data } = await api.patch(`/monitoramento/pregoes/${pregaoId}/resultado`, body)
+  return data
+}
+
+export async function exportarResultadosPregoesCsv(params?: {
+  portal?: string
+  resultado?: ResultadoPregao
+  periodoPor?: "INICIO" | "FINALIZACAO"
+  dataInicio?: string
+  dataFim?: string
+  licitacao?: string
+}): Promise<{ blob: Blob; fileName: string }> {
+  const response = await api.get("/monitoramento/pregoes/exportar-csv", {
+    params,
+    responseType: "blob",
+  })
+
+  const header = response.headers["content-disposition"] as string | undefined
+  const match = header?.match(/filename="([^"]+)"/)
+  const fileName = match?.[1] || `pregoes_${new Date().toISOString().slice(0, 10)}.csv`
+  const blob = new Blob([response.data], { type: "text/csv;charset=utf-8" })
+  return { blob, fileName }
+}
+
 
 // --- Checklist Items (Adicional) ---
 export async function updateChecklistItem(id: string, body: { titulo?: string; descricao?: string; exigeEvidencia?: boolean }) {

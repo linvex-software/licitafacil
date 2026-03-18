@@ -4,12 +4,14 @@ import { Plus, Radio, Bell, X, Search } from 'lucide-react'
 import { CardPregao } from '@/components/monitoramento/CardPregao'
 import type { PregaoMonitorado } from '@/components/monitoramento/CardPregao'
 import { useMonitoramentoSocket } from '@/hooks/useMonitoramentoSocket'
-import { listarPregoesPncp, cadastrarPregaoMonitorado, sugerirVinculoPregao } from '@/lib/api'
+import { listarPregoesPncp, cadastrarPregaoMonitorado, sugerirVinculoPregao, registrarResultadoPregao } from '@/lib/api'
 import { useAuth } from '@/contexts/auth-context'
 import { AuthGuard } from '@/components/AuthGuard'
 import { Layout } from '@/components/layout'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -17,6 +19,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const ITENS_POR_PAGINA = 20
 
@@ -48,6 +59,15 @@ function MonitoramentoContent() {
   const [bidIdSelecionado, setBidIdSelecionado] = useState<string>('')
   const [vinculoQuery, setVinculoQuery] = useState<string>('')
   const [criandoLicitacaoKey, setCriandoLicitacaoKey] = useState<string>('')
+
+  const [resultadoModalOpen, setResultadoModalOpen] = useState(false)
+  const [resultadoPregao, setResultadoPregao] = useState<PregaoMonitorado | null>(null)
+  const [resultadoValorFinal, setResultadoValorFinal] = useState<string>('')
+  const [resultadoValorReferencia, setResultadoValorReferencia] = useState<string>('')
+  const [resultadoFonte, setResultadoFonte] = useState<string>('')
+  const [resultadoObs, setResultadoObs] = useState<string>('')
+  const [resultadoStatus, setResultadoStatus] = useState<string>('PENDENTE')
+  const [salvandoResultado, setSalvandoResultado] = useState(false)
 
   const { conectado, reconectando, updates, alertas } = useMonitoramentoSocket(user?.empresaId)
 
@@ -209,6 +229,55 @@ function MonitoramentoContent() {
       setErroAdicionar(e?.message || 'Erro ao adicionar pregão')
     } finally {
       setAdicionando(false)
+    }
+  }
+
+  const abrirModalResultado = (pregao: PregaoMonitorado) => {
+    if (!pregao.id) {
+      toast({
+        title: "Este pregão ainda não está salvo",
+        description: "Adicione/registre o pregão no monitoramento para poder salvar o resultado.",
+        variant: "destructive",
+      })
+      return
+    }
+    setResultadoPregao(pregao)
+    setResultadoStatus((pregao as any)?.resultado ?? 'PENDENTE')
+    setResultadoValorFinal('')
+    setResultadoValorReferencia('')
+    setResultadoFonte('')
+    setResultadoObs('')
+    setResultadoModalOpen(true)
+  }
+
+  const salvarResultado = async () => {
+    if (!resultadoPregao?.id) return
+    setSalvandoResultado(true)
+    try {
+      const valorFinal = resultadoValorFinal.trim() ? Number(resultadoValorFinal.replace(",", ".")) : null
+      const valorReferencia = resultadoValorReferencia.trim() ? Number(resultadoValorReferencia.replace(",", ".")) : null
+      if (valorFinal != null && (Number.isNaN(valorFinal) || valorFinal < 0)) throw new Error("Valor final inválido.")
+      if (valorReferencia != null && (Number.isNaN(valorReferencia) || valorReferencia < 0)) throw new Error("Valor de referência inválido.")
+
+      await registrarResultadoPregao(resultadoPregao.id, {
+        resultado: resultadoStatus as any,
+        valorFinal,
+        valorReferencia,
+        fonteValorReferencia: resultadoFonte ? (resultadoFonte as any) : null,
+        observacao: resultadoObs?.trim() || null,
+      })
+      toast({ title: "Resultado registrado", description: "Você pode acompanhar na Central de Pregões." })
+      setResultadoModalOpen(false)
+      setResultadoPregao(null)
+      carregar()
+    } catch (e: any) {
+      toast({
+        title: "Erro ao salvar resultado",
+        description: e?.response?.data?.message || e?.message || "Não foi possível salvar.",
+        variant: "destructive",
+      })
+    } finally {
+      setSalvandoResultado(false)
     }
   }
 
@@ -431,6 +500,7 @@ function MonitoramentoContent() {
                 pregao={p}
                 onCriarLicitacao={handleCriarLicitacao}
                 criandoLicitacao={criandoLicitacaoKey === `${p.portal}::${p.numeroPregao}`}
+                onRegistrarResultado={abrirModalResultado}
               />
             ))}
           </div>
@@ -458,6 +528,75 @@ function MonitoramentoContent() {
           )}
         </>
       )}
+
+      <Dialog open={resultadoModalOpen} onOpenChange={(open) => !open && setResultadoModalOpen(false)}>
+        {resultadoPregao && (
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Registrar resultado</DialogTitle>
+              <DialogDescription>
+                {resultadoPregao.numeroPregao} • {resultadoPregao.portal}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Resultado</Label>
+                <Select value={resultadoStatus} onValueChange={setResultadoStatus}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PENDENTE">Pendente</SelectItem>
+                    <SelectItem value="GANHOU">Ganhou</SelectItem>
+                    <SelectItem value="PERDEU">Perdeu</SelectItem>
+                    <SelectItem value="DESISTIU">Desistiu</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Fonte do valor de referência</Label>
+                <Select value={resultadoFonte || "EMPTY"} onValueChange={(v) => setResultadoFonte(v === "EMPTY" ? "" : v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Opcional" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EMPTY">Não informar</SelectItem>
+                    <SelectItem value="PNCP">PNCP</SelectItem>
+                    <SelectItem value="EDITAL">Edital</SelectItem>
+                    <SelectItem value="MANUAL">Manual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Valor de referência</Label>
+                <Input inputMode="decimal" value={resultadoValorReferencia} onChange={(e) => setResultadoValorReferencia(e.target.value)} />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Valor final</Label>
+                <Input inputMode="decimal" value={resultadoValorFinal} onChange={(e) => setResultadoValorFinal(e.target.value)} />
+              </div>
+
+              <div className="sm:col-span-2 space-y-1.5">
+                <Label>Observação</Label>
+                <Input value={resultadoObs} onChange={(e) => setResultadoObs(e.target.value)} placeholder="Opcional" />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setResultadoModalOpen(false)} disabled={salvandoResultado}>
+                Cancelar
+              </Button>
+              <Button onClick={salvarResultado} disabled={salvandoResultado}>
+                {salvandoResultado ? "Salvando..." : "Salvar"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
     </div>
   )
 }

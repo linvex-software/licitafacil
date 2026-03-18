@@ -66,6 +66,7 @@ const navGroups: NavGroup[] = [
                 subItems: [
                     { label: "Funil de licitações (Kanban)", href: "/negocios/funil", icon: TrendingUp },
                     { label: "Agenda", href: "/negocios/agenda", icon: CalendarDays },
+                    { label: "Pregões (Central)", href: "/negocios/pregoes", icon: Gavel },
                     { label: "Monitoramento", href: "/monitoramento", icon: Radio },
                 ]
             },
