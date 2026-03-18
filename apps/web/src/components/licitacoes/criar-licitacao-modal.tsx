@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,6 +22,9 @@ import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateBid } from "@/hooks/use-licitacoes";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { ToastAction } from "@/components/ui/toast";
+import { createPrazo, vincularPregaoMonitorado } from "@/lib/api";
 
 interface CriarLicitacaoModalProps {
   onSuccess: () => void;
@@ -68,10 +71,80 @@ export function CriarLicitacaoModal({
     legalStatus: "ANALISANDO",
     operationalState: "OK",
   });
+  const [portal, setPortal] = useState<"PNCP" | "BNC" | "">("");
+  const [dataAbertura, setDataAbertura] = useState<string>(""); // datetime-local
+  const [pregaoId, setPregaoId] = useState<string>("");
 
   const { toast } = useToast();
   const createBid = useCreateBid();
   const queryClient = useQueryClient();
+  const router = useRouter();
+
+  const prefillFromQuery = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("criar") !== "true") return null;
+    return {
+      numero: params.get("numero") ?? "",
+      objeto: params.get("objeto") ?? "",
+      orgao: params.get("orgao") ?? "",
+      portal: (params.get("portal") ?? "").toUpperCase(),
+      data: params.get("data") ?? "",
+      pregaoId: params.get("pregaoId") ?? "",
+      uf: params.get("uf") ?? "",
+    };
+  }, []);
+
+  useEffect(() => {
+    const p = prefillFromQuery;
+    if (!p) return;
+
+    const title = [p.numero, p.objeto].filter(Boolean).join(" — ").slice(0, 500);
+    setFormData((prev) => ({
+      ...prev,
+      title: title || prev.title,
+      agency: (p.orgao || prev.agency).slice(0, 200),
+      uf: (p.uf || prev.uf).toUpperCase(),
+      modality: "PREGAO_ELETRONICO",
+      legalStatus: "ANALISANDO",
+      operationalState: "OK",
+    }));
+
+    const portalNorm = p.portal === "BNC" ? "BNC" : p.portal === "PNCP" ? "PNCP" : "";
+    setPortal(portalNorm as any);
+
+    // data pode vir ISO; converter para datetime-local "YYYY-MM-DDTHH:mm"
+    if (p.data) {
+      const d = new Date(p.data);
+      if (!Number.isNaN(d.getTime())) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        const hh = String(d.getHours()).padStart(2, "0");
+        const mi = String(d.getMinutes()).padStart(2, "0");
+        setDataAbertura(`${yyyy}-${mm}-${dd}T${hh}:${mi}`);
+      }
+    }
+
+    if (p.pregaoId) setPregaoId(p.pregaoId);
+    setOpen(true);
+
+    // Limpar query para não reabrir sempre (mantém a página /licitacoes limpa)
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("criar");
+      url.searchParams.delete("numero");
+      url.searchParams.delete("objeto");
+      url.searchParams.delete("orgao");
+      url.searchParams.delete("portal");
+      url.searchParams.delete("data");
+      url.searchParams.delete("pregaoId");
+      url.searchParams.delete("uf");
+      window.history.replaceState({}, "", url.toString());
+    } catch {
+      // ignore
+    }
+  }, [prefillFromQuery]);
 
   function resetForm() {
     setFormData({
@@ -83,6 +156,9 @@ export function CriarLicitacaoModal({
       legalStatus: "ANALISANDO",
       operationalState: "OK",
     });
+    setPortal("");
+    setDataAbertura("");
+    setPregaoId("");
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -98,11 +174,39 @@ export function CriarLicitacaoModal({
     }
 
     try {
-      await createBid.mutateAsync(formData);
+      const created = await createBid.mutateAsync(formData);
+
+      // Se veio do monitoramento e tem data, criar um prazo "Abertura"
+      if (dataAbertura) {
+        try {
+          await createPrazo({
+            bidId: (created as any).id,
+            titulo: "Abertura",
+            dataPrazo: new Date(dataAbertura).toISOString(),
+            descricao: portal ? `Portal: ${portal}` : null,
+          });
+        } catch {
+          // não bloquear criação da licitação por falha no prazo
+        }
+      }
+
+      // Se o pregão monitorado tem id, vincular bidId no monitoramento
+      if (pregaoId) {
+        try {
+          await vincularPregaoMonitorado(pregaoId, (created as any).id);
+        } catch {
+          // não bloquear criação da licitação por falha no vínculo
+        }
+      }
 
       toast({
         title: "Licitação criada",
         description: "A licitação foi adicionada com sucesso.",
+        action: (
+          <ToastAction altText="Abrir licitação" onClick={() => router.push(`/licitacoes/${(created as any).id}`)}>
+            Abrir
+          </ToastAction>
+        ),
       });
 
       setOpen(false);
@@ -137,6 +241,30 @@ export function CriarLicitacaoModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Portal</Label>
+              <Select value={portal || undefined} onValueChange={(v) => setPortal(v as any)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o portal" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PNCP">PNCP</SelectItem>
+                  <SelectItem value="BNC">BNC</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="dataAbertura">Data de abertura</Label>
+              <Input
+                id="dataAbertura"
+                type="datetime-local"
+                value={dataAbertura}
+                onChange={(e) => setDataAbertura(e.target.value)}
+              />
+            </div>
+          </div>
+
           <div>
             <Label htmlFor="title">Título / Objeto Resumido *</Label>
             <Input

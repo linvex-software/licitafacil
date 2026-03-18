@@ -12,15 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth-context";
 import { api } from "@/lib/api";
 import {
-    applyFontSize, applyContrast, loadAccessibilityPrefs,
-    type FontSize, type Contrast as A11yContrast,
-} from "@/lib/accessibility";
-import {
     User, Lock, Eye, EyeOff, Save, ShieldCheck,
-    ZoomIn, Contrast, CheckCircle2,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-
 // ─── Schemas ──────────────
 
 const nomeSchema = z.object({
@@ -45,26 +38,6 @@ type SenhaForm = z.infer<typeof senhaSchema>;
 export default function PerfilPage() {
     const { user } = useAuth();
     const { toast } = useToast();
-
-    // Acessibilidade
-    const [fontSize, setFontSize] = useState<FontSize>("normal");
-    const [contraste, setContraste] = useState<A11yContrast>("default");
-
-    useEffect(() => {
-        const prefs = loadAccessibilityPrefs();
-        setFontSize(prefs.size);
-        setContraste(prefs.contrast);
-    }, []);
-
-    const handleFontSize = (size: FontSize) => {
-        setFontSize(size);
-        applyFontSize(size);
-    };
-
-    const handleContrast = (c: A11yContrast) => {
-        setContraste(c);
-        applyContrast(c);
-    };
 
     // ─── Form nome ──────────────
     const [savingNome, setSavingNome] = useState(false);
@@ -285,81 +258,6 @@ export default function PerfilPage() {
                             </Button>
                         </form>
                     </Form>
-                </div>
-
-                {/* Card: Acessibilidade */}
-                <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6">
-                    <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1 flex items-center gap-2">
-                        <ZoomIn className="w-4 h-4" /> Acessibilidade
-                    </h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
-                        Ajuste as preferências de visualização para maior conforto.
-                    </p>
-
-                    <div className="mb-5">
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2" id="a11y-font-size-label">
-                            Tamanho do texto
-                        </label>
-                        <div className="flex gap-2" role="group" aria-labelledby="a11y-font-size-label">
-                            {(["normal", "large", "xlarge"] as FontSize[]).map((size) => {
-                                const labels = { normal: "Normal", large: "Grande", xlarge: "Extra grande" };
-                                const icons = { normal: <span className="text-sm">A</span>, large: <span className="text-base font-bold">A</span>, xlarge: <span className="text-lg font-bold">A</span> };
-                                return (
-                                    <button
-                                        key={size}
-                                        onClick={() => handleFontSize(size)}
-                                        aria-pressed={fontSize === size}
-                                        aria-label={`Fonte ${labels[size]}`}
-                                        className={cn(
-                                            "flex-1 py-2 px-3 rounded-lg border text-center transition-all flex flex-col items-center gap-1",
-                                            fontSize === size
-                                                ? "border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300"
-                                                : "border-slate-200 dark:border-slate-700 hover:border-slate-300 text-slate-600 dark:text-slate-400"
-                                        )}
-                                    >
-                                        {icons[size]}
-                                        <span className="text-xs">{labels[size]}</span>
-                                        {fontSize === size && <CheckCircle2 className="w-3 h-3 text-blue-500" />}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Alto contraste */}
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2" id="a11y-contrast-label">
-                            Contraste
-                        </label>
-                        <div className="flex gap-2" role="group" aria-labelledby="a11y-contrast-label">
-                            {(["default", "high"] as A11yContrast[]).map((c) => {
-                                const label = c === "default" ? "Padrão" : "Alto contraste";
-                                return (
-                                    <button
-                                        key={c}
-                                        onClick={() => handleContrast(c)}
-                                        aria-pressed={contraste === c}
-                                        aria-label={`Contraste ${label}`}
-                                        className={cn(
-                                            "flex-1 py-2.5 px-4 rounded-lg border text-sm font-medium transition-all flex items-center justify-center gap-2",
-                                            contraste === c
-                                                ? "border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300"
-                                                : "border-slate-200 dark:border-slate-700 hover:border-slate-300 text-slate-600 dark:text-slate-400"
-                                        )}
-                                    >
-                                        <Contrast className="w-4 h-4" />
-                                        {label}
-                                        {contraste === c && <CheckCircle2 className="w-3.5 h-3.5 text-blue-500" />}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                        {contraste === "high" && (
-                            <p className="text-xs text-slate-400 mt-2">
-                                Alto contraste aumenta a espessura das bordas e satura as cores para maior legibilidade.
-                            </p>
-                        )}
-                    </div>
                 </div>
 
             </div>

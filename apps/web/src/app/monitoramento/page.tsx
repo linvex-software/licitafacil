@@ -4,11 +4,14 @@ import { Plus, Radio, Bell, X, Search } from 'lucide-react'
 import { CardPregao } from '@/components/monitoramento/CardPregao'
 import type { PregaoMonitorado } from '@/components/monitoramento/CardPregao'
 import { useMonitoramentoSocket } from '@/hooks/useMonitoramentoSocket'
-import { listarPregoesPncp, cadastrarPregaoMonitorado, sugerirVinculoPregao } from '@/lib/api'
+import { listarPregoesPncp, cadastrarPregaoMonitorado, sugerirVinculoPregao, registrarResultadoPregao } from '@/lib/api'
 import { useAuth } from '@/contexts/auth-context'
 import { AuthGuard } from '@/components/AuthGuard'
 import { Layout } from '@/components/layout'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/hooks/use-toast'
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -16,8 +19,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
-const ITENS_POR_PAGINA = 50
+const ITENS_POR_PAGINA = 20
 
 function formatarOpcaoLicitacao(title?: string, agency?: string) {
   const raw = `${title ?? ''} — ${agency ?? ''}`
@@ -30,10 +42,11 @@ function formatarOpcaoLicitacao(title?: string, agency?: string) {
 function MonitoramentoContent() {
   const { user } = useAuth()
   const router = useRouter()
+  const { toast } = useToast()
   const [pregoes, setPregoes] = useState<PregaoMonitorado[]>([])
   const [carregando, setCarregando] = useState(true)
   const [filtroPortal, setFiltroPortal] = useState('')
-  const [filtroStatus, setFiltroStatus] = useState('')
+  const [filtroUf, setFiltroUf] = useState('')
   const [dataFiltro, setDataFiltro] = useState(new Date().toISOString().slice(0, 10))
   const [busca, setBusca] = useState('')
   const [pagina, setPagina] = useState(1)
@@ -45,8 +58,55 @@ function MonitoramentoContent() {
   const [sugestoesLoading, setSugestoesLoading] = useState(false)
   const [bidIdSelecionado, setBidIdSelecionado] = useState<string>('')
   const [vinculoQuery, setVinculoQuery] = useState<string>('')
+  const [criandoLicitacaoKey, setCriandoLicitacaoKey] = useState<string>('')
+
+  const [resultadoModalOpen, setResultadoModalOpen] = useState(false)
+  const [resultadoPregao, setResultadoPregao] = useState<PregaoMonitorado | null>(null)
+  const [resultadoValorFinal, setResultadoValorFinal] = useState<string>('')
+  const [resultadoValorReferencia, setResultadoValorReferencia] = useState<string>('')
+  const [resultadoFonte, setResultadoFonte] = useState<string>('')
+  const [resultadoObs, setResultadoObs] = useState<string>('')
+  const [resultadoStatus, setResultadoStatus] = useState<string>('PENDENTE')
+  const [salvandoResultado, setSalvandoResultado] = useState(false)
 
   const { conectado, reconectando, updates, alertas } = useMonitoramentoSocket(user?.empresaId)
+
+  const handleCriarLicitacao = async (pregao: PregaoMonitorado) => {
+    const key = `${pregao.portal}::${pregao.numeroPregao}`
+    setCriandoLicitacaoKey(key)
+    try {
+      let pregaoId = pregao.id ?? ''
+      if (!pregaoId) {
+        // Se o item veio direto do PNCP (sem id), cria no banco primeiro para obter pregaoId e permitir vínculo pós-criação.
+        const url = pregao.urlFallbackPncp || pregao.urlSalaDisputa
+        const created = await cadastrarPregaoMonitorado({
+          url,
+          numeroPregao: pregao.numeroPregao,
+        })
+        pregaoId = created?.id ?? ''
+      }
+
+      const params = new URLSearchParams({
+        criar: "true",
+        numero: pregao.numeroPregao ?? "",
+        objeto: (pregao.objeto ?? "").slice(0, 500),
+        orgao: (pregao.orgao ?? "").slice(0, 200),
+        portal: pregao.portal ?? "",
+        data: pregao.horarioInicio ?? "",
+      })
+      if (pregaoId) params.set("pregaoId", pregaoId)
+      if (pregao.uf) params.set("uf", pregao.uf)
+      router.push(`/licitacoes?${params.toString()}`)
+    } catch (e: any) {
+      toast({
+        title: "Falha ao preparar licitação",
+        description: e?.response?.data?.message || e?.message || "Não foi possível criar o pregão monitorado para vincular.",
+        variant: "destructive",
+      })
+    } finally {
+      setCriandoLicitacaoKey('')
+    }
+  }
 
   const numeroDetectado = useMemo(() => {
     const url = urlManual.trim()
@@ -85,7 +145,7 @@ function MonitoramentoContent() {
 
   useEffect(() => { carregar() }, [carregar])
 
-  useEffect(() => { setPagina(1) }, [filtroPortal, filtroStatus, dataFiltro, busca])
+  useEffect(() => { setPagina(1) }, [filtroPortal, filtroUf, dataFiltro, busca])
 
   useEffect(() => {
     if (!mostrarAdicionar) return
@@ -130,7 +190,7 @@ function MonitoramentoContent() {
 
   const pregoesFiltrados = pregoes.filter(p => {
     if (filtroPortal && p.portal !== filtroPortal) return false
-    if (filtroStatus && p.status !== filtroStatus) return false
+    if (filtroUf && p.uf !== filtroUf) return false
     if (busca.trim()) {
       const q = busca.toLowerCase()
       if (!p.objeto?.toLowerCase().includes(q) &&
@@ -172,19 +232,53 @@ function MonitoramentoContent() {
     }
   }
 
-  const handleCriarLicitacao = (pregao: PregaoMonitorado) => {
-    const params = new URLSearchParams({
-      numero: pregao.numeroPregao,
-      objeto: pregao.objeto?.slice(0, 200) || '',
-      orgao: pregao.orgao || '',
-    })
-    router.push(`/licitacoes?criar=true&${params.toString()}`)
+  const abrirModalResultado = (pregao: PregaoMonitorado) => {
+    if (!pregao.id) {
+      toast({
+        title: "Este pregão ainda não está salvo",
+        description: "Adicione/registre o pregão no monitoramento para poder salvar o resultado.",
+        variant: "destructive",
+      })
+      return
+    }
+    setResultadoPregao(pregao)
+    setResultadoStatus((pregao as any)?.resultado ?? 'PENDENTE')
+    setResultadoValorFinal('')
+    setResultadoValorReferencia('')
+    setResultadoFonte('')
+    setResultadoObs('')
+    setResultadoModalOpen(true)
   }
 
-  const handleAnalisarEdital = (pregao: PregaoMonitorado) => {
-    const url = pregao.urlFallbackPncp || pregao.urlSalaDisputa
-    window.open(url, '_blank')
-    router.push('/licitacoes')
+  const salvarResultado = async () => {
+    if (!resultadoPregao?.id) return
+    setSalvandoResultado(true)
+    try {
+      const valorFinal = resultadoValorFinal.trim() ? Number(resultadoValorFinal.replace(",", ".")) : null
+      const valorReferencia = resultadoValorReferencia.trim() ? Number(resultadoValorReferencia.replace(",", ".")) : null
+      if (valorFinal != null && (Number.isNaN(valorFinal) || valorFinal < 0)) throw new Error("Valor final inválido.")
+      if (valorReferencia != null && (Number.isNaN(valorReferencia) || valorReferencia < 0)) throw new Error("Valor de referência inválido.")
+
+      await registrarResultadoPregao(resultadoPregao.id, {
+        resultado: resultadoStatus as any,
+        valorFinal,
+        valorReferencia,
+        fonteValorReferencia: resultadoFonte ? (resultadoFonte as any) : null,
+        observacao: resultadoObs?.trim() || null,
+      })
+      toast({ title: "Resultado registrado", description: "Você pode acompanhar na Central de Pregões." })
+      setResultadoModalOpen(false)
+      setResultadoPregao(null)
+      carregar()
+    } catch (e: any) {
+      toast({
+        title: "Erro ao salvar resultado",
+        description: e?.response?.data?.message || e?.message || "Não foi possível salvar.",
+        variant: "destructive",
+      })
+    } finally {
+      setSalvandoResultado(false)
+    }
   }
 
   return (
@@ -302,6 +396,34 @@ function MonitoramentoContent() {
         </div>
       )}
 
+      {!carregando && pregoes.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { label: 'Total hoje', valor: pregoes.length, cor: 'text-foreground' },
+            {
+              label: 'Com link direto',
+              valor: pregoes.filter(p => p.urlSalaDisputa && !p.urlSalaDisputa.includes('pncp.gov.br')).length,
+              cor: 'text-green-400',
+            },
+            {
+              label: 'Portais',
+              valor: [...new Set(pregoes.map(p => p.portal))].length,
+              cor: 'text-blue-400',
+            },
+            {
+              label: 'Estados',
+              valor: [...new Set(pregoes.map(p => p.uf).filter(Boolean))].length,
+              cor: 'text-purple-400',
+            },
+          ].map(item => (
+            <div key={item.label} className="bg-card border border-border rounded-lg p-3 text-center">
+              <p className={`text-2xl font-bold ${item.cor}`}>{item.valor}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{item.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -329,14 +451,14 @@ function MonitoramentoContent() {
           <option value="PNCP">PNCP</option>
         </select>
         <select
-          value={filtroStatus}
-          onChange={e => setFiltroStatus(e.target.value)}
+          value={filtroUf}
+          onChange={e => { setFiltroUf(e.target.value); setPagina(1) }}
           className="px-3 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
         >
-          <option value="">Todos os status</option>
-          <option value="AGUARDANDO">Aguardando</option>
-          <option value="EM_DISPUTA">Em disputa</option>
-          <option value="ENCERRADO">Encerrado</option>
+          <option value="">Todos os estados</option>
+          {['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT',
+            'PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO']
+            .map(uf => <option key={uf} value={uf}>{uf}</option>)}
         </select>
         <span className="text-xs text-muted-foreground ml-auto">
           {carregando
@@ -377,7 +499,8 @@ function MonitoramentoContent() {
                 key={p.id ?? `${p.numeroPregao}-${i}`}
                 pregao={p}
                 onCriarLicitacao={handleCriarLicitacao}
-                onAnalisarEdital={handleAnalisarEdital}
+                criandoLicitacao={criandoLicitacaoKey === `${p.portal}::${p.numeroPregao}`}
+                onRegistrarResultado={abrirModalResultado}
               />
             ))}
           </div>
@@ -405,6 +528,75 @@ function MonitoramentoContent() {
           )}
         </>
       )}
+
+      <Dialog open={resultadoModalOpen} onOpenChange={(open) => !open && setResultadoModalOpen(false)}>
+        {resultadoPregao && (
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Registrar resultado</DialogTitle>
+              <DialogDescription>
+                {resultadoPregao.numeroPregao} • {resultadoPregao.portal}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Resultado</Label>
+                <Select value={resultadoStatus} onValueChange={setResultadoStatus}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PENDENTE">Pendente</SelectItem>
+                    <SelectItem value="GANHOU">Ganhou</SelectItem>
+                    <SelectItem value="PERDEU">Perdeu</SelectItem>
+                    <SelectItem value="DESISTIU">Desistiu</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Fonte do valor de referência</Label>
+                <Select value={resultadoFonte || "EMPTY"} onValueChange={(v) => setResultadoFonte(v === "EMPTY" ? "" : v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Opcional" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EMPTY">Não informar</SelectItem>
+                    <SelectItem value="PNCP">PNCP</SelectItem>
+                    <SelectItem value="EDITAL">Edital</SelectItem>
+                    <SelectItem value="MANUAL">Manual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Valor de referência</Label>
+                <Input inputMode="decimal" value={resultadoValorReferencia} onChange={(e) => setResultadoValorReferencia(e.target.value)} />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Valor final</Label>
+                <Input inputMode="decimal" value={resultadoValorFinal} onChange={(e) => setResultadoValorFinal(e.target.value)} />
+              </div>
+
+              <div className="sm:col-span-2 space-y-1.5">
+                <Label>Observação</Label>
+                <Input value={resultadoObs} onChange={(e) => setResultadoObs(e.target.value)} placeholder="Opcional" />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setResultadoModalOpen(false)} disabled={salvandoResultado}>
+                Cancelar
+              </Button>
+              <Button onClick={salvarResultado} disabled={salvandoResultado}>
+                {salvandoResultado ? "Salvando..." : "Salvar"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
     </div>
   )
 }

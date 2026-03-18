@@ -232,4 +232,70 @@ export class EmailService {
       return false;
     }
   }
+
+  async enviarAlertaPregao(dados: {
+    to: string;
+    numeroPregao: string;
+    objeto: string;
+    portal: string;
+    horarioInicio: Date;
+    urlSalaDisputa: string;
+  }): Promise<boolean> {
+    const horario = new Date(dados.horarioInicio).toLocaleString("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      hour: "2-digit",
+      minute: "2-digit",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+
+    const html = `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+        <div style="background:#2563EB;padding:24px;border-radius:8px 8px 0 0">
+          <h1 style="color:white;margin:0;font-size:20px">Pregão iniciando em breve</h1>
+        </div>
+        <div style="background:#f8fafc;padding:24px;border:1px solid #e2e8f0;border-top:none">
+          <p style="color:#374151;font-size:15px;margin:0 0 16px">
+            O pregão abaixo está prestes a iniciar. Acesse o portal para participar.
+          </p>
+          <table style="width:100%;border-collapse:collapse">
+            <tr>
+              <td style="padding:8px;background:#fff;border:1px solid #e2e8f0;font-weight:bold;width:35%">Número</td>
+              <td style="padding:8px;background:#fff;border:1px solid #e2e8f0">${dados.numeroPregao}</td>
+            </tr>
+            <tr>
+              <td style="padding:8px;background:#f8fafc;border:1px solid #e2e8f0;font-weight:bold">Portal</td>
+              <td style="padding:8px;background:#f8fafc;border:1px solid #e2e8f0">${dados.portal}</td>
+            </tr>
+            <tr>
+              <td style="padding:8px;background:#fff;border:1px solid #e2e8f0;font-weight:bold">Horário</td>
+              <td style="padding:8px;background:#fff;border:1px solid #e2e8f0">${horario}</td>
+            </tr>
+            <tr>
+              <td style="padding:8px;background:#f8fafc;border:1px solid #e2e8f0;font-weight:bold">Objeto</td>
+              <td style="padding:8px;background:#f8fafc;border:1px solid #e2e8f0">${(dados.objeto ?? "").slice(0, 200)}</td>
+            </tr>
+          </table>
+          <div style="text-align:center;margin-top:24px">
+            <a href="${dados.urlSalaDisputa}"
+              style="background:#2563EB;color:white;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:15px">
+              Abrir sala de disputa
+            </a>
+          </div>
+        </div>
+        <div style="padding:16px;text-align:center">
+          <p style="color:#9ca3af;font-size:12px;margin:0">
+            Limvex Licitação — Gestão inteligente de processos licitatórios
+          </p>
+        </div>
+      </div>
+    `;
+
+    return this.sendEmail({
+      to: dados.to,
+      subject: `Pregão ${dados.numeroPregao} inicia em breve — ${dados.portal}`,
+      html,
+    });
+  }
 }

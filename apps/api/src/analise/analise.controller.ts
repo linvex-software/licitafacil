@@ -30,14 +30,6 @@ export class AnaliseController {
     return this.analiseService.analisarHistoricoOrgao(cnpj, mesesNumber);
   }
 
-  @Get("concorrentes")
-  async concorrentes(@Query("cnpj") cnpj: string) {
-    if (!cnpj?.trim()) {
-      throw new BadRequestException("cnpj é obrigatório");
-    }
-    return this.analiseService.analisarConcorrente(cnpj);
-  }
-
   @Get("produtos")
   async produtos(@Query("categoria") categoria: string) {
     if (!categoria?.trim()) {

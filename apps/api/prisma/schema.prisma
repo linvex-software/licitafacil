@@ -60,6 +60,8 @@ model Empresa {
   // Relacionamento: Uma empresa tem muitos pregões monitorados
   pregoesMonitorados PregaoMonitorado[]
 
+  minutosAlertaPregao Int @default(15)
+
   @@index([deletedAt]) // Otimizar queries que filtram deletados
   @@map("empresas")
 }
@@ -899,6 +901,19 @@ enum StatusPregao {
   CANCELADO
 }
 
+enum ResultadoPregao {
+  GANHOU
+  PERDEU
+  DESISTIU
+  PENDENTE
+}
+
+enum FonteValorReferenciaPregao {
+  PNCP
+  EDITAL
+  MANUAL
+}
+
 model PregaoMonitorado {
   id             String              @id @default(uuid())
   empresaId      String
@@ -913,6 +928,15 @@ model PregaoMonitorado {
   urlSalaDisputa String
   linkPncp       String?
   melhorLance    Float?
+
+  // Central de Pregões (registro manual de resultado)
+  resultado      ResultadoPregao     @default(PENDENTE)
+  valorFinal     Float?
+  valorReferencia Float?
+  fonteValorReferencia FonteValorReferenciaPregao?
+  observacao     String?
+  finalizadoEm   DateTime?
+
   alertaEnviado  Boolean             @default(false)
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
@@ -921,6 +945,7 @@ model PregaoMonitorado {
   bid           Bid?                @relation(fields: [bidId], references: [id], onDelete: SetNull)
 
   @@index([empresaId, status])
+  @@index([empresaId, resultado])
   @@index([horarioInicio])
   @@index([bidId])
 }

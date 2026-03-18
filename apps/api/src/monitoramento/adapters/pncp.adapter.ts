@@ -48,9 +48,8 @@ export class PncpAdapter implements PortalAdapter {
     const resultados: PregaoInfo[] = []
     let pagina = 1
     let continuar = true
-    const isDev = process.env.NODE_ENV !== 'production'
-    const tamanhoPagina = isDev ? 20 : 50
-    const maxPaginas = isDev ? 3 : 10
+    const tamanhoPagina = 50
+    const maxPaginas = 25
 
     while (continuar) {
       try {
@@ -81,6 +80,7 @@ export class PncpAdapter implements PortalAdapter {
             numeroPregao: item.numeroCompra || numeroControle || '',
             objeto: item.objetoCompra || '',
             orgao: item.orgaoEntidade?.razaoSocial || item.unidadeOrgao?.nomeUnidade || '',
+            uf: item.unidadeOrgao?.ufSigla || item.orgaoEntidade?.ufSigla || '',
             horarioInicio: new Date(item.dataAberturaProposta || item.dataPublicacaoPncp),
             urlSalaDisputa: link || urlFallbackPncp,
             urlFallbackPncp,

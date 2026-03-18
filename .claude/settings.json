@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm --filter @licitafacil/web build)",
+      "Bash(pkill -f 'next dev')",
+      "Bash(pkill -f 'nest start')",
+      "Bash(lsof -ti:3000,3001,3002)",
+      "Bash(docker run:*)",
+      "Bash(docker start:*)",
+      "Read(//tmp/**)",
+      "Bash(lsof -ti:3001)",
+      "Bash(lsof -ti:3000)",
+      "Bash(kill -9 375758)",
+      "Bash(kill -9 375648)",
+      "Bash(kill -9 375696)",
+      "Bash(pkill -f ts-node)",
+      "Bash(lsof -ti:3002)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/)",
+      "Bash(lsof -ti:3000,3001)",
+      "Bash(kill -9 389293)",
+      "Bash(kill -9 396595)",
+      "Bash(sort find:*)",
+      "Bash(gh pr:*)",
+      "Bash(pnpm prisma:*)"
+    ],
+    "additionalDirectories": [
+      "/home/murilo/Área de trabalho/Limvex/licitafacil/apps/web/src/app/analise/concorrentes"
+    ]
+  }
+}

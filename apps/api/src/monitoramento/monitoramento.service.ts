@@ -1,18 +1,24 @@
-import { Injectable, BadRequestException } from '@nestjs/common'
+import { Injectable, BadRequestException, Logger } from '@nestjs/common'
 import { InjectQueue } from '@nestjs/bull'
 import { Queue } from 'bull'
 import { PrismaService } from '../prisma/prisma.service'
 import { PncpAdapter } from './adapters/pncp.adapter'
 import { FiltrosPregaoDto } from './dto/filtros-pregao.dto'
 import { CadastrarPregaoDto } from './dto/cadastrar-pregao.dto'
+import { AtualizarPregaoDto } from './dto/atualizar-pregao.dto'
 import { Prisma } from '@prisma/client'
+import { RegistrarResultadoPregaoDto } from './dto/registrar-resultado-pregao.dto'
+import { FiltrosCentralPregoesDto, PeriodoCentralPregoes } from './dto/filtros-central-pregoes.dto'
 
 @Injectable()
 export class MonitoramentoService {
+  private readonly logger = new Logger(MonitoramentoService.name)
+
   constructor(
     private prisma: PrismaService,
     private pncpAdapter: PncpAdapter,
     @InjectQueue('monitoramento') private monitoramentoQueue: Queue,
+    @InjectQueue('monitoramento-alertas') private alertasQueue: Queue,
   ) {}
 
   async listarPregoes(empresaId: string, filtros: FiltrosPregaoDto) {
@@ -101,6 +107,24 @@ export class MonitoramentoService {
       { pregaoId: pregao.id, empresaId },
       { repeat: { every: 60000 }, jobId: `monitor-${pregao.id}` },
     )
+
+    // Agendar alerta por email
+    const empresa = await this.prisma.empresa.findUnique({
+      where: { id: empresaId },
+      select: { minutosAlertaPregao: true },
+    })
+    const minutosAntes = empresa?.minutosAlertaPregao ?? 15
+    const horarioAlerta = new Date(pregao.horarioInicio)
+    horarioAlerta.setMinutes(horarioAlerta.getMinutes() - minutosAntes)
+    const delay = horarioAlerta.getTime() - Date.now()
+    if (delay > 0) {
+      await this.alertasQueue.add(
+        'enviar-alerta-pregao',
+        { pregaoId: pregao.id, empresaId },
+        { delay, attempts: 2 },
+      )
+      this.logger.log(`Alerta agendado para ${minutosAntes}min antes do pregão ${pregao.id}`)
+    }
 
     return pregao
   }
@@ -209,5 +233,215 @@ export class MonitoramentoService {
     if (job) await this.monitoramentoQueue.removeRepeatableByKey(job.key)
 
     return this.prisma.pregaoMonitorado.delete({ where: { id, empresaId } })
+  }
+
+  async atualizarPregao(id: string, empresaId: string, dto: AtualizarPregaoDto) {
+    return this.prisma.pregaoMonitorado.update({
+      where: { id, empresaId },
+      data: {
+        ...(dto.bidId !== undefined ? { bidId: dto.bidId } : {}),
+      },
+    })
+  }
+
+  private parseLocalDateOnly(s?: string, endOfDay?: boolean) {
+    if (!s) return null
+    const [y, m, d] = s.split('-').map((v) => parseInt(v, 10))
+    if (!y || !m || !d) return null
+    const dt = new Date(y, m - 1, d)
+    if (endOfDay) dt.setHours(23, 59, 59, 999)
+    else dt.setHours(0, 0, 0, 0)
+    return dt
+  }
+
+  private buildCentralWhere(empresaId: string, filtros: FiltrosCentralPregoesDto) {
+    const inicio = this.parseLocalDateOnly(filtros.dataInicio, false)
+    const fim = this.parseLocalDateOnly(filtros.dataFim, true)
+    const lic = (filtros.licitacao ?? '').trim()
+    const periodoPor = filtros.periodoPor ?? PeriodoCentralPregoes.INICIO
+
+    return {
+      empresaId,
+      ...(filtros.portal && { portal: filtros.portal }),
+      ...(filtros.resultado && { resultado: filtros.resultado }),
+      ...(inicio || fim
+        ? {
+          ...(periodoPor === PeriodoCentralPregoes.FINALIZACAO
+            ? {
+              finalizadoEm: {
+                ...(inicio ? { gte: inicio } : {}),
+                ...(fim ? { lte: fim } : {}),
+              },
+            }
+            : {
+              // default: início do pregão
+              horarioInicio: {
+                ...(inicio ? { gte: inicio } : {}),
+                ...(fim ? { lte: fim } : {}),
+              },
+            }),
+        }
+        : {}),
+      ...(lic
+        ? {
+          OR: [
+            { numeroPregao: { contains: lic, mode: 'insensitive' as const } },
+            { objeto: { contains: lic, mode: 'insensitive' as const } },
+            { orgao: { contains: lic, mode: 'insensitive' as const } },
+            { bid: { title: { contains: lic, mode: 'insensitive' as const } } },
+            { bid: { agency: { contains: lic, mode: 'insensitive' as const } } },
+          ],
+        }
+        : {}),
+    } satisfies Prisma.PregaoMonitoradoWhereInput
+  }
+
+  async registrarResultadoPregao(id: string, empresaId: string, dto: RegistrarResultadoPregaoDto) {
+    const agora = new Date()
+
+    return this.prisma.pregaoMonitorado.update({
+      where: { id, empresaId },
+      data: {
+        resultado: dto.resultado,
+        valorFinal: dto.valorFinal ?? null,
+        valorReferencia: dto.valorReferencia ?? null,
+        fonteValorReferencia: dto.fonteValorReferencia ?? null,
+        observacao: dto.observacao ?? null,
+        finalizadoEm: dto.resultado === 'PENDENTE' ? null : agora,
+      },
+    })
+  }
+
+  async listarResultadosPregoes(empresaId: string, filtros: FiltrosCentralPregoesDto) {
+    const page = Math.max(parseInt(filtros.page ?? '1', 10) || 1, 1)
+    const limit = Math.min(Math.max(parseInt(filtros.limit ?? '10', 10) || 10, 1), 50)
+    const skip = (page - 1) * limit
+
+    const where = this.buildCentralWhere(empresaId, filtros)
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.pregaoMonitorado.findMany({
+        where,
+        include: { bid: { select: { id: true, title: true, agency: true } } },
+        orderBy: [{ finalizadoEm: 'desc' }, { horarioInicio: 'desc' }],
+        skip,
+        take: limit,
+      }),
+      this.prisma.pregaoMonitorado.count({ where }),
+    ])
+
+    return {
+      page,
+      limit,
+      total,
+      items,
+    }
+  }
+
+  async metricasPregoes(empresaId: string, filtros: FiltrosCentralPregoesDto) {
+    const where = this.buildCentralWhere(empresaId, filtros)
+
+    const [counts, economiaAgg, totalCount, finalAgg, refAgg] = await this.prisma.$transaction([
+      this.prisma.pregaoMonitorado.groupBy({
+        by: ['resultado'],
+        where,
+        orderBy: { resultado: 'asc' },
+        _count: { _all: true },
+      }),
+      this.prisma.pregaoMonitorado.aggregate({
+        where: {
+          ...where,
+          valorFinal: { not: null },
+          valorReferencia: { not: null },
+        },
+        _sum: {
+          valorFinal: true,
+          valorReferencia: true,
+        },
+        _count: { _all: true },
+      }),
+      this.prisma.pregaoMonitorado.count({ where }),
+      this.prisma.pregaoMonitorado.count({ where: { ...where, finalizadoEm: { not: null } } }),
+      this.prisma.pregaoMonitorado.count({ where: { ...where, valorReferencia: { not: null } } }),
+    ])
+
+    const sumFinal = economiaAgg._sum.valorFinal ?? 0
+    const sumRef = economiaAgg._sum.valorReferencia ?? 0
+
+    const porResultado = Object.fromEntries(
+      (counts as Array<{ resultado: any; _count: { _all: number } }>).map((c) => [c.resultado, c._count._all]),
+    )
+
+    return {
+      total: totalCount,
+      totalFinalizados: finalAgg,
+      totalComValorReferencia: refAgg,
+      porResultado,
+      economiaTotal: sumRef - sumFinal,
+      baseEconomia: {
+        totalComValores: (economiaAgg as any)?._count?._all ?? 0,
+        somaValorReferencia: sumRef,
+        somaValorFinal: sumFinal,
+      },
+    }
+  }
+
+  async exportarResultadosCsv(empresaId: string, filtros: FiltrosCentralPregoesDto) {
+    const where = this.buildCentralWhere(empresaId, filtros)
+    const items = await this.prisma.pregaoMonitorado.findMany({
+      where,
+      include: { bid: { select: { id: true, title: true } } },
+      orderBy: [{ finalizadoEm: 'desc' }, { horarioInicio: 'desc' }],
+      take: 5000,
+    })
+
+    const escape = (v: any) => {
+      const s = (v ?? '').toString()
+      const needsQuotes = /[;"\n\r]/.test(s)
+      const safe = s.replace(/"/g, '""')
+      return needsQuotes ? `"${safe}"` : safe
+    }
+
+    const header = [
+      'numeroPregao',
+      'portal',
+      'orgao',
+      'horarioInicio',
+      'resultado',
+      'valorReferencia',
+      'valorFinal',
+      'economia',
+      'licitacaoId',
+      'licitacaoTitulo',
+      'finalizadoEm',
+      'observacao',
+      'urlSalaDisputa',
+    ].join(';')
+
+    const lines = items.map((p) => {
+      const economia =
+        typeof p.valorReferencia === 'number' && typeof p.valorFinal === 'number'
+          ? p.valorReferencia - p.valorFinal
+          : ''
+      return [
+        escape(p.numeroPregao),
+        escape(p.portal),
+        escape(p.orgao),
+        escape(p.horarioInicio?.toISOString?.() ?? ''),
+        escape(p.resultado),
+        escape(p.valorReferencia ?? ''),
+        escape(p.valorFinal ?? ''),
+        escape(economia),
+        escape(p.bidId ?? ''),
+        escape(p.bid?.title ?? ''),
+        escape(p.finalizadoEm?.toISOString?.() ?? ''),
+        escape(p.observacao ?? ''),
+        escape(p.urlSalaDisputa ?? ''),
+      ].join(';')
+    })
+
+    // BOM para Excel/PT-BR
+    const csv = `\uFEFF${header}\n${lines.join('\n')}\n`
+    return csv
   }
 }

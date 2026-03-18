@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
-import { AccessibilityProvider } from "@/contexts/accessibility-context";
 
 export const metadata: Metadata = {
-  title: "Licitafacil - Gestão de Licitações",
-  description: "Sistema profissional de gestão de licitações",
+  title: "LVX Licitação",
+  description: "Gestão inteligente de processos licitatórios",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export const viewport: Viewport = {
@@ -22,11 +24,29 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className="antialiased font-sans" suppressHydrationWarning>
-        <AccessibilityProvider>
-          <Providers>
-            {children}
-          </Providers>
-        </AccessibilityProvider>
+        <Providers>
+          {children}
+        </Providers>
+        {/* VLibras - Widget oficial de acessibilidade do Governo Federal */}
+        <div
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: `
+              <div vw class="enabled">
+                <div vw-access-button class="active"></div>
+                <div vw-plugin-wrapper>
+                  <div class="vw-plugin-top-wrapper"></div>
+                </div>
+              </div>
+              <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+              <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                  new window.VLibras.Widget('https://vlibras.gov.br/app');
+                });
+              </script>
+            `
+          }}
+        />
       </body>
     </html>
   );

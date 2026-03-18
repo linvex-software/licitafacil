@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Body,
   Param,
   HttpCode,
@@ -55,10 +56,35 @@ export class EmpresaController {
   }
 
   /**
+   * Busca a configuração de alerta de pregão
+   * GET /empresas/configuracoes/alertas
+   */
+  @Get("configuracoes/alertas")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  async getConfigAlerta(@Tenant() empresaId: string) {
+    return this.empresaService.getConfigAlerta(empresaId);
+  }
+
+  /**
+   * Salva a configuração de alerta de pregão
+   * PATCH /empresas/configuracoes/alertas
+   */
+  @Patch("configuracoes/alertas")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  async updateConfigAlerta(
+    @Tenant() empresaId: string,
+    @Body() body: { minutosAlertaPregao: number },
+  ) {
+    return this.empresaService.updateConfigAlerta(empresaId, body.minutosAlertaPregao);
+  }
+
+  /**
    * Busca uma empresa por ID (com validação de tenant)
    * GET /empresas/:id
    * Só permite buscar a própria empresa
-   * 
+   *
    * Permissão: ADMIN e COLABORADOR podem ver
    */
   @Get(":id")
