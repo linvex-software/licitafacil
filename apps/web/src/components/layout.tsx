@@ -8,7 +8,7 @@ import {
     Globe, ShieldCheck, ChevronDown, ClipboardList,
     BarChart2, Briefcase,
     TrendingUp, History, Tag as TagIcon,
-    CalendarDays, Users, HelpCircle, Radio,
+    CalendarDays, Users, HelpCircle, Radio, UserSearch,
 } from "lucide-react";
 
 import { AlertsDropdown } from "@/components/AlertsDropdown";
@@ -59,6 +59,7 @@ const navGroups: NavGroup[] = [
                 subItems: [
                     { label: "Histórico de Compras", href: "/analise/historico-compras", icon: History },
                     { label: "Produtos", href: "/analise/produtos", icon: TagIcon },
+                    { label: "Concorrentes", href: "/analise/concorrentes", icon: UserSearch },
                 ]
             },
             {
