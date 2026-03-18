@@ -633,6 +633,11 @@ export async function removerPregaoMonitorado(id: string): Promise<any> {
   return res
 }
 
+export async function vincularPregaoMonitorado(pregaoId: string, bidId: string): Promise<any> {
+  const { data: res } = await api.patch(`/monitoramento/pregoes/${pregaoId}`, { bidId })
+  return res
+}
+
 
 // --- Checklist Items (Adicional) ---
 export async function updateChecklistItem(id: string, body: { titulo?: string; descricao?: string; exigeEvidencia?: boolean }) {

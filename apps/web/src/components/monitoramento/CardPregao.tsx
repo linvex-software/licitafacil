@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { ExternalLink, Clock, TrendingDown } from 'lucide-react'
+import { ExternalLink, Clock, TrendingDown, Plus } from 'lucide-react'
 
 export interface PregaoMonitorado {
   id?: string
@@ -18,6 +18,8 @@ export interface PregaoMonitorado {
 
 interface CardPregaoProps {
   pregao: PregaoMonitorado
+  onCriarLicitacao?: (pregao: PregaoMonitorado) => void
+  criandoLicitacao?: boolean
 }
 
 const CORES_PORTAL: Record<string, string> = {
@@ -64,7 +66,7 @@ function useCountdown(horario: string) {
   return { texto, ref }
 }
 
-export function CardPregao({ pregao }: CardPregaoProps) {
+export function CardPregao({ pregao, onCriarLicitacao, criandoLicitacao }: CardPregaoProps) {
   const { texto: countdown, ref: cardRef } = useCountdown(pregao.horarioInicio)
 
   const temUrlPortal = pregao.urlSalaDisputa &&
@@ -122,6 +124,23 @@ export function CardPregao({ pregao }: CardPregaoProps) {
           Abrir <ExternalLink className="h-3 w-3" />
         </a>
       </div>
+
+      {onCriarLicitacao && (
+        <div className="flex items-center justify-between pt-1 border-t border-border">
+          <button
+            type="button"
+            onClick={() => onCriarLicitacao(pregao)}
+            disabled={!!criandoLicitacao}
+            className="text-xs px-2 py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:border-primary transition-colors flex items-center gap-1 disabled:opacity-60 disabled:pointer-events-none"
+            title="Criar licitação no sistema a partir deste pregão"
+          >
+            <Plus className="h-3 w-3" /> {criandoLicitacao ? "Criando..." : "Criar licitação"}
+          </button>
+          <span className="text-[11px] text-muted-foreground">
+            Pré-preenche os dados automaticamente
+          </span>
+        </div>
+      )}
 
     </div>
   )
