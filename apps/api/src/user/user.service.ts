@@ -65,6 +65,7 @@ export class UserService {
         empresaId: true,
         createdAt: true,
         updatedAt: true,
+        onboardingConcluido: true,
       },
     });
 
@@ -330,6 +331,7 @@ export class UserService {
         createdAt: true,
         updatedAt: true,
         deletedAt: true,
+        onboardingConcluido: true,
       },
     });
 
@@ -416,6 +418,16 @@ export class UserService {
   }
 
   /**
+   * Marca o onboarding como concluído para o usuário
+   */
+  async marcarOnboardingConcluido(userId: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { onboardingConcluido: true },
+    });
+  }
+
+  /**
    * Mapeia entidade Prisma para User (sem senha)
    * Converte role do Prisma enum para shared enum
    */
@@ -427,6 +439,7 @@ export class UserService {
     empresaId: string;
     createdAt: Date;
     updatedAt: Date;
+    onboardingConcluido?: boolean;
   }): User {
     // Converter role do Prisma (string literal) para enum do shared
     // Prisma retorna "ADMIN" | "COLABORADOR" como string
@@ -440,6 +453,7 @@ export class UserService {
       empresaId: user.empresaId,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
+      onboardingConcluido: user.onboardingConcluido ?? false,
     };
   }
 }
