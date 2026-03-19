@@ -31,6 +31,7 @@ export const userSchema = z.object({
   empresaId: z.string().uuid(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
+  onboardingConcluido: z.boolean().optional(),
 });
 
 /**
