@@ -37,12 +37,26 @@ export class EmpresaService {
       throw new NotFoundException(`Empresa não encontrada`);
     }
 
-    return {
-      id: empresa.id,
-      name: empresa.name,
-      createdAt: empresa.createdAt.toISOString(),
-      updatedAt: empresa.updatedAt.toISOString(),
-    };
+    return this.mapToEmpresa(empresa);
+  }
+
+  /**
+   * Atualiza dados da empresa do usuário autenticado (nome e/ou segmento)
+   */
+  async atualizarDados(
+    empresaId: string,
+    dados: { nome?: string; segmento?: string },
+  ): Promise<Empresa> {
+    const updateData: { name?: string; segmento?: string } = {};
+    if (dados.nome !== undefined) updateData.name = dados.nome.trim();
+    if (dados.segmento !== undefined) updateData.segmento = dados.segmento;
+
+    const empresa = await this.prisma.empresa.update({
+      where: { id: empresaId },
+      data: updateData,
+    });
+
+    return this.mapToEmpresa(empresa);
   }
 
   /**
@@ -63,12 +77,7 @@ export class EmpresaService {
       throw new NotFoundException(`Empresa com ID ${id} não encontrada`);
     }
 
-    return {
-      id: empresa.id,
-      name: empresa.name,
-      createdAt: empresa.createdAt.toISOString(),
-      updatedAt: empresa.updatedAt.toISOString(),
-    };
+    return this.mapToEmpresa(empresa);
   }
 
   /**
@@ -99,5 +108,21 @@ export class EmpresaService {
       select: { minutosAlertaPregao: true },
     });
     return { minutosAlertaPregao: empresa.minutosAlertaPregao };
+  }
+
+  private mapToEmpresa(empresa: {
+    id: string;
+    name: string;
+    segmento: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }): Empresa {
+    return {
+      id: empresa.id,
+      name: empresa.name,
+      segmento: empresa.segmento,
+      createdAt: empresa.createdAt.toISOString(),
+      updatedAt: empresa.updatedAt.toISOString(),
+    };
   }
 }

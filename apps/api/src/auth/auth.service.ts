@@ -78,6 +78,7 @@ export class AuthService {
       empresaId: user.empresaId,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
+      onboardingConcluido: user.onboardingConcluido,
     };
 
     // Gerar token JWT

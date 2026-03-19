@@ -11,6 +11,7 @@ interface AuthContextType {
     login: (token: string, user: User) => void;
     logout: () => void;
     isLoading: boolean;
+    markOnboardingComplete: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,8 +49,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         router.push("/login");
     };
 
+    const markOnboardingComplete = () => {
+        if (!user) return;
+        const updatedUser: User = { ...user, onboardingConcluido: true };
+        setUser(updatedUser);
+        if (token) setAuth(token, updatedUser);
+    };
+
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+        <AuthContext.Provider value={{ user, token, login, logout, isLoading, markOnboardingComplete }}>
             {children}
         </AuthContext.Provider>
     );
