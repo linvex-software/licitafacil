@@ -1,6 +1,5 @@
 import { EstrategiaLance, PortalLicitacao } from "@prisma/client";
 import {
-  ArrayMinSize,
   IsBoolean,
   IsArray,
   IsEnum,
@@ -55,6 +54,19 @@ export class CreateDisputaDto {
   @IsString()
   bidId?: string;
 
+  /** Alias de bidId (contrato L02 / frontend) */
+  @IsOptional()
+  @IsString()
+  licitacaoId?: string;
+
+  @IsOptional()
+  @IsString()
+  numeroPregao?: string;
+
+  @IsOptional()
+  @IsString()
+  uasg?: string;
+
   @IsEnum(PortalLicitacao)
   portal!: PortalLicitacao;
 
@@ -62,20 +74,19 @@ export class CreateDisputaDto {
   @IsISO8601()
   agendadoPara?: string;
 
+  @IsOptional()
   @ValidateNested()
   @Type(() => CredencialPortalDto)
-  credencial!: CredencialPortalDto;
+  credencial?: CredencialPortalDto;
 
   @IsOptional()
   @IsArray()
-  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => ConfiguracaoLanceDto)
   itens?: ConfiguracaoLanceDto[];
 
   @IsOptional()
   @IsArray()
-  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => ConfiguracaoLanceDto)
   configuracoes?: ConfiguracaoLanceDto[];

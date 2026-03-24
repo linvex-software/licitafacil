@@ -1,11 +1,21 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bull";
-import { DisputaStatus, EventoDisputa, type Prisma } from "@prisma/client";
+import {
+  DisputaStatus,
+  EstrategiaLance,
+  EventoDisputa,
+  OrigemLanceHistorico,
+  ResultadoDisputa,
+  StatusItemDisputa,
+  type Prisma,
+} from "@prisma/client";
 import { Queue } from "bull";
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
@@ -14,6 +24,9 @@ import { UpdateDisputaDto } from "./dto/update-disputa.dto";
 import { DisputaEventoPayload } from "./interfaces/disputa-evento.interface";
 import { DisputaGateway } from "./disputa.gateway";
 import { GetHistoricoDisputaQueryDto } from "./dto/historico-disputa.dto";
+import { ListarDisputasQueryDto } from "./dto/listar-disputas.dto";
+import { SnapshotExtensaoDto } from "./dto/snapshot-extensao.dto";
+import { PatchResultadoDisputaDto } from "./dto/patch-resultado-disputa.dto";
 
 type DisputaCompleta = Prisma.DisputaGetPayload<{
   include: {
@@ -27,11 +40,12 @@ type DisputaCompleta = Prisma.DisputaGetPayload<{
 export class DisputaService {
   constructor(
     private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => DisputaGateway))
     private readonly disputaGateway: DisputaGateway,
     @InjectQueue("disputa") private readonly disputaQueue: Queue,
   ) {}
 
-  async criarDisputa(dto: CreateDisputaDto, empresaId: string) {
+  async criarDisputa(dto: CreateDisputaDto, empresaId: string, criadoPorId?: string | null) {
     const agendadoParaInput = dto.agendadoPara;
     const agendada = agendadoParaInput != null && agendadoParaInput !== undefined;
     const status = agendada ? DisputaStatus.AGENDADA : DisputaStatus.AO_VIVO;
@@ -40,45 +54,59 @@ export class DisputaService {
       throw new BadRequestException("Data de agendamento inválida");
     }
 
-    const senhaHash = this.criptografarSenha(dto.credencial.senha);
-    const configuracoes = dto.configuracoes ?? dto.itens;
-    if (!configuracoes || configuracoes.length === 0) {
-      throw new BadRequestException("Informe ao menos uma configuração de lance");
+    const comCredencial = Boolean(dto.credencial);
+    const configuracoes = dto.configuracoes ?? dto.itens ?? [];
+
+    if (comCredencial && configuracoes.length === 0) {
+      throw new BadRequestException("Informe ao menos uma configuração de lance para o modo robô");
     }
+
+    const bidId = dto.bidId ?? dto.licitacaoId;
+    const numeroPregao = (dto.numeroPregao ?? "NI").trim() || "NI";
+    const uasg = (dto.uasg ?? "NI").trim() || "NI";
+
+    let senhaHash: string | null = null;
+    if (comCredencial && dto.credencial) {
+      senhaHash = this.criptografarSenha(dto.credencial.senha);
+    }
+
+    const iniciadoEmExtensao = !agendada && !comCredencial ? new Date() : undefined;
 
     const disputa = await this.prisma.disputa.create({
       data: {
-        empresa: {
-          connect: { id: empresaId },
-        },
-        bid: dto.bidId
-          ? {
-              connect: { id: dto.bidId },
-            }
-          : undefined,
+        empresa: { connect: { id: empresaId } },
+        bid: bidId ? { connect: { id: bidId } } : undefined,
+        numeroPregao,
+        uasg,
+        criadoPor: criadoPorId ? { connect: { id: criadoPorId } } : undefined,
         portal: dto.portal,
         status,
         agendadoPara,
-        credencial: {
-          create: {
-            empresa: {
-              connect: { id: empresaId },
-            },
-            portal: dto.portal,
-            cnpj: dto.credencial.cnpj,
-            senhaHash,
-          },
-        },
-        configuracoes: {
-          create: configuracoes.map((item) => ({
-            itemNumero: item.itemNumero,
-            itemDescricao: item.itemDescricao,
-            valorMaximo: item.valorMaximo,
-            valorMinimo: item.valorMinimo,
-            estrategia: item.estrategia,
-            ativo: item.ativo ?? true,
-          })),
-        },
+        iniciadoEm: iniciadoEmExtensao,
+        credencial:
+          comCredencial && dto.credencial && senhaHash
+            ? {
+                create: {
+                  empresa: { connect: { id: empresaId } },
+                  portal: dto.portal,
+                  cnpj: dto.credencial.cnpj,
+                  senhaHash,
+                },
+              }
+            : undefined,
+        configuracoes:
+          configuracoes.length > 0
+            ? {
+                create: configuracoes.map((item) => ({
+                  itemNumero: item.itemNumero,
+                  itemDescricao: item.itemDescricao,
+                  valorMaximo: item.valorMaximo,
+                  valorMinimo: item.valorMinimo,
+                  estrategia: item.estrategia,
+                  ativo: item.ativo ?? true,
+                })),
+              }
+            : undefined,
       },
       include: {
         bid: true,
@@ -87,29 +115,264 @@ export class DisputaService {
       },
     });
 
-    if (agendada) {
-      const delay = Math.max(0, agendadoPara!.getTime() - Date.now());
-      await this.disputaQueue.add(
-        "iniciar",
-        { disputaId: disputa.id },
-        {
-          delay,
-          removeOnComplete: true,
-          removeOnFail: false,
-        },
-      );
-    } else {
-      await this.disputaQueue.add(
-        "iniciar",
-        { disputaId: disputa.id },
-        {
-          removeOnComplete: true,
-          removeOnFail: false,
-        },
-      );
+    if (comCredencial) {
+      if (agendada) {
+        const delay = Math.max(0, agendadoPara!.getTime() - Date.now());
+        await this.disputaQueue.add(
+          "iniciar",
+          { disputaId: disputa.id },
+          { delay, removeOnComplete: true, removeOnFail: false },
+        );
+      } else {
+        await this.disputaQueue.add(
+          "iniciar",
+          { disputaId: disputa.id },
+          { removeOnComplete: true, removeOnFail: false },
+        );
+      }
     }
 
     return this.sanitizarDisputa(disputa);
+  }
+
+  async listarDisputasPaginado(empresaId: string, query: ListarDisputasQueryDto) {
+    const page = query.page && query.page > 0 ? query.page : 1;
+    const limit = query.limit && query.limit > 0 && query.limit <= 100 ? query.limit : 10;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.DisputaWhereInput = { empresaId };
+    if (query.status) where.status = query.status;
+
+    const [total, disputas] = await Promise.all([
+      this.prisma.disputa.count({ where }),
+      this.prisma.disputa.findMany({
+        where,
+        include: { bid: true, credencial: true, configuracoes: true },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+    ]);
+
+    return {
+      data: disputas.map((d) => this.sanitizarDisputa(d)),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      },
+    };
+  }
+
+  async registrarResultadoOperador(
+    id: string,
+    empresaId: string,
+    dto: PatchResultadoDisputaDto,
+  ) {
+    const map: Record<string, ResultadoDisputa> = {
+      GANHOU: ResultadoDisputa.GANHOU,
+      PERDEU: ResultadoDisputa.PERDEU,
+      DESISTIU: ResultadoDisputa.DESISTIU,
+    };
+    const resultado = map[dto.resultado];
+    if (resultado == null) {
+      throw new BadRequestException("Resultado inválido");
+    }
+    await this.obterDisputaPorEmpresa(id, empresaId);
+
+    const atualizada = await this.prisma.disputa.update({
+      where: { id },
+      data: {
+        resultado,
+        status: DisputaStatus.ENCERRADA,
+        encerradoEm: new Date(),
+      },
+      include: { bid: true, credencial: true, configuracoes: true },
+    });
+
+    this.disputaGateway.emitirCanal(id, "disputa:update", {
+      tipo: "resultado",
+      resultado: dto.resultado,
+      status: atualizada.status,
+    });
+
+    return this.sanitizarDisputa(atualizada);
+  }
+
+  async registrarLanceViaRest(
+    disputaId: string,
+    empresaId: string,
+    itemNumero: number,
+    valor: number,
+    operadorId?: string | null,
+  ) {
+    return this.registrarLanceManual(disputaId, itemNumero, valor, empresaId, operadorId);
+  }
+
+  async assertAcessoDisputa(disputaId: string, empresaId: string) {
+    const d = await this.prisma.disputa.findFirst({
+      where: { id: disputaId, empresaId },
+      select: { id: true },
+    });
+    if (!d) throw new NotFoundException("Disputa não encontrada");
+  }
+
+  async aplicarSnapshotExtensao(disputaId: string, empresaId: string, dto: SnapshotExtensaoDto) {
+    const inicio = Date.now();
+    if (dto.disputaId !== disputaId) {
+      throw new BadRequestException("disputaId inconsistente no payload");
+    }
+    await this.assertAcessoDisputa(disputaId, empresaId);
+
+    const disputa = await this.prisma.disputa.findFirst({
+      where: { id: disputaId, empresaId },
+      include: { configuracoes: true, criadoPor: { select: { id: true, email: true, name: true } } },
+    });
+    if (!disputa) throw new NotFoundException("Disputa não encontrada");
+
+    for (const item of dto.itens) {
+      let cfg = disputa.configuracoes.find((c) => c.itemNumero === item.numeroItem);
+      const statusNovo = item.status ?? cfg?.statusItem ?? StatusItemDisputa.AGUARDANDO;
+      const statusAnterior = cfg?.statusItem ?? StatusItemDisputa.AGUARDANDO;
+
+      if (!cfg) {
+        cfg = await this.prisma.configuracaoLance.create({
+          data: {
+            disputaId,
+            itemNumero: item.numeroItem,
+            itemDescricao: item.descricao ?? null,
+            valorMaximo: 0,
+            valorMinimo: 0,
+            estrategia: EstrategiaLance.CONSERVADORA,
+            ativo: true,
+            melhorLance: item.melhorLance ?? null,
+            posicaoAtual: item.posicaoAtual ?? null,
+            statusItem: statusNovo,
+            vencedor: item.vencedor ?? null,
+            valorFinal: item.valorFinal ?? null,
+          },
+        });
+      } else {
+        cfg = await this.prisma.configuracaoLance.update({
+          where: { id: cfg.id },
+          data: {
+            ...(item.descricao != null ? { itemDescricao: item.descricao } : {}),
+            ...(item.melhorLance != null ? { melhorLance: item.melhorLance } : {}),
+            ...(item.posicaoAtual != null ? { posicaoAtual: item.posicaoAtual } : {}),
+            statusItem: statusNovo,
+            ...(item.vencedor != null ? { vencedor: item.vencedor } : {}),
+            ...(item.valorFinal != null ? { valorFinal: item.valorFinal } : {}),
+          },
+        });
+      }
+
+      if (item.posicaoAtual != null && item.posicaoAtual > 1) {
+        await this.disputaQueue
+          .add(
+            "alerta-posicao",
+            {
+              disputaId,
+              empresaId,
+              itemNumero: item.numeroItem,
+              posicaoAtual: item.posicaoAtual,
+              destinatarioEmail: disputa.criadoPor?.email,
+              destinatarioNome: disputa.criadoPor?.name,
+            },
+            {
+              jobId: `alerta-posicao-${disputaId}-${item.numeroItem}`,
+              removeOnComplete: true,
+              removeOnFail: true,
+            },
+          )
+          .catch(() => undefined);
+      }
+
+      if (statusAnterior !== StatusItemDisputa.ENCERRADO && statusNovo === StatusItemDisputa.ENCERRADO) {
+        await this.disputaQueue
+          .add(
+            "alerta-encerramento",
+            {
+              disputaId,
+              empresaId,
+              itemNumero: item.numeroItem,
+              destinatarioEmail: disputa.criadoPor?.email,
+              destinatarioNome: disputa.criadoPor?.name,
+            },
+            { removeOnComplete: true, removeOnFail: true },
+          )
+          .catch(() => undefined);
+
+        this.disputaGateway.emitirCanal(disputaId, "disputa:update", {
+          tipo: "item_encerrado",
+          itemNumero: item.numeroItem,
+          status: statusNovo,
+        });
+      }
+
+      await this.prisma.historicoLance.create({
+        data: {
+          disputaId,
+          itemDisputaId: cfg.id,
+          itemNumero: item.numeroItem,
+          evento: EventoDisputa.POSICAO_ATUALIZADA,
+          melhorLance: item.melhorLance ?? null,
+          posicao: item.posicaoAtual ?? null,
+          detalhe: "Snapshot extensão",
+          origem: OrigemLanceHistorico.EXTENSAO,
+        },
+      });
+    }
+
+    const fresh = await this.prisma.disputa.findFirst({
+      where: { id: disputaId, empresaId },
+      include: { configuracoes: true, bid: true, credencial: true },
+    });
+
+    this.disputaGateway.emitirCanal(disputaId, "disputa:update", {
+      tipo: "snapshot",
+      itens: fresh?.configuracoes ?? [],
+      ms: Date.now() - inicio,
+    });
+
+    return { ok: true, ms: Date.now() - inicio };
+  }
+
+  retransmitirPreencherLance(disputaId: string, payload: Record<string, unknown>) {
+    this.disputaGateway.server.to(`disputa:${disputaId}`).emit("disputa:preencher_lance", payload);
+  }
+
+  async registrarLanceConfirmadoExtensao(
+    disputaId: string,
+    empresaId: string,
+    body: { itemNumero: number; valor: number; posicao?: number },
+  ) {
+    await this.assertAcessoDisputa(disputaId, empresaId);
+    const cfg = await this.prisma.configuracaoLance.findFirst({
+      where: { disputaId, itemNumero: body.itemNumero },
+    });
+
+    await this.prisma.historicoLance.create({
+      data: {
+        disputaId,
+        itemDisputaId: cfg?.id,
+        itemNumero: body.itemNumero,
+        evento: EventoDisputa.LANCE_ENVIADO,
+        valorEnviado: body.valor,
+        posicao: body.posicao ?? null,
+        detalhe: "Lance confirmado pela extensão",
+        origem: OrigemLanceHistorico.EXTENSAO,
+      },
+    });
+
+    this.disputaGateway.emitirCanal(disputaId, "extensao:lance_confirmado", {
+      itemNumero: body.itemNumero,
+      valor: body.valor,
+      posicao: body.posicao,
+      timestamp: new Date().toISOString(),
+    });
+
+    return { ok: true };
   }
 
   async listarDisputas(empresaId: string) {
@@ -133,6 +396,7 @@ export class DisputaService {
         bid: true,
         credencial: true,
         configuracoes: true,
+        historico: { orderBy: { timestamp: "desc" }, take: 500 },
       },
     });
 
@@ -235,6 +499,7 @@ export class DisputaService {
     itemNumero: number,
     valor: number,
     empresaId: string,
+    operadorId?: string | null,
   ) {
     if (!Number.isFinite(valor) || valor <= 0) {
       throw new BadRequestException("Valor do lance manual inválido");
@@ -247,19 +512,28 @@ export class DisputaService {
       throw new NotFoundException("Disputa não encontrada");
     }
 
+    const cfg = await this.prisma.configuracaoLance.findFirst({
+      where: { disputaId, itemNumero },
+      select: { id: true },
+    });
+
     await this.prisma.historicoLance.create({
       data: {
         disputaId,
+        itemDisputaId: cfg?.id,
         itemNumero,
         evento: EventoDisputa.LANCE_ENVIADO,
         valorEnviado: valor,
         detalhe: "Lance manual enviado pelo operador (origem: MANUAL)",
         timestamp: new Date(),
+        origem: OrigemLanceHistorico.MANUAL,
+        operadorId: operadorId ?? undefined,
       },
     });
 
     this.disputaGateway.emitirEvento(disputaId, EventoDisputa.LANCE_ENVIADO, {
-      tipo: "LANCE_ENVIADO",
+      disputaId,
+      evento: EventoDisputa.LANCE_ENVIADO,
       itemNumero,
       valorEnviado: valor,
       detalhe: "Lance manual enviado pelo operador",
@@ -276,9 +550,6 @@ export class DisputaService {
     return { ok: true };
   }
 
-  /**
-   * Histórico de disputas encerradas com filtros e paginação (F25-06)
-   */
   async listarHistorico(empresaId: string, query: GetHistoricoDisputaQueryDto) {
     const page = query.page && query.page > 0 ? query.page : 1;
     const limit = query.limit && query.limit > 0 && query.limit <= 100 ? query.limit : 10;
@@ -300,7 +571,6 @@ export class DisputaService {
       }
       if (query.dataFim) {
         const fim = new Date(query.dataFim);
-        // incluir o dia inteiro
         fim.setHours(23, 59, 59, 999);
         (where.iniciadoEm as Prisma.DateTimeFilter).lte = fim;
       }
@@ -360,7 +630,6 @@ export class DisputaService {
       };
     });
 
-    // filtro por resultado (aplicado após cálculo de economia/resultado)
     let data = itens;
     if (query.resultado === "GANHOU") {
       data = itens.filter((i) => i.resultado === "GANHOU");
@@ -381,9 +650,6 @@ export class DisputaService {
     };
   }
 
-  /**
-   * Detalhes de histórico de uma disputa encerrada (F25-06)
-   */
   async buscarHistoricoDetalhe(id: string, empresaId: string) {
     const disputa = await this.prisma.disputa.findFirst({
       where: { id, empresaId, status: DisputaStatus.ENCERRADA },
@@ -411,6 +677,7 @@ export class DisputaService {
         posicao: h.posicao,
         evento: h.evento,
         detalhe: h.detalhe,
+        origem: h.origem,
         timestamp: h.timestamp.toISOString(),
       }));
 
@@ -434,9 +701,6 @@ export class DisputaService {
     };
   }
 
-  /**
-   * Gera PDF do histórico de disputa usando HTML simples (F25-06).
-   */
   async gerarHistoricoPdf(id: string, empresaId: string) {
     const detalhe = await this.buscarHistoricoDetalhe(id, empresaId);
 
@@ -450,7 +714,6 @@ export class DisputaService {
 
     const html = this.montarHtmlHistorico(detalhe);
 
-    // Importação lazy do puppeteer-core para evitar custo em testes
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const puppeteer = require("puppeteer-core") as typeof import("puppeteer-core");
     const browser = await puppeteer.launch({
@@ -485,6 +748,7 @@ export class DisputaService {
     const historico = await this.prisma.historicoLance.create({
       data: {
         disputaId,
+        itemDisputaId: payload.itemDisputaId ?? undefined,
         itemNumero: payload.itemNumero ?? 0,
         evento,
         valorEnviado: payload.valorEnviado,
@@ -492,6 +756,8 @@ export class DisputaService {
         posicao: payload.posicao,
         detalhe: payload.detalhe,
         timestamp: payload.timestamp ?? new Date(),
+        origem: payload.origem ?? OrigemLanceHistorico.MANUAL,
+        operadorId: payload.operadorId ?? undefined,
       },
     });
 
@@ -528,9 +794,6 @@ export class DisputaService {
     return disputa;
   }
 
-  /**
-   * Calcula métricas agregadas da disputa a partir das configurações e do histórico.
-   */
   private calcularMetricasHistorico(disputa: {
     configuracoes: { itemNumero: number; valorMaximo: Prisma.Decimal; ativo: boolean }[];
     historico: {
@@ -553,7 +816,6 @@ export class DisputaService {
     let nossoUltimoLance: number | null = null;
 
     for (const h of disputa.historico) {
-      // rastrear melhor lance por item
       if (h.melhorLance != null) {
         const atual = melhorPorItem.get(h.itemNumero);
         const valor = Number(h.melhorLance);
@@ -562,7 +824,6 @@ export class DisputaService {
         }
       }
 
-      // contar lances enviados por nós (inclui LANCE_ENVIADO e LANCE_MANUAL)
       if (
         h.valorEnviado != null &&
         (h.evento === EventoDisputa.LANCE_ENVIADO || h.evento === EventoDisputa.LANCE_MANUAL)
@@ -605,9 +866,6 @@ export class DisputaService {
     };
   }
 
-  /**
-   * Monta HTML simplificado para o relatório de histórico de disputa (F25-06).
-   */
   private montarHtmlHistorico(detalhe: {
     disputa: {
       id: string;
@@ -783,7 +1041,6 @@ export class DisputaService {
     });
   }
 
-  // USO INTERNO — nunca expor via REST
   descriptografarSenhaInterno(hash: string): string {
     return this.descriptografarSenha(hash);
   }
@@ -831,8 +1088,11 @@ export class DisputaService {
     return Buffer.from(rawKey.slice(0, 32), "utf8");
   }
 
-  private sanitizarDisputa(disputa: DisputaCompleta) {
+  private sanitizarDisputa(disputa: DisputaCompleta & { historico?: unknown }) {
     const { credencial, ...resto } = disputa;
+    if (!credencial) {
+      return { ...resto, credencial: null };
+    }
     const { senhaHash: _senhaHash, ...credencialSemSenha } = credencial;
 
     return {

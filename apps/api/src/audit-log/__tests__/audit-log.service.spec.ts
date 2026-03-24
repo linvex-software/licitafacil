@@ -5,8 +5,6 @@ import { PrismaTenantService } from "../../prisma/prisma-tenant.service";
 
 describe("AuditLogService", () => {
   let service: AuditLogService;
-  let _prismaService: PrismaService;
-  let _prismaTenantService: PrismaTenantService;
 
   // Mock do Prisma Client
   const mockPrismaClient = {

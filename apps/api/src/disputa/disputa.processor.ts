@@ -1,6 +1,8 @@
+import { Logger } from "@nestjs/common";
 import { Process, Processor } from "@nestjs/bull";
 import { DisputaStatus, EventoDisputa, PortalLicitacao } from "@prisma/client";
 import { Job } from "bull";
+import { EmailService } from "../email/email.service";
 import { DisputaService } from "./disputa.service";
 import { DisputaGateway } from "./disputa.gateway";
 import { FaseSessao } from "./robos/base-robo";
@@ -10,15 +12,69 @@ import { ComprasnetRobo } from "./robos/comprasnet/comprasnet.robo";
 
 @Processor("disputa")
 export class DisputaProcessor {
+  private readonly logger = new Logger(DisputaProcessor.name);
+
   constructor(
     private readonly disputaService: DisputaService,
     private readonly disputaGateway: DisputaGateway,
+    private readonly emailService: EmailService,
   ) {}
+
+  @Process("alerta-posicao")
+  async processarAlertaPosicao(
+    job: Job<{
+      disputaId: string;
+      itemNumero: number;
+      posicaoAtual: number;
+      destinatarioEmail?: string | null;
+      destinatarioNome?: string | null;
+    }>,
+  ) {
+    const { disputaId, itemNumero, posicaoAtual, destinatarioEmail, destinatarioNome } = job.data;
+    if (!destinatarioEmail?.trim()) {
+      return;
+    }
+    const saudacao = destinatarioNome?.trim() ? `Olá, ${destinatarioNome.trim()}` : "Olá";
+    await this.emailService.sendEmail({
+      to: destinatarioEmail,
+      subject: `[LicitaFácil] Item ${itemNumero} na posição ${posicaoAtual} — disputa em andamento`,
+      html: `<p>${saudacao},</p><p>O item <strong>${itemNumero}</strong> da disputa <code>${disputaId}</code> está na posição <strong>${posicaoAtual}</strong>.</p><p>Acesse o painel para acompanhar.</p>`,
+      text: `Item ${itemNumero} na posição ${posicaoAtual}. Disputa ${disputaId}.`,
+    });
+  }
+
+  @Process("alerta-encerramento")
+  async processarAlertaEncerramento(
+    job: Job<{
+      disputaId: string;
+      itemNumero: number;
+      destinatarioEmail?: string | null;
+      destinatarioNome?: string | null;
+    }>,
+  ) {
+    const { disputaId, itemNumero, destinatarioEmail, destinatarioNome } = job.data;
+    if (!destinatarioEmail?.trim()) {
+      return;
+    }
+    const saudacao = destinatarioNome?.trim() ? `Olá, ${destinatarioNome.trim()}` : "Olá";
+    await this.emailService.sendEmail({
+      to: destinatarioEmail,
+      subject: `[LicitaFácil] Item ${itemNumero} encerrado — disputa`,
+      html: `<p>${saudacao},</p><p>O item <strong>${itemNumero}</strong> da disputa <code>${disputaId}</code> foi encerrado no pregão.</p>`,
+      text: `Item ${itemNumero} encerrado na disputa ${disputaId}.`,
+    });
+  }
 
   @Process("iniciar")
   async processarDisputa(job: Job<{ disputaId: string }>) {
     const { disputaId } = job.data;
     const disputa = await this.disputaService.buscarComConfiguracoes(disputaId);
+    if (!disputa.credencialId || !disputa.credencial) {
+      this.logger.log(
+        `Disputa ${disputaId} sem credencial (modo extensão). Robô não será iniciado.`,
+      );
+      return;
+    }
     const usarMock = process.env.DISPUTA_MOCK === "true";
 
     const robo =

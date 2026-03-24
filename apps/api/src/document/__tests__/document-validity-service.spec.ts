@@ -11,8 +11,8 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { DocumentService } from "../document.service";
-import type { PrismaTenantService } from "../../prisma/prisma-tenant.service";
-import type { PrismaService } from "../../prisma/prisma.service";
+import { PrismaTenantService } from "../../prisma/prisma-tenant.service";
+import { PrismaService } from "../../prisma/prisma.service";
 
 describe("DocumentService - Validade de Documentos", () => {
   let service: DocumentService;

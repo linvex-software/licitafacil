@@ -1,4 +1,4 @@
-import { EventoDisputa } from "@prisma/client";
+import { EventoDisputa, OrigemLanceHistorico } from "@prisma/client";
 
 export interface DisputaEventoPayload {
   disputaId: string;
@@ -9,4 +9,7 @@ export interface DisputaEventoPayload {
   posicao?: number;
   detalhe?: string;
   timestamp: Date;
+  itemDisputaId?: string | null;
+  origem?: OrigemLanceHistorico;
+  operadorId?: string | null;
 }
