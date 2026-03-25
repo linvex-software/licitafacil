@@ -13,6 +13,7 @@ export const createEmpresaSchema = z.object({
 export const empresaSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
+  segmento: z.string().nullable().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });

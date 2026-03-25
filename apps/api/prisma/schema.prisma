@@ -112,6 +112,8 @@ model User {
   createdChecklistTemplates ChecklistTemplate[]
   // Relacionamento: Um usuário pode concluir vários itens de checklist
   checklistItemsConcluidos  ChecklistItem[]
+  disputasCriadas           Disputa[]        @relation("DisputaCriadaPor")
+  historicoLancesOperados   HistoricoLance[]
 
   // Configurações de notificação por email
   receberEmails       Boolean @default(true)
@@ -794,24 +796,31 @@ model DiarioOficial {
 }
 
 model Disputa {
-  id            String             @id @default(uuid())
-  empresaId     String
-  empresa       Empresa            @relation(fields: [empresaId], references: [id])
-  bidId         String?
-  bid           Bid?               @relation(fields: [bidId], references: [id])
-  portal        PortalLicitacao
-  status        DisputaStatus      @default(AGENDADA)
-  agendadoPara  DateTime?
-  iniciadoEm    DateTime?
-  encerradoEm   DateTime?
-  credencialId    String
-  credencial      CredencialPortal   @relation(fields: [credencialId], references: [id])
-  resultado       ResultadoDisputa   @default(EM_ANDAMENTO)
-  economiaGerada  Float?
-  configuracoes   ConfiguracaoLance[]
-  historico       HistoricoLance[]
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  id             String             @id @default(uuid())
+  empresaId      String
+  empresa        Empresa            @relation(fields: [empresaId], references: [id])
+  bidId          String?
+  bid            Bid?               @relation(fields: [bidId], references: [id])
+  portal         PortalLicitacao
+  status         DisputaStatus      @default(AGENDADA)
+  agendadoPara   DateTime?
+  iniciadoEm     DateTime?
+  encerradoEm    DateTime?
+  numeroPregao   String             @default("NI")
+  uasg           String             @default("NI")
+  criadoPorId    String?
+  criadoPor      User?              @relation("DisputaCriadaPor", fields: [criadoPorId], references: [id], onDelete: SetNull)
+  credencialId   String?
+  credencial     CredencialPortal?  @relation(fields: [credencialId], references: [id])
+  resultado      ResultadoDisputa   @default(EM_ANDAMENTO)
+  economiaGerada Float?
+  configuracoes  ConfiguracaoLance[]
+  historico      HistoricoLance[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([empresaId, status])
+  @@index([criadoPorId])
 }
 
 model CredencialPortal {
@@ -827,29 +836,46 @@ model CredencialPortal {
 }
 
 model ConfiguracaoLance {
-  id            String          @id @default(uuid())
-  disputaId     String
-  disputa       Disputa         @relation(fields: [disputaId], references: [id])
-  itemNumero    Int
-  itemDescricao String?
-  valorMaximo   Decimal         @db.Decimal(15, 2)
-  valorMinimo   Decimal         @db.Decimal(15, 2)
-  estrategia    EstrategiaLance
-  ativo         Boolean         @default(true)
-  createdAt     DateTime        @default(now())
+  id             String             @id @default(uuid())
+  disputaId      String
+  disputa        Disputa            @relation(fields: [disputaId], references: [id])
+  itemNumero     Int
+  itemDescricao  String?
+  valorMaximo    Decimal            @db.Decimal(15, 2)
+  valorMinimo    Decimal            @db.Decimal(15, 2)
+  estrategia     EstrategiaLance
+  ativo          Boolean            @default(true)
+  melhorLance    Decimal?           @db.Decimal(15, 2)
+  posicaoAtual   Int?
+  statusItem     StatusItemDisputa  @default(AGUARDANDO)
+  vencedor       String?
+  valorFinal     Decimal?           @db.Decimal(15, 2)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @default(now()) @updatedAt
+  historicoVinculos HistoricoLance[]
+
+  @@index([disputaId, itemNumero])
 }
 
 model HistoricoLance {
-  id           String       @id @default(uuid())
-  disputaId    String
-  disputa      Disputa      @relation(fields: [disputaId], references: [id])
-  itemNumero   Int
-  valorEnviado Decimal?     @db.Decimal(15, 2)
-  melhorLance  Decimal?     @db.Decimal(15, 2)
-  posicao      Int?
-  evento       EventoDisputa
-  detalhe      String?
-  timestamp    DateTime     @default(now())
+  id            String               @id @default(uuid())
+  disputaId     String
+  disputa       Disputa              @relation(fields: [disputaId], references: [id])
+  itemDisputaId String?
+  itemDisputa   ConfiguracaoLance?   @relation(fields: [itemDisputaId], references: [id], onDelete: SetNull)
+  itemNumero    Int
+  valorEnviado  Decimal?             @db.Decimal(15, 2)
+  melhorLance   Decimal?             @db.Decimal(15, 2)
+  posicao       Int?
+  evento        EventoDisputa
+  detalhe       String?
+  timestamp     DateTime             @default(now())
+  origem        OrigemLanceHistorico @default(MANUAL)
+  operadorId    String?
+  operador      User?                @relation(fields: [operadorId], references: [id], onDelete: SetNull)
+
+  @@index([disputaId, timestamp])
+  @@index([itemDisputaId])
 }
 
 enum PortalLicitacao {
@@ -884,11 +910,24 @@ enum EventoDisputa {
   LANCE_MANUAL
 }
 
+enum StatusItemDisputa {
+  AGUARDANDO
+  ABERTO
+  ENCERRAMENTO_ALEATORIO
+  ENCERRADO
+}
+
+enum OrigemLanceHistorico {
+  MANUAL
+  EXTENSAO
+}
+
 enum ResultadoDisputa {
   EM_ANDAMENTO
   GANHOU
   PERDEU
   CANCELADO
+  DESISTIU
 }
 
 enum PortalMonitoramento {

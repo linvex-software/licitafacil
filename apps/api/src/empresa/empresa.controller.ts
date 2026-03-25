@@ -56,6 +56,26 @@ export class EmpresaController {
   }
 
   /**
+   * Atualiza dados da empresa do usuário autenticado (nome e/ou segmento)
+   * PATCH /empresas/me
+   */
+  @Patch("me")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  async updateMyEmpresa(
+    @Tenant() empresaId: string,
+    @Body() body: { nome?: string; segmento?: string },
+  ): Promise<Empresa> {
+    if (body.nome !== undefined && body.nome.trim().length < 2) {
+      throw new BadRequestException("Nome da empresa deve ter pelo menos 2 caracteres.");
+    }
+    if (body.nome === undefined && body.segmento === undefined) {
+      throw new BadRequestException("Informe ao menos um campo para atualizar.");
+    }
+    return this.empresaService.atualizarDados(empresaId, body);
+  }
+
+  /**
    * Busca a configuração de alerta de pregão
    * GET /empresas/configuracoes/alertas
    */

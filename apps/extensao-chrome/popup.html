@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>LVX Licitação</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, sans-serif; width: 300px; padding: 16px; background: #1a1a18; color: #e8e6de; }
+    h2 { font-size: 14px; font-weight: 500; margin-bottom: 16px; color: #9FE1CB; }
+    label { font-size: 11px; color: #888780; display: block; margin-bottom: 4px; }
+    input { width: 100%; padding: 8px; font-size: 12px; background: #242422; border: 0.5px solid #444441; border-radius: 6px; color: #e8e6de; margin-bottom: 12px; }
+    button { width: 100%; padding: 8px; background: #1D9E75; color: white; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; margin-bottom: 12px; }
+    button:hover { background: #0F6E56; }
+    .status { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot.conectado { background: #1D9E75; }
+    .dot.desconectado { background: #E24B4A; }
+    .saved { font-size: 11px; color: #1D9E75; text-align: center; display: none; }
+  </style>
+</head>
+<body>
+  <h2>LVX Licitação</h2>
+
+  <label>URL da API</label>
+  <input id="apiUrl" type="text" placeholder="wss://api.lvxlicitacao.com.br">
+
+  <label>JWT do operador</label>
+  <input id="jwt" type="password" placeholder="Cole o token de acesso aqui">
+
+  <button id="salvar">Salvar configuração</button>
+  <div class="saved" id="saved">Configuração salva!</div>
+
+  <div class="status">
+    <div class="dot" id="dot"></div>
+    <span id="statusText">Verificando...</span>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
