@@ -8,7 +8,7 @@ import {
     Globe, ShieldCheck, ChevronDown, ClipboardList,
     BarChart2, Briefcase,
     TrendingUp, History, Tag as TagIcon,
-    CalendarDays, Users, HelpCircle, Radio, UserSearch, PlayCircle,
+    CalendarDays, Users, HelpCircle, Radio, UserSearch, PlayCircle, Puzzle,
 } from "lucide-react";
 
 import { AlertsDropdown } from "@/components/AlertsDropdown";
@@ -74,6 +74,9 @@ const navGroups: NavGroup[] = [
             },
             {
                 label: "Buscar", icon: Globe, href: "/integracoes/comprasnet",
+            },
+            {
+                label: "Extensão Chrome", icon: Puzzle, href: "/extensao",
             },
         ]
     },

@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Plus, Radio, Bell, X, Search } from 'lucide-react'
+import { Plus, Bell, X, Search } from 'lucide-react'
 import { CardPregao } from '@/components/monitoramento/CardPregao'
 import type { PregaoMonitorado } from '@/components/monitoramento/CardPregao'
 import { useMonitoramentoSocket } from '@/hooks/useMonitoramentoSocket'
@@ -435,12 +435,19 @@ function MonitoramentoContent() {
             className="pl-8 pr-3 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary w-64"
           />
         </div>
-        <input
-          type="date"
-          value={dataFiltro}
-          onChange={e => setDataFiltro(e.target.value)}
-          className="px-3 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
-        />
+        <div className="relative">
+          <input
+            type="date"
+            value={dataFiltro}
+            onChange={e => setDataFiltro(e.target.value)}
+            className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
+          />
+          <div className="px-3 py-1.5 rounded border border-border bg-background text-sm pointer-events-none">
+            {dataFiltro
+              ? new Date(dataFiltro + 'T12:00:00').toLocaleDateString('pt-BR')
+              : 'Selecionar data'}
+          </div>
+        </div>
         <select
           value={filtroPortal}
           onChange={e => setFiltroPortal(e.target.value)}
@@ -486,10 +493,15 @@ function MonitoramentoContent() {
           </div>
         </div>
       ) : pregoesFiltrados.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <Radio className="h-12 w-12 text-muted-foreground/40 mb-4" />
-          <p className="text-sm font-medium text-muted-foreground">Nenhum pregão encontrado para esta data</p>
-          <p className="text-xs text-muted-foreground mt-1">Tente outra data ou adicione um pregão manualmente</p>
+        <div className="flex items-start gap-3 rounded-lg border border-amber-800 bg-amber-950 px-4 py-3 text-sm text-amber-300">
+          <span className="mt-0.5 text-base">⏰</span>
+          <div>
+            <p className="font-medium">Nenhum pregão encontrado para esta data</p>
+            <p className="text-amber-400 mt-0.5">
+              Os pregões eletrônicos acontecem em dias úteis entre 8h e 18h.
+              Tente selecionar a data de hoje durante o horário comercial.
+            </p>
+          </div>
         </div>
       ) : (
         <>

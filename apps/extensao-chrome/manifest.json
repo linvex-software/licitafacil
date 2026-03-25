@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "LVX Licitação — Painel de Disputa",
+  "version": "1.0.0",
+  "description": "Integra o portal Compras.gov.br com o Limvex em tempo real",
+  "permissions": ["storage", "activeTab", "scripting", "webNavigation", "tabs"],
+  "host_permissions": [
+    "*://*.serpro.gov.br/*",
+    "*://comprasnet.gov.br/*",
+    "*://cnetmobile.estaleiro.serpro.gov.br/*",
+    "http://localhost:3000/*",
+    "https://lvxlicitacao.com.br/*",
+    "https://*.vercel.app/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://cnetmobile.estaleiro.serpro.gov.br/*",
+        "*://comprasnet.gov.br/*",
+        "http://localhost:3000/*",
+        "https://lvxlicitacao.com.br/*",
+        "https://*.vercel.app/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "48": "icon-48.png",
+      "128": "icon-128.png"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["icon-48.png", "icon-128.png"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
