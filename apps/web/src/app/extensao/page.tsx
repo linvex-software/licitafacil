@@ -17,17 +17,67 @@ import {
 
 type StatusConexao = 'aguardando' | 'detectando' | 'instalada' | 'conectando' | 'conectada' | 'nao_instalada' | 'erro'
 
+function resolverWsApiUrl() {
+  const raw = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+  if (raw.startsWith('https://')) return raw.replace('https://', 'wss://')
+  if (raw.startsWith('http://')) return raw.replace('http://', 'ws://')
+  return raw
+}
+
 export default function ExtensaoPage() {
   const { token } = useAuth()
   const router = useRouter()
   const [status, setStatus] = useState<StatusConexao>('aguardando')
   const [mensagemErro, setMensagemErro] = useState('')
+  const apiWsUrl = resolverWsApiUrl()
 
-  // Verificar marker DOM injetado pelo content script (detecção imediata ao carregar)
-  useEffect(() => {
+  const detectarExtensao = useCallback(async () => {
     const marker = document.getElementById('lvx-extensao-presente')
-    if (marker) setStatus('instalada')
+    if (marker) return true
+
+    return await new Promise<boolean>((resolve) => {
+      let finalizado = false
+      const timeout = window.setTimeout(() => {
+        if (finalizado) return
+        finalizado = true
+        window.removeEventListener('message', onMessage)
+        resolve(false)
+      }, 1500)
+
+      const onMessage = (event: MessageEvent) => {
+        if (finalizado) return
+        if (event.data?.tipo === 'LVX_EXTENSAO_PRESENTE') {
+          finalizado = true
+          window.clearTimeout(timeout)
+          window.removeEventListener('message', onMessage)
+          resolve(true)
+        }
+      }
+
+      window.addEventListener('message', onMessage)
+      window.postMessage({ tipo: 'LVX_PING' }, '*')
+    })
   }, [])
+
+  // Detecção ativa ao carregar (com retries curtos)
+  useEffect(() => {
+    let ativo = true
+    const run = async () => {
+      for (let i = 0; i < 3; i += 1) {
+        const ok = await detectarExtensao()
+        if (!ativo) return
+        if (ok) {
+          setStatus((prev) => (prev === 'conectada' ? prev : 'instalada'))
+          return
+        }
+        await new Promise((r) => setTimeout(r, 400))
+      }
+    }
+    void run()
+    return () => {
+      ativo = false
+    }
+  }, [detectarExtensao])
 
   // Escutar resposta via postMessage
   useEffect(() => {
@@ -47,38 +97,56 @@ export default function ExtensaoPage() {
       return
     }
 
-    // Se marker DOM já presente, pular detecção e enviar JWT direto
-    const marker = document.getElementById('lvx-extensao-presente')
-    if (marker) {
-      setStatus('conectando')
-      window.postMessage(
-        { tipo: 'LVX_CONFIGURAR_JWT', jwt: token, apiUrl: 'wss://api.lvxlicitacao.com.br' },
-        '*',
+    setMensagemErro('')
+    setStatus('detectando')
+
+    const conectar = async () => {
+      // até 3 tentativas para contornar timing de injeção do content script
+      for (let i = 0; i < 3; i += 1) {
+        const presente = await detectarExtensao()
+        if (presente) {
+          setStatus('conectando')
+          window.postMessage(
+            { tipo: 'LVX_CONFIGURAR_JWT', jwt: token, apiUrl: apiWsUrl },
+            '*',
+          )
+          return
+        }
+        await new Promise((r) => setTimeout(r, 500))
+      }
+
+      setStatus('nao_instalada')
+      setMensagemErro(
+        'Não foi possível detectar a extensão nesta página. Recarregue a aba, confirme permissão para localhost e tente novamente.',
       )
-      return
     }
 
-    setStatus('detectando')
-    setMensagemErro('')
-    window.postMessage({ tipo: 'LVX_PING' }, '*')
+    void conectar()
+  }, [apiWsUrl, detectarExtensao, token])
 
+  useEffect(() => {
+    if (status !== 'conectando') return
     const timeout = setTimeout(() => {
-      setStatus((atual) => (atual === 'detectando' ? 'nao_instalada' : atual))
-    }, 3000)
+      setStatus((atual) => (atual === 'conectando' ? 'erro' : atual))
+      setMensagemErro('Extensão detectada, mas não confirmou o salvamento do token.')
+    }, 6000)
+    return () => clearTimeout(timeout)
+  }, [status])
 
+  useEffect(() => {
+    // fallback: se extensão responder PING durante detectando, já configura direto
     const enviarJwt = (event: MessageEvent) => {
-      if (event.data?.tipo === 'LVX_EXTENSAO_PRESENTE') {
-        clearTimeout(timeout)
+      if (event.data?.tipo === 'LVX_EXTENSAO_PRESENTE' && token && status === 'detectando') {
         setStatus('conectando')
         window.postMessage(
-          { tipo: 'LVX_CONFIGURAR_JWT', jwt: token, apiUrl: 'wss://api.lvxlicitacao.com.br' },
+          { tipo: 'LVX_CONFIGURAR_JWT', jwt: token, apiUrl: apiWsUrl },
           '*',
         )
-        window.removeEventListener('message', enviarJwt)
       }
     }
     window.addEventListener('message', enviarJwt)
-  }, [token])
+    return () => window.removeEventListener('message', enviarJwt)
+  }, [apiWsUrl, status, token])
 
   const isBusy = status === 'detectando' || status === 'conectando'
   const isDisabled = isBusy || status === 'conectada'

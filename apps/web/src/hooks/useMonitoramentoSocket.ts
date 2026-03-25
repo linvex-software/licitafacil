@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
 import type { Socket } from 'socket.io-client'
+import { getToken } from '@/lib/auth'
 
 export interface PregaoMonitorado {
   id?: string
@@ -51,7 +52,7 @@ export function useMonitoramentoSocket(empresaId?: string): UseMonitoramentoSock
     if (!empresaId) return
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    const token = getToken()
 
     const socket = io(`${apiUrl}/monitoramento`, {
       auth: { token },

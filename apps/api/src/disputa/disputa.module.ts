@@ -7,6 +7,7 @@ import { DisputaController } from "./disputa.controller";
 import { DisputaService } from "./disputa.service";
 import { DisputaGateway } from "./disputa.gateway";
 import { DisputaProcessor } from "./disputa.processor";
+import { DisputaExtensionWsBridge } from "./disputa-extension-ws.bridge";
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { DisputaProcessor } from "./disputa.processor";
     BullModule.registerQueue({ name: "disputa" }),
   ],
   controllers: [DisputaController],
-  providers: [DisputaService, DisputaGateway, DisputaProcessor],
+  providers: [DisputaService, DisputaGateway, DisputaProcessor, DisputaExtensionWsBridge],
   exports: [DisputaService],
 })
 export class DisputaModule {}

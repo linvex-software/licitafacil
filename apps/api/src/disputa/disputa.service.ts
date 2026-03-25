@@ -23,6 +23,7 @@ import { CreateDisputaDto } from "./dto/create-disputa.dto";
 import { UpdateDisputaDto } from "./dto/update-disputa.dto";
 import { DisputaEventoPayload } from "./interfaces/disputa-evento.interface";
 import { DisputaGateway } from "./disputa.gateway";
+import { DisputaExtensionWsBridge } from "./disputa-extension-ws.bridge";
 import { GetHistoricoDisputaQueryDto } from "./dto/historico-disputa.dto";
 import { ListarDisputasQueryDto } from "./dto/listar-disputas.dto";
 import { SnapshotExtensaoDto } from "./dto/snapshot-extensao.dto";
@@ -43,6 +44,8 @@ export class DisputaService {
     @Inject(forwardRef(() => DisputaGateway))
     private readonly disputaGateway: DisputaGateway,
     @InjectQueue("disputa") private readonly disputaQueue: Queue,
+    @Inject(forwardRef(() => DisputaExtensionWsBridge))
+    private readonly disputaExtensionWsBridge: DisputaExtensionWsBridge,
   ) {}
 
   async criarDisputa(dto: CreateDisputaDto, empresaId: string, criadoPorId?: string | null) {
@@ -338,8 +341,15 @@ export class DisputaService {
     return { ok: true, ms: Date.now() - inicio };
   }
 
-  retransmitirPreencherLance(disputaId: string, payload: Record<string, unknown>) {
-    this.disputaGateway.server.to(`disputa:${disputaId}`).emit("disputa:preencher_lance", payload);
+  retransmitirPreencherLance(
+    disputaId: string,
+    payload: Record<string, unknown>,
+    empresaId: string,
+  ) {
+    this.disputaGateway.server
+      .to(`disputa:${disputaId}`)
+      .emit("extensao:preencher_lance", payload);
+    this.disputaExtensionWsBridge.emitPreencherLance(disputaId, empresaId, payload);
   }
 
   async registrarLanceConfirmadoExtensao(
@@ -393,7 +403,18 @@ export class DisputaService {
     const disputa = await this.prisma.disputa.findFirst({
       where: { id, empresaId },
       include: {
-        bid: true,
+        bid: {
+          include: {
+            pregoesMonitorados: {
+              orderBy: { createdAt: "desc" },
+              take: 1,
+              select: {
+                urlSalaDisputa: true,
+                linkPncp: true,
+              },
+            },
+          },
+        },
         credencial: true,
         configuracoes: true,
         historico: { orderBy: { timestamp: "desc" }, take: 500 },

@@ -46,6 +46,7 @@ describe("DisputaService", () => {
   let prisma: any;
   let gateway: any;
   let queue: any;
+  let extensionBridge: any;
   let service: DisputaService;
 
   beforeEach(() => {
@@ -75,7 +76,8 @@ describe("DisputaService", () => {
       server: { to: jest.fn().mockReturnThis(), emit: jest.fn() },
     };
     queue = { add: jest.fn().mockResolvedValue({}) };
-    service = new DisputaService(prisma, gateway, queue);
+    extensionBridge = { emitPreencherLance: jest.fn() };
+    service = new DisputaService(prisma, gateway, queue, extensionBridge);
   });
 
   it("criarDisputa salva com senhaHash (não texto puro)", async () => {

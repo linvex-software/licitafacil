@@ -131,6 +131,11 @@ export interface DisputaConfiguracao {
   valorMinimo: number;
   estrategia: EstrategiaDisputa;
   ativo: boolean;
+  melhorLance?: number | null;
+  posicaoAtual?: number | null;
+  statusItem?: "AGUARDANDO" | "ABERTO" | "ENCERRAMENTO_ALEATORIO" | "ENCERRADO";
+  vencedor?: string | null;
+  valorFinal?: number | null;
 }
 
 export interface DisputaCredencialPublica {
@@ -143,6 +148,10 @@ export interface DisputaBidResumo {
   id: string;
   title: string;
   agency: string;
+  pregoesMonitorados?: Array<{
+    urlSalaDisputa: string;
+    linkPncp?: string | null;
+  }>;
 }
 
 export interface Disputa {
@@ -154,21 +163,37 @@ export interface Disputa {
   agendadoPara?: string | null;
   iniciadoEm?: string | null;
   encerradoEm?: string | null;
-  credencial: DisputaCredencialPublica;
+  numeroPregao?: string;
+  uasg?: string;
+  credencial: DisputaCredencialPublica | null;
   configuracoes: DisputaConfiguracao[];
+  historico?: Array<{
+    id: string;
+    itemNumero: number;
+    evento: string;
+    valorEnviado?: number | null;
+    melhorLance?: number | null;
+    posicao?: number | null;
+    detalhe?: string | null;
+    origem?: "MANUAL" | "EXTENSAO";
+    timestamp: string;
+  }>;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CriarDisputaInput {
   bidId?: string;
+  licitacaoId?: string;
+  numeroPregao?: string;
+  uasg?: string;
   portal: PortalDisputa;
   agendadoPara?: string;
-  credencial: {
+  credencial?: {
     cnpj: string;
     senha: string;
   };
-  configuracoes: Array<{
+  configuracoes?: Array<{
     itemNumero: number;
     itemDescricao?: string;
     valorMaximo: number;

@@ -105,6 +105,26 @@ window.addEventListener('message', (event) => {
       window.postMessage({ tipo: 'LVX_JWT_SALVO' }, '*')
     })
   }
+
+  if (event.data.tipo === 'LVX_ATUALIZAR_DISPUTA_ATIVA') {
+    const disputaId = event.data.disputaId
+    chrome.runtime.sendMessage({ tipo: 'ATUALIZAR_DISPUTA_ATIVA', disputaId }, () => {
+      window.postMessage({ tipo: 'LVX_DISPUTA_ATIVA_OK', disputaId }, '*')
+    })
+  }
+
+  if (event.data.tipo === 'LVX_STATUS_EXTENSAO') {
+    chrome.runtime.sendMessage({ tipo: 'GET_STATUS' }, (resposta) => {
+      window.postMessage(
+        {
+          tipo: 'LVX_STATUS_EXTENSAO_RESULT',
+          status: resposta?.status || 'desconectado',
+          disputaIdAtiva: resposta?.disputaIdAtiva || null,
+        },
+        '*'
+      )
+    })
+  }
 })
 
 let intervalo = null
