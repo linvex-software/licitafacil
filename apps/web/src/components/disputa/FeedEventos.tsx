@@ -2,35 +2,40 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import type { EventoDisputa } from "@/hooks/useDisputaSocket";
+import type { EventoAoVivo } from "@/hooks/useDisputaSocket";
 
 interface FeedEventosProps {
-  eventos: EventoDisputa[];
+  eventos: EventoAoVivo[];
   onLimpar: () => void;
 }
 
-function classNamePorTipo(tipo: string) {
-  switch (tipo) {
-    case "LANCE_ENVIADO":
-      return "text-green-400";
-    case "SAIU_LIDERANCA":
-      return "text-amber-400 font-medium";
-    case "CAPTCHA_DETECTADO":
-      return "text-red-400 font-bold";
-    case "ITEM_ENCERRADO_GANHOU":
-      return "text-green-400 font-bold";
-    case "ITEM_ENCERRADO_PERDEU":
-      return "text-red-400";
-    case "ERRO":
-      return "text-red-400";
-    default:
-      return "text-muted-foreground";
-  }
+function classNameSeveridade(severidade: EventoAoVivo["severidade"]) {
+  if (severidade === "ok") return "text-teal-400";
+  if (severidade === "warn") return "text-amber-400";
+  if (severidade === "danger") return "text-red-400";
+  return "text-blue-300";
+}
+
+function classNameTipo(evento: EventoAoVivo) {
+  if (evento.tipo === "LANCE_CONFIRMADO") return "text-teal-400";
+  if (evento.tipo === "POSICAO_PERDIDA") return "text-amber-400";
+  if (evento.tipo === "ITEM_ENCERRADO") return "text-slate-400";
+  if (evento.tipo === "MENSAGEM") return "text-blue-300";
+  return classNameSeveridade(evento.severidade);
+}
+
+function relativo(ts: number) {
+  const sec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  if (sec < 60) return `há ${sec}s`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `há ${min}min`;
+  const h = Math.floor(min / 60);
+  return `há ${h}h`;
 }
 
 export function FeedEventos({ eventos, onLimpar }: FeedEventosProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const ordenados = useMemo(() => [...eventos].reverse(), [eventos]);
+  const ordenados = useMemo(() => eventos.slice(-200), [eventos]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -52,14 +57,16 @@ export function FeedEventos({ eventos, onLimpar }: FeedEventosProps) {
           <p className="text-muted-foreground">Aguardando eventos em tempo real...</p>
         )}
 
-        {ordenados.map((evento, index) => (
-          <div key={`${evento.timestamp}-${index}`} className="flex gap-2">
+        {ordenados.map((evento) => (
+          <div key={evento.id} className="flex gap-2">
             <span className="text-muted-foreground shrink-0">
-              {new Date(evento.timestamp).toLocaleTimeString("pt-BR")}
+              {relativo(evento.ts)}
             </span>
-            <p className={classNamePorTipo(evento.tipo)}>
-              {evento.descricao}
-              {typeof evento.valor === "number" ? ` R$${evento.valor.toLocaleString("pt-BR")}` : ""}
+            <p className={classNameTipo(evento)}>
+              {evento.texto}
+              {typeof evento.valor === "number"
+                ? ` (${evento.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })})`
+                : ""}
             </p>
           </div>
         ))}

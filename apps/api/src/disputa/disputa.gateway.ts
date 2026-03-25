@@ -129,7 +129,7 @@ export class DisputaGateway {
       throw new WsException("disputaId obrigatório");
     }
     await this.disputaService.assertAcessoDisputa(disputaId, empresaId);
-    this.disputaService.retransmitirPreencherLance(disputaId, body);
+    this.disputaService.retransmitirPreencherLance(disputaId, body, empresaId);
     return { ok: true };
   }
 

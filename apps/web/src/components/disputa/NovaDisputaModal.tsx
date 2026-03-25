@@ -63,9 +63,12 @@ export function NovaDisputaModal({ onSuccess }: NovaDisputaModalProps) {
   const [form, setForm] = useState({
     bidId: "",
     portal: "COMPRASNET" as PortalDisputa,
+    modo: "ROBO" as "ROBO" | "EXTENSAO",
     cnpj: "",
     senha: "",
     agendadoPara: "",
+    numeroPregao: "",
+    uasg: "",
   });
   const [itens, setItens] = useState<ItemForm[]>([itemPadrao()]);
 
@@ -98,9 +101,12 @@ export function NovaDisputaModal({ onSuccess }: NovaDisputaModalProps) {
     setForm({
       bidId: "",
       portal: "COMPRASNET",
+      modo: "ROBO",
       cnpj: "",
       senha: "",
       agendadoPara: "",
+      numeroPregao: "",
+      uasg: "",
     });
     setItens([itemPadrao()]);
   };
@@ -123,36 +129,46 @@ export function NovaDisputaModal({ onSuccess }: NovaDisputaModalProps) {
       toast({ title: "Selecione a licitação", variant: "destructive" });
       return;
     }
-    if (form.cnpj.replace(/\D/g, "").length !== 14) {
+    const modoRobo = form.modo === "ROBO";
+    if (modoRobo && form.cnpj.replace(/\D/g, "").length !== 14) {
       toast({ title: "CNPJ inválido", description: "Informe um CNPJ com 14 dígitos.", variant: "destructive" });
       return;
     }
-    if (!form.senha.trim()) {
+    if (modoRobo && !form.senha.trim()) {
       toast({ title: "Senha obrigatória", variant: "destructive" });
       return;
     }
-    const erroItens = validarItens();
-    if (erroItens) {
-      toast({ title: "Configuração inválida", description: erroItens, variant: "destructive" });
-      return;
+    if (modoRobo) {
+      const erroItens = validarItens();
+      if (erroItens) {
+        toast({ title: "Configuração inválida", description: erroItens, variant: "destructive" });
+        return;
+      }
     }
 
     const agendadoParaLimpo = form.agendadoPara?.trim();
     const payload: CriarDisputaInput = {
       bidId: form.bidId,
+      licitacaoId: form.bidId,
+      numeroPregao: form.numeroPregao || undefined,
+      uasg: form.uasg || undefined,
       portal: form.portal,
-      credencial: {
-        cnpj: form.cnpj.replace(/\D/g, ""),
-        senha: form.senha,
-      },
-      configuracoes: itens.map((item) => ({
-        itemNumero: item.itemNumero,
-        itemDescricao: item.itemDescricao || undefined,
-        valorMaximo: Number(item.valorMaximo),
-        valorMinimo: Number(item.valorMinimo),
-        estrategia: item.estrategia,
-        ativo: item.ativo,
-      })),
+      credencial: modoRobo
+        ? {
+            cnpj: form.cnpj.replace(/\D/g, ""),
+            senha: form.senha,
+          }
+        : undefined,
+      configuracoes: modoRobo
+        ? itens.map((item) => ({
+            itemNumero: item.itemNumero,
+            itemDescricao: item.itemDescricao || undefined,
+            valorMaximo: Number(item.valorMaximo),
+            valorMinimo: Number(item.valorMinimo),
+            estrategia: item.estrategia,
+            ativo: item.ativo,
+          }))
+        : undefined,
       ...(agendadoParaLimpo
         ? { agendadoPara: new Date(agendadoParaLimpo).toISOString() }
         : {}),
@@ -230,6 +246,21 @@ export function NovaDisputaModal({ onSuccess }: NovaDisputaModalProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
+                <Label>Modo da disputa</Label>
+                <Select
+                  value={form.modo}
+                  onValueChange={(value: "ROBO" | "EXTENSAO") =>
+                    setForm((prev) => ({ ...prev, modo: value }))
+                  }
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ROBO">Robô (com credencial)</SelectItem>
+                    <SelectItem value="EXTENSAO">Extensão (sem credencial)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
                 <Label>Portal</Label>
                 <Select value={form.portal} onValueChange={(value: PortalDisputa) => setForm((prev) => ({ ...prev, portal: value }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -239,24 +270,53 @@ export function NovaDisputaModal({ onSuccess }: NovaDisputaModalProps) {
                   </SelectContent>
                 </Select>
               </div>
+              {form.modo === "ROBO" && (
+                <div>
+                  <Label>CNPJ</Label>
+                  <Input
+                    value={form.cnpj}
+                    placeholder="00.000.000/0000-00"
+                    onChange={(e) => setForm((prev) => ({ ...prev, cnpj: formatarCnpj(e.target.value) }))}
+                  />
+                </div>
+              )}
+            </div>
+
+            {form.modo === "ROBO" ? (
               <div>
-                <Label>CNPJ</Label>
-                <Input
-                  value={form.cnpj}
-                  placeholder="00.000.000/0000-00"
-                  onChange={(e) => setForm((prev) => ({ ...prev, cnpj: formatarCnpj(e.target.value) }))}
-                />
+                <Label>Senha do portal</Label>
+                <Input type="password" value={form.senha} onChange={(e) => setForm((prev) => ({ ...prev, senha: e.target.value }))} />
               </div>
-            </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Número do pregão (opcional)</Label>
+                  <Input
+                    value={form.numeroPregao}
+                    placeholder="Ex: 90012/2026"
+                    onChange={(e) => setForm((prev) => ({ ...prev, numeroPregao: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label>UASG (opcional)</Label>
+                  <Input
+                    value={form.uasg}
+                    placeholder="Ex: 123456"
+                    onChange={(e) => setForm((prev) => ({ ...prev, uasg: e.target.value }))}
+                  />
+                </div>
+              </div>
+            )}
 
-            <div>
-              <Label>Senha do portal</Label>
-              <Input type="password" value={form.senha} onChange={(e) => setForm((prev) => ({ ...prev, senha: e.target.value }))} />
-            </div>
-
-            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
-              Suas credenciais são armazenadas com criptografia AES-256 e nunca são exibidas após salvas.
-            </p>
+            {form.modo === "ROBO" ? (
+              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
+                Suas credenciais são armazenadas com criptografia AES-256 e nunca são exibidas após salvas.
+              </p>
+            ) : (
+              <p className="text-xs text-teal-700 bg-teal-50 border border-teal-200 rounded-md p-2">
+                No modo extensão, a disputa é criada sem credencial e os lances são operados pela extensão Chrome.
+              </p>
+            )}
 
             <div>
               <Label>Agendar início (opcional)</Label>
@@ -275,18 +335,24 @@ export function NovaDisputaModal({ onSuccess }: NovaDisputaModalProps) {
 
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-              <Button
-                onClick={() => {
-                  if (!form.bidId) {
-                    setErroLicitacao("Selecione uma licitação");
-                    return;
-                  }
-                  setStep(2);
-                }}
-                disabled={!form.bidId}
-              >
-                Continuar
-              </Button>
+              {form.modo === "ROBO" ? (
+                <Button
+                  onClick={() => {
+                    if (!form.bidId) {
+                      setErroLicitacao("Selecione uma licitação");
+                      return;
+                    }
+                    setStep(2);
+                  }}
+                  disabled={!form.bidId}
+                >
+                  Continuar
+                </Button>
+              ) : (
+                <Button onClick={handleSalvar} disabled={!form.bidId || isSaving}>
+                  {isSaving ? "Criando..." : "Criar disputa (extensão)"}
+                </Button>
+              )}
             </div>
           </div>
         ) : (

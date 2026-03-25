@@ -2,229 +2,377 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
-import type { DisputaStatus } from "@/lib/api";
+import type { Disputa, DisputaStatus } from "@/lib/api";
+import { getToken } from "@/lib/auth";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 const MAX_EVENTOS = 200;
+const EXTENSAO_TTL_MS = 15000;
 
-export interface EventoDisputa {
-  tipo: string;
-  descricao: string;
+export type StatusConexao = "conectando" | "conectado" | "desconectado";
+export type StatusExtensao = "desconhecida" | "conectada" | "desconectada";
+
+export interface EventoAoVivo {
+  id: string;
+  ts: number;
+  itemNumero?: number;
+  tipo:
+    | "SNAPSHOT"
+    | "POSICAO_PERDIDA"
+    | "POSICAO_ATUALIZADA"
+    | "LANCE_SOLICITADO"
+    | "LANCE_CONFIRMADO"
+    | "ITEM_ENCERRADO"
+    | "RESULTADO"
+    | "MENSAGEM"
+    | "ERRO";
+  texto: string;
   valor?: number;
-  itemId?: string;
-  timestamp: string;
+  severidade: "info" | "ok" | "warn" | "danger";
 }
 
-export interface PosicaoItem {
-  itemId: string;
-  posicao: number;
-  melhorLance: number;
-  meuUltimoLance: number;
-  foraLiderancaEm?: Date;
-}
-
-interface UseDisputaSocketReturn {
-  conectado: boolean;
-  reconectando: boolean;
-  eventos: EventoDisputa[];
-  posicoes: Record<string, PosicaoItem>;
-  status: DisputaStatus | null;
-  captchaAtivo: boolean;
-  captchaItemId: string | null;
-  pausar: () => void;
-  retomar: () => void;
-  enviarLanceManual: (itemId: string, valor: number) => void;
-  desistirItem: (itemId: string) => void;
+export interface ItemAoVivo {
+  itemNumero: number;
+  descricao?: string | null;
+  melhorLance?: number | null;
+  posicaoAtual?: number | null;
+  statusItem: string;
+  vencedor?: string | null;
+  valorFinal?: number | null;
+  ultimoLanceOperador?: number | null;
+  lancePendente?: { valor: number; iniciadoEm: number } | null;
+  lanceConfirmadoEm?: number | null;
+  perdeuLiderancaEm?: number | null;
 }
 
 interface UseDisputaSocketParams {
   disputaId: string;
+  disputaInicial?: Disputa | null;
 }
 
-function tocarAlertaSonoro() {
-  if (typeof window === "undefined") return;
-  const ctx = new window.AudioContext();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.frequency.value = 880;
-  gain.gain.setValueAtTime(0.3, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-  osc.start();
-  osc.stop(ctx.currentTime + 0.5);
+interface UseDisputaSocketReturn {
+  itens: ItemAoVivo[];
+  feed: EventoAoVivo[];
+  statusConexao: StatusConexao;
+  statusExtensao: StatusExtensao;
+  statusDisputa: DisputaStatus | null;
+  darLance: (itemNumero: number, valor: number) => void;
+  limparFeed: () => void;
+  ultimoLanceConfirmadoId: string | null;
 }
 
-function nowIso() {
-  return new Date().toISOString();
+function toqueAlerta() {
+  if (typeof window === "undefined" || typeof window.AudioContext === "undefined") return;
+  try {
+    const ctx = new window.AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.35);
+  } catch {
+    // no-op
+  }
 }
 
-function normalizarItemId(value: unknown): string | null {
-  if (typeof value === "string" && value.trim().length > 0) return value;
-  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+function numero(v: unknown): number | null {
+  if (typeof v === "number" && Number.isFinite(v)) return v;
+  if (typeof v === "string" && v.trim().length > 0) {
+    const n = Number(v);
+    if (Number.isFinite(n)) return n;
+  }
   return null;
 }
 
-function normalizarEvento(payload: unknown, tipoFallback: string): EventoDisputa {
-  const data = (payload ?? {}) as Record<string, unknown>;
-  const itemId = normalizarItemId(data.itemId ?? data.itemNumero);
-
-  return {
-    tipo: typeof data.tipo === "string" ? data.tipo : tipoFallback,
-    descricao:
-      typeof data.descricao === "string"
-        ? data.descricao
-        : typeof data.detalhe === "string"
-          ? data.detalhe
-          : tipoFallback,
-    valor:
-      typeof data.valor === "number"
-        ? data.valor
-        : typeof data.valorEnviado === "number"
-          ? data.valorEnviado
-          : undefined,
-    itemId: itemId ?? undefined,
-    timestamp: typeof data.timestamp === "string" ? data.timestamp : nowIso(),
-  };
+function toMs(value?: string | number | Date): number {
+  if (typeof value === "number") return value;
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === "string") {
+    const parsed = Date.parse(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return Date.now();
 }
 
-function parseStatus(status: unknown): DisputaStatus | null {
-  if (typeof status !== "string") return null;
-  return status as DisputaStatus;
+function feedId(prefix: string, itemNumero?: number, ts?: number) {
+  return `${prefix}-${itemNumero ?? "na"}-${ts ?? Date.now()}`;
 }
 
-export function useDisputaSocket({ disputaId }: UseDisputaSocketParams): UseDisputaSocketReturn {
+function fromDisputa(d?: Disputa | null): Record<number, ItemAoVivo> {
+  if (!d) return {};
+  const byNum: Record<number, ItemAoVivo> = {};
+  for (const c of d.configuracoes ?? []) {
+    byNum[c.itemNumero] = {
+      itemNumero: c.itemNumero,
+      descricao: c.itemDescricao ?? null,
+      melhorLance: c.melhorLance ?? null,
+      posicaoAtual: c.posicaoAtual ?? null,
+      statusItem: c.statusItem ?? "AGUARDANDO",
+      vencedor: c.vencedor ?? null,
+      valorFinal: c.valorFinal ?? null,
+      ultimoLanceOperador: null,
+      lancePendente: null,
+      lanceConfirmadoEm: null,
+      perdeuLiderancaEm: null,
+    };
+  }
+  return byNum;
+}
+
+function historicoToFeed(d?: Disputa | null): EventoAoVivo[] {
+  const hist = d?.historico ?? [];
+  const eventos = hist
+    .slice(-MAX_EVENTOS)
+    .map((h) => {
+      const ts = toMs(h.timestamp);
+      const itemNumero = h.itemNumero ?? undefined;
+      return {
+        id: feedId(h.evento, itemNumero, ts),
+        ts,
+        itemNumero,
+        tipo: h.evento === "LANCE_ENVIADO" ? "LANCE_CONFIRMADO" : "MENSAGEM",
+        texto: h.detalhe || h.evento,
+        valor: h.valorEnviado ?? undefined,
+        severidade: h.evento === "ERRO" ? "danger" : "info",
+      } as EventoAoVivo;
+    })
+    .sort((a, b) => a.ts - b.ts);
+  return eventos.slice(-MAX_EVENTOS);
+}
+
+export function useDisputaSocket({
+  disputaId,
+  disputaInicial,
+}: UseDisputaSocketParams): UseDisputaSocketReturn {
   const socketRef = useRef<Socket | null>(null);
-  const [conectado, setConectado] = useState(false);
-  const [reconectando, setReconectando] = useState(false);
-  const [eventos, setEventos] = useState<EventoDisputa[]>([]);
-  const [posicoes, setPosicoes] = useState<Record<string, PosicaoItem>>({});
-  const [status, setStatus] = useState<DisputaStatus | null>(null);
-  const [captchaAtivo, setCaptchaAtivo] = useState(false);
-  const [captchaItemId, setCaptchaItemId] = useState<string | null>(null);
+  const [statusConexao, setStatusConexao] = useState<StatusConexao>("conectando");
+  const [statusDisputa, setStatusDisputa] = useState<DisputaStatus | null>(disputaInicial?.status ?? null);
+  const [itensByNum, setItensByNum] = useState<Record<number, ItemAoVivo>>(() => fromDisputa(disputaInicial));
+  const [feed, setFeed] = useState<EventoAoVivo[]>(() => historicoToFeed(disputaInicial));
+  const [ultimoSnapshotMs, setUltimoSnapshotMs] = useState<number>(0);
+  const [statusExtensao, setStatusExtensao] = useState<StatusExtensao>("desconhecida");
+  const [statusWsExtensao, setStatusWsExtensao] = useState<StatusExtensao>("desconhecida");
+  const [ultimoLanceConfirmadoId, setUltimoLanceConfirmadoId] = useState<string | null>(null);
 
-  const pushEvento = useCallback((evento: EventoDisputa) => {
-    setEventos((prev) => [evento, ...prev].slice(0, MAX_EVENTOS));
+  const appendFeed = useCallback((evento: EventoAoVivo) => {
+    setFeed((prev) => {
+      if (prev.some((e) => e.id === evento.id)) return prev;
+      const next = [...prev, evento];
+      return next.slice(-MAX_EVENTOS);
+    });
   }, []);
 
   useEffect(() => {
-    if (!disputaId) return;
+    if (!disputaInicial) return;
+    setStatusDisputa(disputaInicial.status ?? null);
+    setItensByNum(fromDisputa(disputaInicial));
+    setFeed(historicoToFeed(disputaInicial));
+  }, [disputaInicial]);
 
-    const token = typeof window !== "undefined" ? window.localStorage.getItem("token") : null;
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (statusWsExtensao === "conectada") {
+        setStatusExtensao("conectada");
+        return;
+      }
+      if (!ultimoSnapshotMs) return;
+      const vivo = Date.now() - ultimoSnapshotMs < EXTENSAO_TTL_MS;
+      setStatusExtensao(vivo ? "conectada" : "desconectada");
+    }, 2000);
+    return () => window.clearInterval(timer);
+  }, [statusWsExtensao, ultimoSnapshotMs]);
+
+  useEffect(() => {
+    const onMsg = (event: MessageEvent) => {
+      const data = event.data;
+      if (!data || typeof data !== "object") return;
+      if (data.tipo !== "LVX_STATUS_EXTENSAO_RESULT") return;
+      const status = data.status === "conectado" ? "conectada" : "desconectada";
+      setStatusWsExtensao(status);
+      setStatusExtensao((prev) => {
+        if (status === "conectada") return "conectada";
+        if (prev === "conectada" && Date.now() - ultimoSnapshotMs < EXTENSAO_TTL_MS) return "conectada";
+        return "desconectada";
+      });
+    };
+
+    window.addEventListener("message", onMsg);
+    const timer = window.setInterval(() => {
+      window.postMessage({ tipo: "LVX_STATUS_EXTENSAO" }, "*");
+    }, 3000);
+    window.postMessage({ tipo: "LVX_STATUS_EXTENSAO" }, "*");
+
+    return () => {
+      window.removeEventListener("message", onMsg);
+      window.clearInterval(timer);
+    };
+  }, [ultimoSnapshotMs]);
+
+  useEffect(() => {
+    if (!disputaId) return;
+    const token = getToken();
     const socket = io(`${apiUrl}/disputa`, {
       auth: { token },
       reconnection: true,
-      reconnectionDelay: 1000,
+      reconnectionDelay: 10000,
       reconnectionAttempts: Infinity,
     });
     socketRef.current = socket;
 
     socket.on("connect", () => {
-      setConectado(true);
-      setReconectando(false);
+      setStatusConexao("conectado");
       socket.emit("disputa:join", { disputaId });
     });
-
     socket.on("disconnect", () => {
-      setConectado(false);
-      setReconectando(true);
+      setStatusConexao("desconectado");
+      setStatusExtensao("desconectada");
     });
-
+    socket.on("connect_error", () => {
+      setStatusConexao("desconectado");
+    });
     socket.io.on("reconnect_attempt", () => {
-      setReconectando(true);
+      setStatusConexao("conectando");
     });
-
     socket.io.on("reconnect", () => {
-      setConectado(true);
-      setReconectando(false);
+      setStatusConexao("conectado");
       socket.emit("disputa:join", { disputaId });
     });
 
-    socket.on("connect_error", () => {
-      setConectado(false);
-      setReconectando(true);
-    });
-
-    socket.on("disputa:evento", (payload: unknown) => {
-      pushEvento(normalizarEvento(payload, "EVENTO"));
-    });
-
-    const handlePosicao = (payload: unknown) => {
+    socket.on("disputa:update", (payload: unknown) => {
       const data = (payload ?? {}) as Record<string, unknown>;
-      const itemId = normalizarItemId(data.itemId ?? data.itemNumero);
-      if (!itemId) return;
+      const tipo = typeof data.tipo === "string" ? data.tipo : "snapshot";
+      const now = Date.now();
 
-      const posicao = typeof data.posicao === "number" ? data.posicao : 99;
-      const melhorLance = typeof data.melhorLance === "number" ? data.melhorLance : 0;
-      const meuUltimoLance =
-        typeof data.meuUltimoLance === "number"
-          ? data.meuUltimoLance
-          : typeof data.valorEnviado === "number"
-            ? data.valorEnviado
-            : 0;
+      if (tipo === "snapshot") {
+        const itens = Array.isArray(data.itens) ? data.itens : [];
+        setItensByNum((prev) => {
+          const next = { ...prev };
+          for (const raw of itens) {
+            const x = raw as Record<string, unknown>;
+            const itemNumero = numero(x.itemNumero);
+            if (!itemNumero) continue;
+            const prevPos = next[itemNumero]?.posicaoAtual ?? null;
+            const posicaoAtual = numero(x.posicaoAtual);
+            const perdeu = prevPos === 1 && posicaoAtual != null && posicaoAtual > 1;
+            if (perdeu) {
+              toqueAlerta();
+              appendFeed({
+                id: feedId("posicao-perdida", itemNumero, now),
+                ts: now,
+                itemNumero,
+                tipo: "POSICAO_PERDIDA",
+                texto: `Posição perdida no item ${itemNumero}: agora em ${posicaoAtual}º`,
+                severidade: "warn",
+              });
+            }
+            next[itemNumero] = {
+              ...next[itemNumero],
+              itemNumero,
+              descricao: (x.itemDescricao as string | null | undefined) ?? next[itemNumero]?.descricao ?? null,
+              melhorLance: numero(x.melhorLance),
+              posicaoAtual,
+              statusItem: (x.statusItem as string | undefined) ?? next[itemNumero]?.statusItem ?? "AGUARDANDO",
+              vencedor: (x.vencedor as string | null | undefined) ?? null,
+              valorFinal: numero(x.valorFinal),
+              perdeuLiderancaEm: perdeu ? now : posicaoAtual === 1 ? null : (next[itemNumero]?.perdeuLiderancaEm ?? null),
+            };
+          }
+          return next;
+        });
+        appendFeed({
+          id: feedId("snapshot", undefined, now),
+          ts: now,
+          tipo: "SNAPSHOT",
+          texto: "Snapshot da extensão recebido",
+          severidade: "info",
+        });
+        setUltimoSnapshotMs(now);
+        setStatusExtensao("conectada");
+        return;
+      }
 
-      setPosicoes((prev) => {
-        const anterior = prev[itemId];
-        const saiuDaLideranca = anterior?.posicao === 1 && posicao > 1;
-
-        if (saiuDaLideranca) {
-          tocarAlertaSonoro();
+      if (tipo === "item_encerrado") {
+        const itemNumero = numero(data.itemNumero) ?? undefined;
+        if (itemNumero) {
+          setItensByNum((prev) => ({
+            ...prev,
+            [itemNumero]: {
+              ...prev[itemNumero],
+              itemNumero,
+              statusItem: "ENCERRADO",
+            },
+          }));
         }
+        appendFeed({
+          id: feedId("item-encerrado", itemNumero, now),
+          ts: now,
+          itemNumero,
+          tipo: "ITEM_ENCERRADO",
+          texto: `Item ${itemNumero ?? "-"} encerrado`,
+          severidade: "warn",
+        });
+        return;
+      }
 
-        return {
-          ...prev,
-          [itemId]: {
-            itemId,
-            posicao,
-            melhorLance,
-            meuUltimoLance,
-            foraLiderancaEm:
-              posicao > 1
-                ? anterior?.foraLiderancaEm ?? (saiuDaLideranca ? new Date() : undefined)
-                : undefined,
-          },
-        };
-      });
-    };
-
-    socket.on("disputa:posicao", handlePosicao);
-    socket.on("POSICAO_ATUALIZADA", handlePosicao);
-
-    socket.on("disputa:status", (payload: unknown) => {
-      const data = payload as { status?: DisputaStatus };
-      const parsed = parseStatus(data?.status);
-      if (parsed) setStatus(parsed);
+      if (tipo === "resultado") {
+        const status = (data.status as DisputaStatus | undefined) ?? null;
+        if (status) setStatusDisputa(status);
+        appendFeed({
+          id: feedId("resultado", undefined, now),
+          ts: now,
+          tipo: "RESULTADO",
+          texto: `Resultado registrado: ${String(data.resultado ?? "-")}`,
+          severidade: "ok",
+        });
+      }
     });
 
-    socket.on("disputa:captcha", (payload: unknown) => {
-      const data = payload as { itemId?: string };
-      setCaptchaAtivo(true);
-      setCaptchaItemId(data?.itemId ?? null);
-      pushEvento(normalizarEvento(payload, "CAPTCHA_DETECTADO"));
-    });
-
-    socket.on("CAPTCHA_DETECTADO", (payload: unknown) => {
-      const data = payload as { itemId?: string; itemNumero?: number };
-      const itemId = normalizarItemId(data?.itemId ?? data?.itemNumero);
-      setCaptchaAtivo(true);
-      setCaptchaItemId(itemId);
-      pushEvento(normalizarEvento(payload, "CAPTCHA_DETECTADO"));
-    });
-
-    socket.on("disputa:item_encerrado", (payload: unknown) => {
+    socket.on("extensao:lance_confirmado", (payload: unknown) => {
       const data = (payload ?? {}) as Record<string, unknown>;
-      const resultado = typeof data.resultado === "string" ? data.resultado : "PERDEU";
-      pushEvento(
-        normalizarEvento(payload, `ITEM_ENCERRADO_${resultado}`),
-      );
-    });
-
-    socket.on("SESSAO_ENCERRADA", (payload: unknown) => {
-      pushEvento(normalizarEvento(payload, "SESSAO_ENCERRADA"));
+      const itemNumero = numero(data.itemNumero);
+      const valor = numero(data.valor);
+      const posicao = numero(data.posicao);
+      const ts = toMs(data.timestamp as string | undefined);
+      if (itemNumero) {
+        setItensByNum((prev) => ({
+          ...prev,
+          [itemNumero]: {
+            ...prev[itemNumero],
+            itemNumero,
+            ultimoLanceOperador: valor,
+            posicaoAtual: posicao ?? prev[itemNumero]?.posicaoAtual ?? null,
+            lancePendente: null,
+            lanceConfirmadoEm: ts,
+          },
+        }));
+      }
+      const id = feedId("confirmado", itemNumero ?? undefined, ts);
+      setUltimoLanceConfirmadoId(id);
+      appendFeed({
+        id,
+        ts,
+        itemNumero: itemNumero ?? undefined,
+        tipo: "LANCE_CONFIRMADO",
+        texto: `Lance confirmado no portal para item ${itemNumero ?? "-"}`,
+        valor: valor ?? undefined,
+        severidade: "ok",
+      });
     });
 
     socket.on("ERRO", (payload: unknown) => {
-      pushEvento(normalizarEvento(payload, "ERRO"));
+      const data = (payload ?? {}) as Record<string, unknown>;
+      const ts = toMs(data.timestamp as string | undefined);
+      appendFeed({
+        id: feedId("erro", undefined, ts),
+        ts,
+        tipo: "ERRO",
+        texto: typeof data.detalhe === "string" ? data.detalhe : "Erro na disputa",
+        severidade: "danger",
+      });
     });
 
     return () => {
@@ -232,40 +380,53 @@ export function useDisputaSocket({ disputaId }: UseDisputaSocketParams): UseDisp
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [disputaId, pushEvento]);
+  }, [appendFeed, disputaId]);
 
-  const actions = useMemo(() => {
-    const pausar = () => {
-      socketRef.current?.emit("disputa:pausar", { disputaId });
-      setStatus("PAUSADA");
-    };
+  const darLance = useCallback(
+    (itemNumero: number, valor: number) => {
+      if (!Number.isFinite(valor) || valor <= 0) return;
+      socketRef.current?.emit("disputa:preencher_lance", {
+        disputaId,
+        itemNumero,
+        valor,
+      });
+      const ts = Date.now();
+      setItensByNum((prev) => ({
+        ...prev,
+        [itemNumero]: {
+          ...prev[itemNumero],
+          itemNumero,
+          lancePendente: { valor, iniciadoEm: ts },
+        },
+      }));
+      appendFeed({
+        id: feedId("lance-solicitado", itemNumero, ts),
+        ts,
+        itemNumero,
+        tipo: "LANCE_SOLICITADO",
+        texto: `Solicitado preenchimento de lance no item ${itemNumero}`,
+        valor,
+        severidade: "info",
+      });
+    },
+    [appendFeed, disputaId],
+  );
 
-    const retomar = () => {
-      socketRef.current?.emit("disputa:retomar", { disputaId });
-      setStatus("AO_VIVO");
-      setCaptchaAtivo(false);
-      setCaptchaItemId(null);
-    };
+  const limparFeed = useCallback(() => setFeed([]), []);
 
-    const enviarLanceManual = (itemId: string, valor: number) => {
-      socketRef.current?.emit("disputa:lance_manual", { disputaId, itemId, valor });
-    };
-
-    const desistirItem = (itemId: string) => {
-      socketRef.current?.emit("disputa:desistir_item", { disputaId, itemId });
-    };
-
-    return { pausar, retomar, enviarLanceManual, desistirItem };
-  }, [disputaId]);
+  const itens = useMemo(
+    () => Object.values(itensByNum).sort((a, b) => a.itemNumero - b.itemNumero),
+    [itensByNum],
+  );
 
   return {
-    conectado,
-    reconectando,
-    eventos,
-    posicoes,
-    status,
-    captchaAtivo,
-    captchaItemId,
-    ...actions,
+    itens,
+    feed,
+    statusConexao,
+    statusExtensao,
+    statusDisputa,
+    darLance,
+    limparFeed,
+    ultimoLanceConfirmadoId,
   };
 }
