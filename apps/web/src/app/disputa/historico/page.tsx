@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { api } from "@/lib/api";
+import { api, isBillingHandledError } from "@/lib/api";
 import { Search } from "lucide-react";
 
 interface HistoricoDisputaResumo {
@@ -64,8 +64,10 @@ export default function DisputaHistoricoPage() {
       const { data } = await api.get<HistoricoResponse>("/disputa/historico", { params });
       setItems(data.data);
       setTotalPages(data.pagination.totalPages);
-    } catch {
-      toast({ title: "Erro ao carregar histórico de disputas", variant: "destructive" });
+    } catch (e) {
+      if (!isBillingHandledError(e)) {
+        toast({ title: "Erro ao carregar histórico de disputas", variant: "destructive" });
+      }
     } finally {
       setLoading(false);
     }

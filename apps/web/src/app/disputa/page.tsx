@@ -10,7 +10,7 @@ import { NovaDisputaModal } from "@/components/disputa/NovaDisputaModal";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cancelarDisputa, listarDisputas, type Disputa } from "@/lib/api";
+import { cancelarDisputa, listarDisputas, isBillingHandledError, type Disputa } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
 type AbaStatus = "ATIVAS" | "AGENDADAS" | "ENCERRADAS";
@@ -48,7 +48,7 @@ export default function DisputaPage() {
     queryFn: () => listarDisputas(),
     staleTime: 8000,
     refetchInterval: 10000,
-    retry: 1,
+    retry: (failureCount, err) => !isBillingHandledError(err) && failureCount < 1,
     placeholderData: (previousData) => previousData,
     refetchIntervalInBackground: false,
   });
@@ -70,12 +70,24 @@ export default function DisputaPage() {
       await cancelarDisputa(id);
       toast({ title: "Disputa cancelada" });
       await refetch();
-    } catch {
-      toast({ title: "Falha ao cancelar disputa", variant: "destructive" });
+    } catch (e) {
+      if (!isBillingHandledError(e)) {
+        toast({ title: "Falha ao cancelar disputa", variant: "destructive" });
+      }
     } finally {
       setCancelandoId(null);
     }
   };
+
+  if (error && isBillingHandledError(error)) {
+    return (
+      <AuthGuard>
+        <Layout>
+          <div className="min-h-[45vh]" aria-hidden />
+        </Layout>
+      </AuthGuard>
+    );
+  }
 
   if (error) {
     return (

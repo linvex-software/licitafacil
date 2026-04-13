@@ -1,6 +1,8 @@
 import { Controller, Get, Post, Patch, Delete, Param, Query, Body, Req, UseGuards, Header } from '@nestjs/common'
 import { MonitoramentoService } from './monitoramento.service'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
+import { FeatureAccessGuard } from '../common/guards/feature-access.guard'
+import { RequireFeature } from '../common/decorators/require-feature.decorator'
 import { FiltrosPregaoDto } from './dto/filtros-pregao.dto'
 import { CadastrarPregaoDto } from './dto/cadastrar-pregao.dto'
 import { AtualizarPregaoDto } from './dto/atualizar-pregao.dto'
@@ -8,7 +10,8 @@ import { RegistrarResultadoPregaoDto } from './dto/registrar-resultado-pregao.dt
 import { FiltrosCentralPregoesDto } from './dto/filtros-central-pregoes.dto'
 
 @Controller('monitoramento')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, FeatureAccessGuard)
+@RequireFeature('monitoramento')
 export class MonitoramentoController {
   constructor(private service: MonitoramentoService) {}
 

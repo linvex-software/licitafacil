@@ -6,9 +6,12 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { FeatureAccessGuard } from "../common/guards/feature-access.guard";
+import { RequireFeature } from "../common/decorators/require-feature.decorator";
 import { AnaliseConcorrentesService } from "./analise-concorrentes.service";
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, FeatureAccessGuard)
+@RequireFeature("analytics_concorrencia")
 @Controller("analise")
 export class AnaliseConcorrentesController {
   constructor(

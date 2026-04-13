@@ -56,6 +56,17 @@ export class EmpresaController {
   }
 
   /**
+   * Plano atual da empresa (billing) — visível a qualquer usuário do tenant.
+   * GET /empresas/me/plano
+   */
+  @Get("me/plano")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  async getMePlano(@Tenant() empresaId: string) {
+    return this.empresaService.getMePlano(empresaId);
+  }
+
+  /**
    * Atualiza dados da empresa do usuário autenticado (nome e/ou segmento)
    * PATCH /empresas/me
    */

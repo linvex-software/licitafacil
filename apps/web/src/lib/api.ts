@@ -8,6 +8,34 @@ export const api = axios.create({
   baseURL: API_URL,
 });
 
+/** Erro de 403 de billing já tratado pelo modal global (evita toast / tela de erro). */
+export function isBillingHandledError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  return Boolean((error as { _billingHandled?: boolean })._billingHandled);
+}
+
+// Callback registrável para o BillingProvider reagir a 403 estruturados
+type BillingErrorHandler = (error: {
+  code: string;
+  currentPlan?: string;
+  requiredPlan?: string;
+  feature?: string;
+  currentCount?: number;
+  maxAllowed?: number;
+  suggestedPlan?: string;
+  status?: string;
+}) => void;
+
+let billingErrorHandler: BillingErrorHandler | null = null;
+
+export function registerBillingErrorHandler(handler: BillingErrorHandler) {
+  billingErrorHandler = handler;
+}
+
+export function unregisterBillingErrorHandler() {
+  billingErrorHandler = null;
+}
+
 // Interceptor to add token to requests (usa o mesmo token do auth)
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
@@ -19,10 +47,25 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Interceptor to handle unauthorized errors
+// Interceptor: 403 de billing (antes do 401) e não autorizado
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error.response?.status === 403 && error.response?.data?.code) {
+      const data = error.response.data as { code?: string };
+      const code = data.code;
+      if (
+        billingErrorHandler &&
+        (code === "FEATURE_LOCKED" ||
+          code === "USER_LIMIT_EXCEEDED" ||
+          code === "ACCOUNT_INACTIVE")
+      ) {
+        billingErrorHandler(data as Parameters<BillingErrorHandler>[0]);
+        (error as { _billingHandled?: boolean })._billingHandled = true;
+        return Promise.reject(error);
+      }
+    }
+
     if (error.response?.status === 401) {
       if (typeof window !== "undefined") {
         clearAuth();
@@ -32,7 +75,7 @@ api.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 // --- Checklist (itens de checklist da licitação) ---

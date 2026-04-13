@@ -27,8 +27,10 @@ import { DocumentService } from "../document/document.service";
 import { SoftDeleteService } from "../common/services/soft-delete.service";
 import { AuditLogService } from "../audit-log/audit-log.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { FeatureAccessGuard } from "../common/guards/feature-access.guard";
 import { RolesGuard } from "../common/guards/roles.guard";
 import { Roles } from "../common/decorators/roles.decorator";
+import { RequireFeature } from "../common/decorators/require-feature.decorator";
 import { Tenant } from "../common/decorators/tenant.decorator";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { Audit } from "../audit-log/decorators/audit.decorator";
@@ -582,6 +584,8 @@ export class BidController {
   @Post(":id/analisar-edital")
   @HttpCode(HttpStatus.OK)
   @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
+  @UseGuards(FeatureAccessGuard)
+  @RequireFeature("ia_analise_edital")
   @UseInterceptors(FileInterceptor("pdf"))
   async analisarEdital(
     @Param("id") id: string,
@@ -637,7 +641,8 @@ export class BidController {
   }
 
   @Post(":id/chat")
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(FeatureAccessGuard)
+  @RequireFeature("ia_chat_edital")
   @HttpCode(HttpStatus.OK)
   @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
   async chat(
@@ -654,7 +659,8 @@ export class BidController {
   }
 
   @Get(":id/chat/historico")
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(FeatureAccessGuard)
+  @RequireFeature("ia_chat_edital")
   @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
   async chatHistorico(
     @Param("id") id: string,
@@ -669,6 +675,8 @@ export class BidController {
   }
 
   @Post(":id/importar-documentos-analise")
+  @UseGuards(FeatureAccessGuard)
+  @RequireFeature("ia_analise_edital")
   @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
   @Audit({ action: "bid.import_documents", resourceType: "Bid" })
   async importarDocumentosAnalise(
@@ -680,6 +688,8 @@ export class BidController {
   }
 
   @Post(":id/gerar-checklist-analise")
+  @UseGuards(FeatureAccessGuard)
+  @RequireFeature("ia_analise_edital")
   @Roles(UserRole.ADMIN, UserRole.COLABORADOR)
   @Audit({ action: "bid.generate_checklist", resourceType: "Bid" })
   async gerarChecklistAnalise(
