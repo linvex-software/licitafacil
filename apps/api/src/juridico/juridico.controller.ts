@@ -20,7 +20,9 @@ import {
 } from "@prisma/client";
 import { IsArray, IsBoolean, IsEnum, IsOptional, IsString, IsUUID } from "class-validator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { FeatureAccessGuard } from "../common/guards/feature-access.guard";
 import { TenantGuard } from "../common/guards/tenant.guard";
+import { RequireFeature } from "../common/decorators/require-feature.decorator";
 import { Tenant } from "../common/decorators/tenant.decorator";
 import { JuridicoService } from "./juridico.service";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
@@ -85,7 +87,8 @@ class AtualizarStatusPeticaoDto {
 }
 
 @Controller("juridico")
-@UseGuards(JwtAuthGuard, TenantGuard)
+@UseGuards(JwtAuthGuard, TenantGuard, FeatureAccessGuard)
+@RequireFeature("modulo_juridico")
 export class JuridicoController {
   private readonly logger = new Logger(JuridicoController.name);
 
