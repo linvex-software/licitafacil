@@ -44,7 +44,7 @@ export class DisputaController {
     if (paginar) {
       return this.disputaService.listarDisputasPaginado(empresaId, query);
     }
-    return this.disputaService.listarDisputas(empresaId);
+    return this.disputaService.listarDisputas(empresaId, query);
   }
 
   /**

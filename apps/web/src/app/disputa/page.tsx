@@ -45,7 +45,7 @@ export default function DisputaPage() {
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["disputas"],
-    queryFn: listarDisputas,
+    queryFn: () => listarDisputas(),
     staleTime: 8000,
     refetchInterval: 10000,
     retry: 1,
