@@ -4,12 +4,12 @@ import {
   NotFoundException,
   ForbiddenException,
 } from "@nestjs/common";
+import { PlanoTipo } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { PrismaTenantService } from "../prisma/prisma-tenant.service";
 import { type CreateUserInput, type User, UserRole } from "@licitafacil/shared";
 import * as bcrypt from "bcrypt";
-
-const MAX_USERS_PER_EMPRESA = 30;
+import { PLAN_HIERARCHY, USER_LIMITS } from "../common/constants/feature-matrix";
 
 @Injectable()
 export class UserService {
@@ -17,6 +17,35 @@ export class UserService {
     private readonly prisma: PrismaService,
     private readonly prismaTenant: PrismaTenantService,
   ) { }
+
+  private async assertUserLimitNotExceeded(empresaId: string): Promise<void> {
+    const clienteConfig = await this.prisma.clienteConfig.findFirst({
+      where: { empresaId, deletedAt: null },
+    });
+    const plano = clienteConfig?.plano ?? PlanoTipo.STARTER;
+
+    const currentCount = await this.prisma.user.count({
+      where: {
+        empresaId,
+        deletedAt: null,
+      },
+    });
+
+    const maxAllowed = USER_LIMITS[plano];
+    if (maxAllowed !== null && currentCount >= maxAllowed) {
+      const currentIndex = PLAN_HIERARCHY.indexOf(plano);
+      const suggestedPlan = PLAN_HIERARCHY[currentIndex + 1] ?? PlanoTipo.ENTERPRISE;
+
+      throw new ForbiddenException({
+        statusCode: 403,
+        code: "USER_LIMIT_EXCEEDED",
+        message: `Limite de ${maxAllowed} usuários atingido para o plano ${plano}`,
+        currentCount,
+        maxAllowed,
+        suggestedPlan,
+      });
+    }
+  }
 
   /**
    * Cria um novo usuário com senha hasheada
@@ -30,6 +59,8 @@ export class UserService {
     if (existingUser) {
       throw new ConflictException("Email já cadastrado");
     }
+
+    await this.assertUserLimitNotExceeded(data.empresaId);
 
     // Hash da senha
     const hashedPassword = await bcrypt.hash(data.password, 10);
@@ -149,15 +180,7 @@ export class UserService {
       );
     }
 
-    const totalUsuariosCriados = await this.prisma.user.count({
-      where: { empresaId },
-    });
-
-    if (totalUsuariosCriados >= MAX_USERS_PER_EMPRESA) {
-      throw new ForbiddenException(
-        `Limite de ${MAX_USERS_PER_EMPRESA} usuários atingido para esta empresa`,
-      );
-    }
+    await this.assertUserLimitNotExceeded(empresaId);
 
     // Verificar se email já existe
     const existingUser = await this.prisma.user.findUnique({
@@ -342,24 +365,39 @@ export class UserService {
   }
 
   /**
-   * Retorna informações de uso de usuários da empresa.
-   * Limite fixo de 30 usuários por empresa.
+   * Retorna informações de uso de usuários da empresa (ativos, sem soft-deleted),
+   * alinhado ao limite do plano em {@link USER_LIMITS}.
    */
   async obterLimite(empresaId: string) {
-    const usuariosCriados = await this.prisma.user.count({
-      where: { empresaId },
+    const clienteConfig = await this.prisma.clienteConfig.findFirst({
+      where: { empresaId, deletedAt: null },
+    });
+    const plano = clienteConfig?.plano ?? PlanoTipo.STARTER;
+
+    const usuariosAtivos = await this.prisma.user.count({
+      where: { empresaId, deletedAt: null },
     });
 
-    const percentual = Math.min(
-      Math.round((usuariosCriados / MAX_USERS_PER_EMPRESA) * 100),
-      100,
-    );
+    const limite = USER_LIMITS[plano];
+
+    if (limite === null) {
+      return {
+        atual: usuariosAtivos,
+        limite: null,
+        disponivel: null,
+        percentual: 0,
+        plano,
+      };
+    }
+
+    const percentual = Math.min(Math.round((usuariosAtivos / limite) * 100), 100);
 
     return {
-      atual: usuariosCriados,
-      limite: MAX_USERS_PER_EMPRESA,
-      disponivel: Math.max(MAX_USERS_PER_EMPRESA - usuariosCriados, 0),
+      atual: usuariosAtivos,
+      limite,
+      disponivel: Math.max(limite - usuariosAtivos, 0),
       percentual,
+      plano,
     };
   }
 

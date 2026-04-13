@@ -13,6 +13,8 @@ import {
 } from "@nestjs/common";
 import { type User } from "@licitafacil/shared";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { FeatureAccessGuard } from "../common/guards/feature-access.guard";
+import { RequireFeature } from "../common/decorators/require-feature.decorator";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { Tenant } from "../common/decorators/tenant.decorator";
 import { CreateDisputaDto } from "./dto/create-disputa.dto";
@@ -24,7 +26,8 @@ import { PatchResultadoDisputaDto } from "./dto/patch-resultado-disputa.dto";
 import { PostLanceDisputaDto } from "./dto/post-lance-disputa.dto";
 import type { Response } from "express";
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, FeatureAccessGuard)
+@RequireFeature("disputa_ao_vivo")
 @Controller("disputa")
 export class DisputaController {
   constructor(private readonly disputaService: DisputaService) {}
