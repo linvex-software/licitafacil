@@ -9,6 +9,7 @@ import {
     BarChart2, Briefcase,
     TrendingUp, History, Tag as TagIcon,
     CalendarDays, Users, HelpCircle, Radio, UserSearch, PlayCircle, Puzzle,
+    CreditCard,
 } from "lucide-react";
 
 import { AlertsDropdown } from "@/components/AlertsDropdown";
@@ -29,9 +30,11 @@ import { cn } from "@/lib/utils";
 import { SupportDrawer } from "@/components/SupportDrawer";
 import { Logo } from "@/components/logo";
 import { OnboardingModal } from "@/components/onboarding/onboarding-modal";
+import { CanAccessFeature } from "@/components/billing/CanAccessFeature";
+import { FeatureLockModal } from "@/components/billing/FeatureLockModal";
 
 /* ─── Types ──────────────────────────────────────────────── */
-interface SubItem { label: string; href: string; icon?: any; }
+interface SubItem { label: string; href: string; icon?: any; feature?: string; }
 interface NavItem { label: string; icon: any; href: string; subItems?: SubItem[]; emDesenvolvimento?: boolean; }
 interface NavGroup { group: string; items: NavItem[]; }
 
@@ -60,7 +63,7 @@ const navGroups: NavGroup[] = [
                 subItems: [
                     { label: "Histórico de Compras", href: "/analise/historico-compras", icon: History },
                     { label: "Produtos", href: "/analise/produtos", icon: TagIcon },
-                    { label: "Concorrentes", href: "/analise/concorrentes", icon: UserSearch },
+                    { label: "Concorrentes", href: "/analise/concorrentes", icon: UserSearch, feature: "analytics_concorrencia" },
                 ]
             },
             {
@@ -69,7 +72,8 @@ const navGroups: NavGroup[] = [
                     { label: "Funil de licitações (Kanban)", href: "/negocios/funil", icon: TrendingUp },
                     { label: "Agenda", href: "/negocios/agenda", icon: CalendarDays },
                     { label: "Pregões (Central)", href: "/negocios/pregoes", icon: Gavel },
-                    { label: "Monitoramento", href: "/monitoramento", icon: Radio },
+                    { label: "Monitoramento", href: "/monitoramento", icon: Radio, feature: "monitoramento" },
+                    { label: "Disputa ao vivo", href: "/disputa", icon: PlayCircle, feature: "disputa_ao_vivo" },
                 ]
             },
             {
@@ -114,8 +118,8 @@ function NavDropdown({ item, pathname }: { item: NavItem; pathname: string }) {
                     {item.subItems.map((sub) => {
                         const subActive = pathname === sub.href;
                         const Icon = sub.icon;
-                        return (
-                            <Link key={sub.href} href={sub.href}
+                        const link = (
+                            <Link href={sub.href}
                                 className={cn(
                                     "flex items-center gap-2.5 mx-1 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors",
                                     subActive
@@ -127,6 +131,13 @@ function NavDropdown({ item, pathname }: { item: NavItem; pathname: string }) {
                                 {Icon && <Icon className={cn("w-3.5 h-3.5 shrink-0", subActive ? "text-primary" : "text-gray-400 dark:text-gray-500")} />}
                                 {sub.label}
                             </Link>
+                        );
+                        return sub.feature ? (
+                            <CanAccessFeature key={sub.href} feature={sub.feature}>
+                                {link}
+                            </CanAccessFeature>
+                        ) : (
+                            <div key={sub.href}>{link}</div>
                         );
                     })}
                 </div>
@@ -244,16 +255,25 @@ function MobileSidebarContent({
                                     )}
                                     {hasSubItems && isSubmenuOpen && (
                                         <div className="ml-9 mt-0.5 space-y-0.5">
-                                            {(item.subItems ?? []).map(sub => (
-                                                <Link key={sub.href} href={sub.href}
-                                                    className={cn("block px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors",
-                                                        pathname === sub.href
-                                                            ? "text-primary dark:text-primary-300"
-                                                            : "text-gray-500 hover:text-gray-800 dark:text-gray-500 dark:hover:text-gray-200"
-                                                    )}>
-                                                    {sub.label}
-                                                </Link>
-                                            ))}
+                                            {(item.subItems ?? []).map(sub => {
+                                                const subLink = (
+                                                    <Link href={sub.href}
+                                                        className={cn("block px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors",
+                                                            pathname === sub.href
+                                                                ? "text-primary dark:text-primary-300"
+                                                                : "text-gray-500 hover:text-gray-800 dark:text-gray-500 dark:hover:text-gray-200"
+                                                        )}>
+                                                        {sub.label}
+                                                    </Link>
+                                                );
+                                                return sub.feature ? (
+                                                    <CanAccessFeature key={sub.href} feature={sub.feature}>
+                                                        {subLink}
+                                                    </CanAccessFeature>
+                                                ) : (
+                                                    <div key={sub.href}>{subLink}</div>
+                                                );
+                                            })}
                                         </div>
                                     )}
                                 </div>
@@ -391,6 +411,9 @@ export function Layout({ children, fullWidth = false }: {
                             <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
                                 <Link href="/configuracoes"><Settings className="mr-2 h-4 w-4" /> Configurações</Link>
                             </DropdownMenuItem>
+                            <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
+                                <Link href="/planos"><CreditCard className="mr-2 h-4 w-4" /> Planos</Link>
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                                 className="rounded-lg cursor-pointer"
                                 onSelect={() => setSupportOpen(true)}
@@ -457,6 +480,7 @@ export function Layout({ children, fullWidth = false }: {
             </main>
             <SupportDrawer open={supportOpen} onClose={() => setSupportOpen(false)} />
             <OnboardingModal forceOpen={tourOpen} onForceClose={() => setTourOpen(false)} />
+            <FeatureLockModal />
         </div>
     );
 }

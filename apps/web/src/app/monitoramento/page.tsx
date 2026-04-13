@@ -4,7 +4,7 @@ import { Plus, Bell, X, Search } from 'lucide-react'
 import { CardPregao } from '@/components/monitoramento/CardPregao'
 import type { PregaoMonitorado } from '@/components/monitoramento/CardPregao'
 import { useMonitoramentoSocket } from '@/hooks/useMonitoramentoSocket'
-import { listarPregoesPncp, cadastrarPregaoMonitorado, sugerirVinculoPregao, registrarResultadoPregao } from '@/lib/api'
+import { listarPregoesPncp, cadastrarPregaoMonitorado, sugerirVinculoPregao, registrarResultadoPregao, isBillingHandledError } from '@/lib/api'
 import { useAuth } from '@/contexts/auth-context'
 import { AuthGuard } from '@/components/AuthGuard'
 import { Layout } from '@/components/layout'
@@ -98,6 +98,7 @@ function MonitoramentoContent() {
       if (pregao.uf) params.set("uf", pregao.uf)
       router.push(`/licitacoes?${params.toString()}`)
     } catch (e: any) {
+      if (isBillingHandledError(e)) return
       toast({
         title: "Falha ao preparar licitação",
         description: e?.response?.data?.message || e?.message || "Não foi possível criar o pregão monitorado para vincular.",
@@ -226,6 +227,10 @@ function MonitoramentoContent() {
       setMostrarAdicionar(false)
       carregar()
     } catch (e: any) {
+      if (isBillingHandledError(e)) {
+        setErroAdicionar('')
+        return
+      }
       setErroAdicionar(e?.message || 'Erro ao adicionar pregão')
     } finally {
       setAdicionando(false)
@@ -271,11 +276,13 @@ function MonitoramentoContent() {
       setResultadoPregao(null)
       carregar()
     } catch (e: any) {
-      toast({
-        title: "Erro ao salvar resultado",
-        description: e?.response?.data?.message || e?.message || "Não foi possível salvar.",
-        variant: "destructive",
-      })
+      if (!isBillingHandledError(e)) {
+        toast({
+          title: "Erro ao salvar resultado",
+          description: e?.response?.data?.message || e?.message || "Não foi possível salvar.",
+          variant: "destructive",
+        })
+      }
     } finally {
       setSalvandoResultado(false)
     }

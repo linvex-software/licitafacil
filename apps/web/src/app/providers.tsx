@@ -5,6 +5,7 @@ import { queryClient } from "@/lib/queryClient";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/auth-context";
+import { BillingProvider } from "@/contexts/billing-context";
 import { ThemeProvider } from "@/hooks/use-theme";
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -12,10 +13,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <ThemeProvider>
             <QueryClientProvider client={queryClient}>
                 <AuthProvider>
-                    <TooltipProvider>
-                        {children}
-                        <Toaster />
-                    </TooltipProvider>
+                    <BillingProvider>
+                        <TooltipProvider>
+                            {children}
+                            <Toaster />
+                        </TooltipProvider>
+                    </BillingProvider>
                 </AuthProvider>
             </QueryClientProvider>
         </ThemeProvider>

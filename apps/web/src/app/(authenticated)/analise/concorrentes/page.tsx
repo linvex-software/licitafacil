@@ -22,7 +22,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { api } from "@/lib/api";
+import { api, isBillingHandledError } from "@/lib/api";
 import { formatCurrency, formatDate, maskCNPJ } from "@/lib/utils";
 import {
   Search,
@@ -266,6 +266,9 @@ export default function AnaliseConcorrentesPage() {
       );
       setResultado(data);
     } catch (error: unknown) {
+      if (isBillingHandledError(error)) {
+        return;
+      }
       const status = (error as { response?: { status?: number } })?.response?.status;
       if (status === 404) {
         setResultado({
