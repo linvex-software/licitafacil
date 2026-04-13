@@ -14,6 +14,7 @@ import {
 import {
   atualizarStatusPeticao,
   gerarPeticaoDocx,
+  isBillingHandledError,
   listarPeticoesByBid,
   type Peticao,
   type TipoPeticao,
@@ -63,12 +64,16 @@ export function JuridicoTab({ bidId }: JuridicoTabProps) {
     try {
       const data = await listarPeticoesByBid(bidId);
       setPeticoes(data);
-    } catch (err: any) {
-      toast({
-        title: "Erro ao carregar histórico",
-        description: err?.message || "Não foi possível carregar as petições",
-        variant: "destructive",
-      });
+    } catch (err: unknown) {
+      if (!isBillingHandledError(err)) {
+        toast({
+          title: "Erro ao carregar histórico",
+          description: (err as Error)?.message || "Não foi possível carregar as petições",
+          variant: "destructive",
+        });
+      } else {
+        setPeticoes([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -117,6 +122,14 @@ export function JuridicoTab({ bidId }: JuridicoTabProps) {
       });
       fecharModal();
       await carregarHistorico();
+    } catch (err: unknown) {
+      if (!isBillingHandledError(err)) {
+        toast({
+          title: "Erro ao gerar petição",
+          description: (err as Error)?.message || "Não foi possível gerar o documento.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setGerando(false);
     }
@@ -137,12 +150,14 @@ export function JuridicoTab({ bidId }: JuridicoTabProps) {
         title: "Status atualizado",
         description: "Petição marcada como enviada.",
       });
-    } catch (err: any) {
-      toast({
-        title: "Erro ao atualizar status",
-        description: err?.message || "Não foi possível atualizar o status",
-        variant: "destructive",
-      });
+    } catch (err: unknown) {
+      if (!isBillingHandledError(err)) {
+        toast({
+          title: "Erro ao atualizar status",
+          description: (err as Error)?.message || "Não foi possível atualizar o status",
+          variant: "destructive",
+        });
+      }
     } finally {
       setAtualizandoId(null);
     }

@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
+import { PlanoTipo } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { type CreateEmpresaInput, type Empresa } from "@licitafacil/shared";
 
@@ -38,6 +39,15 @@ export class EmpresaService {
     }
 
     return this.mapToEmpresa(empresa);
+  }
+
+  /** Plano comercial da empresa (ClienteConfig), para UI de billing no frontend. */
+  async getMePlano(empresaId: string): Promise<{ plano: PlanoTipo }> {
+    const clienteConfig = await this.prisma.clienteConfig.findFirst({
+      where: { empresaId, deletedAt: null },
+      select: { plano: true },
+    });
+    return { plano: clienteConfig?.plano ?? PlanoTipo.STARTER };
   }
 
   /**

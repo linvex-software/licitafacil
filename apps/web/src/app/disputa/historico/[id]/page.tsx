@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { api } from "@/lib/api";
+import { api, isBillingHandledError } from "@/lib/api";
 import { Download } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -54,14 +54,19 @@ export default function DisputaHistoricoDetalhePage() {
   const [data, setData] = useState<HistoricoDetalheResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [billingBlocked, setBillingBlocked] = useState(false);
 
   const load = async () => {
     setLoading(true);
     try {
       const { data } = await api.get<HistoricoDetalheResponse>(`/disputa/historico/${id}`);
       setData(data);
-    } catch {
-      toast({ title: "Erro ao carregar detalhes da disputa", variant: "destructive" });
+    } catch (e) {
+      if (isBillingHandledError(e)) {
+        setBillingBlocked(true);
+      } else {
+        toast({ title: "Erro ao carregar detalhes da disputa", variant: "destructive" });
+      }
     } finally {
       setLoading(false);
     }
@@ -92,12 +97,22 @@ export default function DisputaHistoricoDetalhePage() {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-    } catch {
-      toast({ title: "Erro ao gerar PDF", variant: "destructive" });
+    } catch (e) {
+      if (!isBillingHandledError(e)) {
+        toast({ title: "Erro ao gerar PDF", variant: "destructive" });
+      }
     } finally {
       setDownloading(false);
     }
   };
+
+  if (billingBlocked) {
+    return (
+      <Layout>
+        <div className="min-h-[45vh]" aria-hidden />
+      </Layout>
+    );
+  }
 
   if (loading || !data) {
     return (

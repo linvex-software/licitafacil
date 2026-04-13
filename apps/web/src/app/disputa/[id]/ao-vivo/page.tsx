@@ -10,7 +10,7 @@ import { HeaderDisputa } from "@/components/disputa/HeaderDisputa";
 import { PainelItem } from "@/components/disputa/PainelItem";
 import { useToast } from "@/hooks/use-toast";
 import { useDisputaSocket } from "@/hooks/useDisputaSocket";
-import { buscarDisputa } from "@/lib/api";
+import { buscarDisputa, isBillingHandledError } from "@/lib/api";
 import Link from "next/link";
 
 export default function DisputaAoVivoPage() {
@@ -18,10 +18,11 @@ export default function DisputaAoVivoPage() {
   const disputaId = id;
   const { toast } = useToast();
 
-  const { data: disputa, isLoading } = useQuery({
+  const { data: disputa, isLoading, error } = useQuery({
     queryKey: ["disputa", disputaId],
     queryFn: () => buscarDisputa(disputaId),
     enabled: Boolean(disputaId),
+    retry: (failureCount, err) => !isBillingHandledError(err) && failureCount < 1,
   });
 
   const {
@@ -56,6 +57,16 @@ export default function DisputaAoVivoPage() {
     if (!disputaId) return;
     window.postMessage({ tipo: "LVX_ATUALIZAR_DISPUTA_ATIVA", disputaId }, "*");
   }, [disputaId]);
+
+  if (error && isBillingHandledError(error)) {
+    return (
+      <AuthGuard>
+        <Layout fullWidth>
+          <div className="min-h-[50vh]" aria-hidden />
+        </Layout>
+      </AuthGuard>
+    );
+  }
 
   return (
     <AuthGuard>
