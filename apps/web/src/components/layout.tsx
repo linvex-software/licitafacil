@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
     LayoutDashboard, Gavel, Settings,
     User, LogOut, Menu, FileText, BarChart3,
-    Globe, ShieldCheck, ChevronDown, ClipboardList,
+    ShieldCheck, ChevronDown, ClipboardList,
     BarChart2, Briefcase,
     TrendingUp, History, Tag as TagIcon,
     CalendarDays, Users, HelpCircle, Radio, UserSearch, PlayCircle, Puzzle,
@@ -75,12 +75,6 @@ const navGroups: NavGroup[] = [
                     { label: "Monitoramento", href: "/monitoramento", icon: Radio, feature: "monitoramento" },
                     { label: "Disputa ao vivo", href: "/disputa", icon: PlayCircle, feature: "disputa_ao_vivo" },
                 ]
-            },
-            {
-                label: "Buscar", icon: Globe, href: "/integracoes/comprasnet",
-            },
-            {
-                label: "Extensão Chrome", icon: Puzzle, href: "/extensao",
             },
         ]
     },
@@ -410,6 +404,9 @@ export function Layout({ children, fullWidth = false }: {
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
                                 <Link href="/configuracoes"><Settings className="mr-2 h-4 w-4" /> Configurações</Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
+                                <Link href="/extensao"><Puzzle className="mr-2 h-4 w-4" /> Extensão Chrome</Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
                                 <Link href="/planos"><CreditCard className="mr-2 h-4 w-4" /> Planos</Link>
