@@ -1,6 +1,9 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { ExternalLink, Clock, TrendingDown, Plus, ClipboardEdit } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { ExternalLink, Clock, TrendingDown, Plus, ClipboardEdit, Swords } from 'lucide-react'
+import { listarDisputas } from '@/lib/api'
+import { IniciarDisputaModal } from '@/components/monitoramento/IniciarDisputaModal'
 
 export interface PregaoMonitorado {
   id?: string
@@ -69,7 +72,10 @@ function useCountdown(horario: string) {
 }
 
 export function CardPregao({ pregao, onCriarLicitacao, criandoLicitacao, onRegistrarResultado }: CardPregaoProps) {
+  const router = useRouter()
   const { texto: countdown, ref: cardRef } = useCountdown(pregao.horarioInicio)
+  const [showDisputaModal, setShowDisputaModal] = useState(false)
+  const [acompanharLoading, setAcompanharLoading] = useState(false)
 
   const temUrlPortal = pregao.urlSalaDisputa &&
     !pregao.urlSalaDisputa.includes('pncp.gov.br') &&
@@ -80,6 +86,30 @@ export function CardPregao({ pregao, onCriarLicitacao, criandoLicitacao, onRegis
     : <span className="text-xs text-yellow-500 flex items-center gap-1">🟡 Abre no PNCP</span>
 
   const urlAbrir = pregao.urlSalaDisputa || pregao.urlFallbackPncp || '#'
+
+  const handleDisputaClick = async () => {
+    const np = pregao.numeroPregao?.trim()
+    if (pregao.status === 'EM_DISPUTA' && np) {
+      setAcompanharLoading(true)
+      try {
+        const lista = await listarDisputas({ numeroPregao: np })
+        const match = lista.find(
+          (d) =>
+            d.numeroPregao === np &&
+            ['INICIANDO', 'AO_VIVO', 'PAUSADA'].includes(d.status),
+        )
+        if (match) {
+          router.push(`/disputa/${match.id}/ao-vivo`)
+          return
+        }
+      } catch {
+        // abre modal
+      } finally {
+        setAcompanharLoading(false)
+      }
+    }
+    setShowDisputaModal(true)
+  }
 
   return (
     <div ref={cardRef} className={`bg-card border rounded-lg p-4 flex flex-col gap-3 transition-all
@@ -115,17 +145,40 @@ export function CardPregao({ pregao, onCriarLicitacao, criandoLicitacao, onRegis
         </div>
       )}
 
-      <div className="flex items-center justify-between pt-1 border-t border-border">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-border">
         {urlBadge}
-        <a
-          href={urlAbrir}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-        >
-          Abrir <ExternalLink className="h-3 w-3" />
-        </a>
+        <div className="flex flex-wrap items-center gap-2">
+          {(pregao.status === 'AGUARDANDO' || pregao.status === 'EM_DISPUTA') && (
+            <button
+              type="button"
+              onClick={() => void handleDisputaClick()}
+              disabled={acompanharLoading}
+              className="flex items-center gap-2 rounded-lg bg-[#0078D1]/10 px-3 py-1.5 text-sm font-medium text-[#0078D1] transition-colors hover:bg-[#0078D1]/20 disabled:opacity-60"
+            >
+              <Swords className="h-4 w-4" />
+              {acompanharLoading
+                ? 'Abrindo...'
+                : pregao.status === 'EM_DISPUTA'
+                  ? 'Acompanhar disputa'
+                  : 'Iniciar disputa'}
+            </button>
+          )}
+          <a
+            href={urlAbrir}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            Abrir <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
       </div>
+
+      <IniciarDisputaModal
+        open={showDisputaModal}
+        onClose={() => setShowDisputaModal(false)}
+        pregao={pregao}
+      />
 
       {onCriarLicitacao && (
         <div className="flex items-center justify-between pt-1 border-t border-border">

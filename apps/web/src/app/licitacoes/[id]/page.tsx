@@ -35,9 +35,11 @@ import { PredictionModal } from "@/components/licitacoes/prediction-modal";
 import { PredictiveAnalysis } from "@/components/licitacoes/PredictiveAnalysis";
 import { EditarLicitacaoModal } from "@/components/licitacoes/EditarLicitacaoModal";
 import { CalculadoraLance } from "@/components/licitacoes/calculadora-lance";
+import { LicitacaoDisputasSection } from "@/components/licitacoes/LicitacaoDisputasSection";
 import type { Bid } from "@licitafacil/shared";
 import { useQuery } from "@tanstack/react-query";
 import { listarPregoesMonitorados } from "@/lib/api";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type PregaoVinculado = {
   id: string;
@@ -458,6 +460,12 @@ export default function LicitacaoDetailPage() {
             </div>
           )}
 
+        <Tabs defaultValue="visao" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="visao">Visão geral</TabsTrigger>
+            <TabsTrigger value="disputa">Disputa</TabsTrigger>
+          </TabsList>
+          <TabsContent value="visao" className="mt-0 space-y-8">
         {/* Info Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <Card className="lg:col-span-2 shadow-sm border-gray-200 dark:border-gray-700">
@@ -632,6 +640,16 @@ export default function LicitacaoDetailPage() {
             </CardContent>
           </Card>
         )}
+          </TabsContent>
+
+          <TabsContent value="disputa" className="mt-0">
+            <LicitacaoDisputasSection
+              bidId={id}
+              licitacaoTitle={licitacao.title}
+              licitacaoAgency={licitacao.agency}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Modal de Análise Preditiva */}

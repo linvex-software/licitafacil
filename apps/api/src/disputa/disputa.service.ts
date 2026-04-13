@@ -138,13 +138,24 @@ export class DisputaService {
     return this.sanitizarDisputa(disputa);
   }
 
+  private buildDisputaListWhere(
+    empresaId: string,
+    query?: Pick<ListarDisputasQueryDto, "status" | "bidId" | "numeroPregao">,
+  ): Prisma.DisputaWhereInput {
+    const where: Prisma.DisputaWhereInput = { empresaId };
+    if (query?.status) where.status = query.status;
+    if (query?.bidId) where.bidId = query.bidId;
+    const np = query?.numeroPregao?.trim();
+    if (np) where.numeroPregao = np;
+    return where;
+  }
+
   async listarDisputasPaginado(empresaId: string, query: ListarDisputasQueryDto) {
     const page = query.page && query.page > 0 ? query.page : 1;
     const limit = query.limit && query.limit > 0 && query.limit <= 100 ? query.limit : 10;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.DisputaWhereInput = { empresaId };
-    if (query.status) where.status = query.status;
+    const where = this.buildDisputaListWhere(empresaId, query);
 
     const [total, disputas] = await Promise.all([
       this.prisma.disputa.count({ where }),
@@ -385,9 +396,11 @@ export class DisputaService {
     return { ok: true };
   }
 
-  async listarDisputas(empresaId: string) {
+  async listarDisputas(empresaId: string, query?: ListarDisputasQueryDto) {
+    const where = this.buildDisputaListWhere(empresaId, query);
+
     const disputas = await this.prisma.disputa.findMany({
-      where: { empresaId },
+      where,
       include: {
         bid: true,
         credencial: true,

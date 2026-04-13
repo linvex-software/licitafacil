@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Layout } from "@/components/layout";
 import {
     Settings, User, Bell, ShieldCheck, ChevronRight,
-    Moon, Sun, Monitor, CheckCircle2, Lock,
+    Moon, Sun, Monitor, CheckCircle2, Lock, Puzzle,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
@@ -170,6 +170,14 @@ export default function ConfiguracoesPage() {
                         iconBg="bg-amber-50 dark:bg-amber-950/50"
                         title="Notificações por Email"
                         description="Controle quais alertas você recebe e com qual frequência"
+                    />
+                    <SectionCard
+                        href="/extensao"
+                        icon={Puzzle}
+                        iconColor="text-violet-600 dark:text-violet-400"
+                        iconBg="bg-violet-50 dark:bg-violet-950/50"
+                        title="Extensão Chrome"
+                        description="Instale e use a extensão para integrar com portais de licitação"
                     />
                     <SectionCard
                         href="/redefinir-senha"

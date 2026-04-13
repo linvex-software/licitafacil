@@ -208,6 +208,7 @@ export interface Disputa {
   encerradoEm?: string | null;
   numeroPregao?: string;
   uasg?: string;
+  resultado?: "EM_ANDAMENTO" | "GANHOU" | "PERDEU" | "CANCELADO" | "DESISTIU";
   credencial: DisputaCredencialPublica | null;
   configuracoes: DisputaConfiguracao[];
   historico?: Array<{
@@ -257,8 +258,12 @@ export async function buscarLicitacoes(): Promise<LicitacaoResumo[]> {
   return data?.data ?? [];
 }
 
-export async function listarDisputas(): Promise<Disputa[]> {
-  const { data } = await api.get("/disputa");
+export async function listarDisputas(params?: {
+  status?: DisputaStatus;
+  bidId?: string;
+  numeroPregao?: string;
+}): Promise<Disputa[]> {
+  const { data } = await api.get("/disputa", { params });
   return data;
 }
 

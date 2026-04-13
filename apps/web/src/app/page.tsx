@@ -11,6 +11,7 @@ import {
   BarChart2, ArrowRight, FileText, Calendar,
   Plus, ChevronRight, Zap,
 } from "lucide-react";
+import { listarDisputas, type Disputa } from "@/lib/api";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Layout } from "@/components/layout";
@@ -77,6 +78,19 @@ export default function DashboardPage() {
   const totalPregoesHoje = (pregoesHoje ?? []).filter((p: any) =>
     ["AGUARDANDO", "EM_DISPUTA"].includes(p?.status)
   ).length;
+
+  const { data: disputasAtivas = [] } = useQuery({
+    queryKey: ["disputas-ativas-dashboard"],
+    queryFn: async () => {
+      const list = await listarDisputas({ status: "AO_VIVO" });
+      return Array.isArray(list) ? list : [];
+    },
+    staleTime: 30_000,
+  });
+
+  const disputasAoVivo = (disputasAtivas as Disputa[]).filter((d) =>
+    ["AO_VIVO", "INICIANDO", "PAUSADA"].includes(d.status)
+  );
 
   const totalOpen = overviewStats?.emAndamento ?? 0;
   const totalAtRisk = overviewStats?.emRisco ?? 0;
@@ -216,6 +230,44 @@ export default function DashboardPage() {
                   </button>
                 </Link>
               </div>
+            </div>
+
+            {/* Disputas ao vivo */}
+            <div
+              className="lg:col-span-5 rounded-xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 animate-fade-up"
+              style={{ animationDelay: "90ms" }}
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                  Disputas ativas
+                </h2>
+                {disputasAoVivo.length > 0 && (
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                  </span>
+                )}
+              </div>
+              {disputasAoVivo.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Nenhuma disputa em andamento</p>
+              ) : (
+                <div className="space-y-2">
+                  {disputasAoVivo.map((d) => (
+                    <Link
+                      key={d.id}
+                      href={`/disputa/${d.id}/ao-vivo`}
+                      className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-gray-50 dark:hover:bg-zinc-800/50"
+                    >
+                      <span className="max-w-[220px] truncate text-sm text-gray-800 dark:text-gray-200">
+                        {d.numeroPregao || "Disputa"}
+                      </span>
+                      <span className="animate-pulse rounded px-2 py-0.5 text-xs font-medium bg-red-500/20 text-red-400">
+                        AO VIVO
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Prazos */}
