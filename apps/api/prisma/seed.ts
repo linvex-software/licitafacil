@@ -1,5 +1,6 @@
 import { PrismaClient, UserRole } from "@prisma/client";
 import * as bcrypt from "bcrypt";
+import { seedClientesPL03 } from "./seed-clientes-pl03";
 
 const prisma = new PrismaClient();
 const EMPRESA_ID = "00000000-0000-0000-0000-000000000001";
@@ -30,6 +31,8 @@ async function main() {
 
   console.log("Superadmin criado:", admin.email);
   console.log("Senha: Admin@123");
+
+  await seedClientesPL03();
 }
 
 main()

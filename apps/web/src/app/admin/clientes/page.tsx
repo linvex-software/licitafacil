@@ -19,14 +19,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/Badge";
-import { Plus, Search, Download, Users, DollarSign, TrendingDown } from "lucide-react";
+import { Plus, Search, Download, Users, DollarSign, TrendingDown, Infinity as InfinityIcon } from "lucide-react";
 import { CriarClienteModal } from "@/components/admin/criar-cliente-modal";
+import { BillingEditModal } from "@/components/admin/BillingEditModal";
 import { api } from "@/lib/api";
 import { formatCurrency, formatCNPJ, formatDate } from "@/lib/utils";
 import { Layout } from "@/components/layout";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "@/hooks/use-toast";
 import { AuthGuard } from "@/components/AuthGuard";
+import { PLAN_DISPLAY_NAMES } from "@/constants/plans";
 
 interface ClienteConfig {
   id: string;
@@ -35,6 +37,8 @@ interface ClienteConfig {
   email: string;
   plano: "STARTER" | "PROFESSIONAL" | "ENTERPRISE";
   status: "ATIVO" | "SUSPENSO" | "CANCELADO" | "TRIAL";
+  maxUsuarios: number;
+  dataProximaCobranca?: string | null;
   mensalidade: number;
   valorSetup: number;
   dataInicio: string;
@@ -74,6 +78,8 @@ export default function PainelAdminClientes() {
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
   const [modalAberto, setModalAberto] = useState(false);
+  const [billingModalOpen, setBillingModalOpen] = useState(false);
+  const [billingTarget, setBillingTarget] = useState<ClienteConfig | null>(null);
 
   // Proteção de rota: apenas SUPER_ADMIN pode acessar
   useEffect(() => {
@@ -112,6 +118,11 @@ export default function PainelAdminClientes() {
       setLoading(false);
     }
   }, [router]);
+
+  const abrirBilling = (cliente: ClienteConfig) => {
+    setBillingTarget(cliente);
+    setBillingModalOpen(true);
+  };
 
   useEffect(() => {
     // Só carregar dados se for SUPER_ADMIN
@@ -167,6 +178,18 @@ export default function PainelAdminClientes() {
       ENTERPRISE: "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800",
     };
     return variants[plano] || "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300";
+  };
+
+  const renderMaxUsuarios = (maxUsuarios: number) => {
+    if (maxUsuarios >= 999999) {
+      return (
+        <span className="inline-flex items-center gap-1 justify-center leading-none">
+          <InfinityIcon className="h-4 w-4 relative top-[2px]" />
+          <span className="sr-only">Ilimitado</span>
+        </span>
+      );
+    }
+    return String(maxUsuarios);
   };
 
   // Enquanto verifica auth ou se não é SUPER_ADMIN
@@ -296,15 +319,17 @@ export default function PainelAdminClientes() {
                       <TableHead>Plano</TableHead>
                       <TableHead className="text-center">Usuários</TableHead>
                       <TableHead className="text-center">Licitações</TableHead>
+                      <TableHead>Vencimento</TableHead>
                       <TableHead>Mensalidade</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Início</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {clientesFiltrados.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                           {busca
                             ? "Nenhum cliente encontrado para essa busca"
                             : "Nenhum cliente cadastrado. Clique em \"Novo Cliente\" para começar."}
@@ -321,11 +346,17 @@ export default function PainelAdminClientes() {
                           <TableCell className="font-mono text-sm">{formatCNPJ(cliente.cnpj)}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className={badgePlanoVariant(cliente.plano)}>
-                              {cliente.plano}
+                              {PLAN_DISPLAY_NAMES[cliente.plano] ?? cliente.plano}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-center">{cliente.empresa._count.users}</TableCell>
+                          <TableCell className="text-center">
+                            {cliente.empresa._count.users}/
+                            {cliente.maxUsuarios != null ? renderMaxUsuarios(cliente.maxUsuarios) : "-"}
+                          </TableCell>
                           <TableCell className="text-center">{cliente.empresa._count.bids}</TableCell>
+                          <TableCell className="text-sm">
+                            {cliente.dataProximaCobranca ? formatDate(cliente.dataProximaCobranca) : "-"}
+                          </TableCell>
                           <TableCell>{formatCurrency(Number(cliente.mensalidade))}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className={badgeStatusVariant(cliente.status)}>
@@ -333,6 +364,19 @@ export default function PainelAdminClientes() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-sm">{formatDate(cliente.dataInicio)}</TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                abrirBilling(cliente);
+                              }}
+                            >
+                              Billing
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       ))
                     )}
@@ -351,6 +395,25 @@ export default function PainelAdminClientes() {
               carregarDados();
             }}
           />
+
+          {billingTarget && (
+            <BillingEditModal
+              open={billingModalOpen}
+              onOpenChange={(o) => {
+                setBillingModalOpen(o);
+                if (!o) setBillingTarget(null);
+              }}
+              companyId={billingTarget.empresaId}
+              companyName={billingTarget.empresa.name}
+              cnpj={billingTarget.cnpj}
+              planoAtual={billingTarget.plano}
+              statusAtual={billingTarget.status}
+              maxUsuariosAtual={billingTarget.maxUsuarios ?? 0}
+              usuariosAtivos={billingTarget.empresa._count.users}
+              dataProximaCobrancaAtual={billingTarget.dataProximaCobranca ?? null}
+              onSaved={() => carregarDados()}
+            />
+          )}
         </div>
       </Layout>
     </AuthGuard >

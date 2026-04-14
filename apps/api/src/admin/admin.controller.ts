@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Body,
   Param,
   UseGuards,
@@ -13,6 +14,9 @@ import {
   ListarClientesDto,
   CriarContratoDto,
   RegistrarPagamentoDto,
+  PatchBillingPlanDto,
+  PatchBillingStatusDto,
+  PatchBillingExtendDto,
 } from "./dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../common/guards/roles.guard";
@@ -86,5 +90,45 @@ export class AdminController {
   @Roles(UserRole.SUPER_ADMIN)
   async listarPagamentos(@Param("contratoId") contratoId: string) {
     return this.adminService.listarPagamentos(contratoId);
+  }
+
+  // ========================================================
+  // Billing (PL-03)
+  // ========================================================
+
+  @Patch("billing/:companyId/plan")
+  @Roles(UserRole.SUPER_ADMIN)
+  async patchBillingPlan(
+    @Param("companyId") companyId: string,
+    @Body() dto: PatchBillingPlanDto,
+    @CurrentUser() user: { id: string; empresaId: string },
+  ) {
+    return this.adminService.patchBillingPlan(companyId, dto, user.id);
+  }
+
+  @Patch("billing/:companyId/status")
+  @Roles(UserRole.SUPER_ADMIN)
+  async patchBillingStatus(
+    @Param("companyId") companyId: string,
+    @Body() dto: PatchBillingStatusDto,
+    @CurrentUser() user: { id: string; empresaId: string },
+  ) {
+    return this.adminService.patchBillingStatus(companyId, dto, user.id);
+  }
+
+  @Patch("billing/:companyId/extend")
+  @Roles(UserRole.SUPER_ADMIN)
+  async patchBillingExtend(
+    @Param("companyId") companyId: string,
+    @Body() dto: PatchBillingExtendDto,
+    @CurrentUser() user: { id: string; empresaId: string },
+  ) {
+    return this.adminService.patchBillingExtend(companyId, dto, user.id);
+  }
+
+  @Get("billing/:companyId/audit")
+  @Roles(UserRole.SUPER_ADMIN)
+  async listarBillingAudit(@Param("companyId") companyId: string) {
+    return this.adminService.listarBillingAudit(companyId);
   }
 }
