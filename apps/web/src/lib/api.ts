@@ -209,6 +209,13 @@ export interface Disputa {
   numeroPregao?: string;
   uasg?: string;
   resultado?: "EM_ANDAMENTO" | "GANHOU" | "PERDEU" | "CANCELADO" | "DESISTIU";
+  valorFinal?: number | null;
+  observacaoResultado?: string | null;
+  economiaGerada?: number | null;
+  totalLancesEnviados?: number | null;
+  menorLanceEnviado?: number | null;
+  melhorLanceGlobal?: number | null;
+  margemVsMelhorLance?: number | null;
   credencial: DisputaCredencialPublica | null;
   configuracoes: DisputaConfiguracao[];
   historico?: Array<{
@@ -328,6 +335,18 @@ export async function retomarDisputa(id: string) {
 export async function encerrarDisputa(id: string, detalhe?: string) {
   const { data } = await api.patch(`/disputa/${id}/encerrar`, { detalhe });
   return data;
+}
+
+export async function registrarResultadoDisputa(
+  id: string,
+  payload: {
+    resultado: "GANHOU" | "PERDEU" | "DESISTIU";
+    valorFinal?: number;
+    observacao?: string;
+  },
+) {
+  const { data } = await api.patch(`/disputa/${id}/resultado`, payload);
+  return data as Disputa;
 }
 
 export async function cancelarDisputa(id: string) {

@@ -33,6 +33,16 @@ interface HistoricoDisputaResumo {
 
 interface HistoricoResponse {
   data: HistoricoDisputaResumo[];
+  metricasPeriodo?: {
+    totalDisputas: number;
+    totalEncerradas: number;
+    totalVitorias: number;
+    totalPerdas: number;
+    totalCanceladas: number;
+    taxaVitoria: number;
+    ticketMedioGanho: number | null;
+    margemMediaPerdida: number | null;
+  };
   pagination: { page: number; limit: number; total: number; totalPages: number };
 }
 
@@ -40,6 +50,7 @@ export default function DisputaHistoricoPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [items, setItems] = useState<HistoricoDisputaResumo[]>([]);
+  const [metricas, setMetricas] = useState<HistoricoResponse["metricasPeriodo"] | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [licitacao, setLicitacao] = useState("");
@@ -63,6 +74,7 @@ export default function DisputaHistoricoPage() {
       };
       const { data } = await api.get<HistoricoResponse>("/disputa/historico", { params });
       setItems(data.data);
+      setMetricas(data.metricasPeriodo ?? null);
       setTotalPages(data.pagination.totalPages);
     } catch (e) {
       if (!isBillingHandledError(e)) {
@@ -97,6 +109,43 @@ export default function DisputaHistoricoPage() {
             </p>
           </div>
         </div>
+
+        {metricas && (
+          <div className="grid gap-4 md:grid-cols-4 mb-6">
+            <Card className="border-slate-200">
+              <CardHeader>
+                <CardTitle className="text-sm font-heading">Total de disputas</CardTitle>
+              </CardHeader>
+              <CardContent className="text-2xl font-semibold text-slate-900">
+                {metricas.totalDisputas}
+              </CardContent>
+            </Card>
+            <Card className="border-slate-200">
+              <CardHeader>
+                <CardTitle className="text-sm font-heading">Taxa de vitória</CardTitle>
+              </CardHeader>
+              <CardContent className="text-2xl font-semibold text-slate-900">
+                {metricas.taxaVitoria.toFixed(2)}%
+              </CardContent>
+            </Card>
+            <Card className="border-slate-200">
+              <CardHeader>
+                <CardTitle className="text-sm font-heading">Ticket médio ganho</CardTitle>
+              </CardHeader>
+              <CardContent className="text-2xl font-semibold text-slate-900">
+                {metricas.ticketMedioGanho != null ? `R$ ${metricas.ticketMedioGanho.toFixed(2)}` : "-"}
+              </CardContent>
+            </Card>
+            <Card className="border-slate-200">
+              <CardHeader>
+                <CardTitle className="text-sm font-heading">Margem média perdida</CardTitle>
+              </CardHeader>
+              <CardContent className="text-2xl font-semibold text-slate-900">
+                {metricas.margemMediaPerdida != null ? `R$ ${metricas.margemMediaPerdida.toFixed(2)}` : "-"}
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         <Card className="mb-6 border-slate-200">
           <CardContent className="py-4 space-y-4">

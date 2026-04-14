@@ -8,17 +8,21 @@ import { Layout } from "@/components/layout";
 import { FeedEventos } from "@/components/disputa/FeedEventos";
 import { HeaderDisputa } from "@/components/disputa/HeaderDisputa";
 import { PainelItem } from "@/components/disputa/PainelItem";
+import { RegistrarResultadoModal } from "@/components/disputa/RegistrarResultadoModal";
 import { useToast } from "@/hooks/use-toast";
 import { useDisputaSocket } from "@/hooks/useDisputaSocket";
 import { buscarDisputa, isBillingHandledError } from "@/lib/api";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 export default function DisputaAoVivoPage() {
   const { id } = useParams<{ id: string }>();
   const disputaId = id;
   const { toast } = useToast();
+  const [openResultado, setOpenResultado] = useState(false);
 
-  const { data: disputa, isLoading, error } = useQuery({
+  const { data: disputa, isLoading, error, refetch } = useQuery({
     queryKey: ["disputa", disputaId],
     queryFn: () => buscarDisputa(disputaId),
     enabled: Boolean(disputaId),
@@ -78,6 +82,18 @@ export default function DisputaAoVivoPage() {
             statusExtensao={statusExtensao}
             status={statusDisputa ?? disputa?.status ?? null}
             urlPortal={urlPortal}
+            actions={
+              (statusDisputa ?? disputa?.status) === "ENCERRADA" ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setOpenResultado(true)}
+                >
+                  Registrar resultado
+                </Button>
+              ) : null
+            }
           />
 
           {isLoading ? (
@@ -113,6 +129,18 @@ export default function DisputaAoVivoPage() {
             </div>
           )}
         </div>
+
+        {disputaId && (
+          <RegistrarResultadoModal
+            open={openResultado}
+            onOpenChange={setOpenResultado}
+            disputaId={disputaId}
+            disputa={disputa}
+            onSaved={() => {
+              void refetch();
+            }}
+          />
+        )}
       </Layout>
     </AuthGuard>
   );

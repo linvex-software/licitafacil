@@ -813,7 +813,13 @@ model Disputa {
   credencialId   String?
   credencial     CredencialPortal?  @relation(fields: [credencialId], references: [id])
   resultado      ResultadoDisputa   @default(EM_ANDAMENTO)
+  valorFinal     Decimal?           @db.Decimal(15, 2)
+  observacaoResultado String?
   economiaGerada Float?
+  totalLancesEnviados Int?
+  menorLanceEnviado   Decimal?      @db.Decimal(15, 2)
+  melhorLanceGlobal   Decimal?      @db.Decimal(15, 2)
+  margemVsMelhorLance Decimal?      @db.Decimal(15, 2)
   configuracoes  ConfiguracaoLance[]
   historico      HistoricoLance[]
   createdAt      DateTime           @default(now())

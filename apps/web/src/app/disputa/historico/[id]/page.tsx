@@ -35,6 +35,8 @@ interface HistoricoDetalheResponse {
     duracaoSegundos: number | null;
     totalLancesEnviados: number;
     nossoUltimoLance: number | null;
+    menorNossoLance: number | null;
+    margemVsMelhorLance: number | null;
   };
   timeline: Array<{
     id: string;
@@ -220,6 +222,22 @@ export default function DisputaHistoricoDetalhePage() {
                 <span className="font-semibold">
                   {metricas.nossoUltimoLance != null
                     ? `R$ ${metricas.nossoUltimoLance.toFixed(2)}`
+                    : "-"}
+                </span>
+              </p>
+              <p className="text-sm text-slate-700">
+                Seu menor lance:{" "}
+                <span className="font-semibold">
+                  {metricas.menorNossoLance != null
+                    ? `R$ ${metricas.menorNossoLance.toFixed(2)}`
+                    : "-"}
+                </span>
+              </p>
+              <p className="text-sm text-slate-700">
+                Margem vs melhor lance:{" "}
+                <span className="font-semibold">
+                  {metricas.margemVsMelhorLance != null
+                    ? `R$ ${metricas.margemVsMelhorLance.toFixed(2)}`
                     : "-"}
                 </span>
               </p>
