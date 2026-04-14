@@ -6,8 +6,7 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { ClienteStatus, PlanoTipo } from "@prisma/client";
-import { PrismaService } from "../../prisma/prisma.service";
+import { ClienteStatus } from "@prisma/client";
 import { IS_PUBLIC_KEY } from "../../auth/decorators/public.decorator";
 import { FEATURE_KEY } from "../decorators/require-feature.decorator";
 import {
@@ -15,21 +14,13 @@ import {
   type FeatureName,
   getRequiredPlan,
 } from "../constants/feature-matrix";
-
-interface CachedCliente {
-  plano: PlanoTipo;
-  status: ClienteStatus;
-  fetchedAt: number;
-}
-
-const clienteConfigCache = new Map<string, CachedCliente>();
-const TTL_MS = 60_000;
+import { ClienteConfigCacheService } from "../services/cliente-config-cache.service";
 
 @Injectable()
 export class FeatureAccessGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    private readonly prisma: PrismaService,
+    private readonly clienteConfigCache: ClienteConfigCacheService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -56,7 +47,7 @@ export class FeatureAccessGuard implements CanActivate {
     }
 
     const empresaId = user.empresaId;
-    const { plano, status } = await this.getClientePlanAndStatus(empresaId);
+    const { plano, status } = await this.clienteConfigCache.getPlanAndStatus(empresaId);
 
     if (status === ClienteStatus.SUSPENSO || status === ClienteStatus.CANCELADO) {
       throw new ForbiddenException({
@@ -80,26 +71,5 @@ export class FeatureAccessGuard implements CanActivate {
     }
 
     return true;
-  }
-
-  private async getClientePlanAndStatus(
-    empresaId: string,
-  ): Promise<{ plano: PlanoTipo; status: ClienteStatus }> {
-    const now = Date.now();
-    const cached = clienteConfigCache.get(empresaId);
-    if (cached && now - cached.fetchedAt <= TTL_MS) {
-      return { plano: cached.plano, status: cached.status };
-    }
-
-    const config = await this.prisma.clienteConfig.findFirst({
-      where: { empresaId, deletedAt: null },
-    });
-
-    const plano = config?.plano ?? PlanoTipo.STARTER;
-    const status = config?.status ?? ClienteStatus.ATIVO;
-
-    clienteConfigCache.set(empresaId, { plano, status, fetchedAt: now });
-
-    return { plano, status };
   }
 }

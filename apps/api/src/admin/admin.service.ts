@@ -3,15 +3,20 @@ import {
   ConflictException,
   NotFoundException,
   Logger,
+  BadRequestException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { MailService } from "../mail/mail.service";
 import { AuditLogService } from "../audit-log/audit-log.service";
+import { ClienteConfigCacheService } from "../common/services/cliente-config-cache.service";
 import {
   CriarClienteDto,
   ListarClientesDto,
   CriarContratoDto,
   RegistrarPagamentoDto,
+  PatchBillingPlanDto,
+  PatchBillingStatusDto,
+  PatchBillingExtendDto,
 } from "./dto";
 import { PlanoTipo, ClienteStatus, UserRole, TipoPagamento } from "@prisma/client";
 import * as bcrypt from "bcrypt";
@@ -25,7 +30,14 @@ export class AdminService {
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
     private readonly auditLogService: AuditLogService,
+    private readonly clienteConfigCache: ClienteConfigCacheService,
   ) {}
+
+  private limitesUsuariosPorPlano(plano: PlanoTipo): number {
+    if (plano === PlanoTipo.STARTER) return 2;
+    if (plano === PlanoTipo.PROFESSIONAL) return 5;
+    return 999999;
+  }
 
   /**
    * Cria um novo cliente B2B completo:
@@ -213,6 +225,157 @@ export class AdminService {
     });
 
     return clientes;
+  }
+
+  // ========================================================
+  // Billing (PL-03)
+  // ========================================================
+
+  async patchBillingPlan(companyId: string, dto: PatchBillingPlanDto, actorUserId: string) {
+    const novoPlano = dto.plano;
+    const novoMaxUsuarios = this.limitesUsuariosPorPlano(novoPlano);
+
+    return this.prisma.$transaction(async (tx) => {
+      const configAtual = await tx.clienteConfig.findUnique({
+        where: { empresaId: companyId },
+      });
+      if (!configAtual || configAtual.deletedAt) {
+        throw new NotFoundException("Configuração do cliente não encontrada");
+      }
+
+      const usuariosAtivos = await tx.user.count({
+        where: { empresaId: companyId, deletedAt: null },
+      });
+      if (usuariosAtivos > novoMaxUsuarios) {
+        throw new BadRequestException(
+          `Downgrade não permitido: a empresa possui ${usuariosAtivos} usuários ativos, mas o plano ${novoPlano} permite no máximo ${novoMaxUsuarios}. Remova usuários antes de reduzir o plano.`,
+        );
+      }
+
+      const atualizado = await tx.clienteConfig.update({
+        where: { empresaId: companyId },
+        data: {
+          plano: novoPlano,
+          maxUsuarios: novoMaxUsuarios,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          empresaId: companyId,
+          userId: actorUserId,
+          action: "billing.plan_changed",
+          resourceType: "Empresa",
+          resourceId: companyId,
+          metadata: {
+            planoAnterior: configAtual.plano,
+            planoNovo: novoPlano,
+            maxUsuariosAnterior: configAtual.maxUsuarios,
+            maxUsuariosNovo: novoMaxUsuarios,
+          } as any,
+        },
+      });
+
+      this.clienteConfigCache.invalidate(companyId);
+      return atualizado;
+    });
+  }
+
+  async patchBillingStatus(companyId: string, dto: PatchBillingStatusDto, actorUserId: string) {
+    const novoStatus = dto.status;
+
+    return this.prisma.$transaction(async (tx) => {
+      const configAtual = await tx.clienteConfig.findUnique({
+        where: { empresaId: companyId },
+      });
+      if (!configAtual || configAtual.deletedAt) {
+        throw new NotFoundException("Configuração do cliente não encontrada");
+      }
+
+      const atualizado = await tx.clienteConfig.update({
+        where: { empresaId: companyId },
+        data: { status: novoStatus },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          empresaId: companyId,
+          userId: actorUserId,
+          action: "billing.status_changed",
+          resourceType: "Empresa",
+          resourceId: companyId,
+          metadata: {
+            statusAnterior: configAtual.status,
+            statusNovo: novoStatus,
+          } as any,
+        },
+      });
+
+      this.clienteConfigCache.invalidate(companyId);
+      return atualizado;
+    });
+  }
+
+  async patchBillingExtend(companyId: string, dto: PatchBillingExtendDto, actorUserId: string) {
+    const novaData = new Date(dto.dataProximaCobranca);
+    if (Number.isNaN(novaData.getTime())) {
+      throw new BadRequestException("dataProximaCobranca inválida");
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const configAtual = await tx.clienteConfig.findUnique({
+        where: { empresaId: companyId },
+      });
+      if (!configAtual || configAtual.deletedAt) {
+        throw new NotFoundException("Configuração do cliente não encontrada");
+      }
+
+      const atualizado = await tx.clienteConfig.update({
+        where: { empresaId: companyId },
+        data: { dataProximaCobranca: novaData },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          empresaId: companyId,
+          userId: actorUserId,
+          action: "billing.renewal_changed",
+          resourceType: "Empresa",
+          resourceId: companyId,
+          metadata: {
+            dataAnterior: configAtual.dataProximaCobranca,
+            dataNova: novaData,
+          } as any,
+        },
+      });
+
+      this.clienteConfigCache.invalidate(companyId);
+      return atualizado;
+    });
+  }
+
+  async listarBillingAudit(companyId: string) {
+    const logs = await this.prisma.auditLog.findMany({
+      where: {
+        empresaId: companyId,
+        action: { startsWith: "billing." },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+      },
+    });
+
+    return logs.map((log) => ({
+      id: log.id,
+      action: log.action,
+      createdAt: log.createdAt.toISOString(),
+      user: log.user
+        ? { id: log.user.id, name: log.user.name, email: log.user.email }
+        : null,
+      metadata: log.metadata,
+    }));
   }
 
   /**
