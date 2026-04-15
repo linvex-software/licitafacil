@@ -17,7 +17,7 @@ async function atualizarStatus() {
 }
 
 document.getElementById('salvar').addEventListener('click', async () => {
-  const apiUrl = document.getElementById('apiUrl').value.trim() || 'wss://api.lvxlicitacao.com.br'
+  const apiUrl = document.getElementById('apiUrl').value.trim() || 'wss://api.licitacao.limvex.com'
   const jwtInput = document.getElementById('jwt').value.trim()
 
   const dados = { apiUrl }

@@ -11,7 +11,7 @@ export class EmailService {
   private baseTemplate: HandlebarsTemplateDelegate | null = null;
   private readonly client: MailtrapClient;
   private readonly sender = {
-    email: "hello@mail.lvxlicitacao.com.br",
+    email: "hello@mail.licitacao.limvex.com",
     name: "LicitaFácil",
   };
 

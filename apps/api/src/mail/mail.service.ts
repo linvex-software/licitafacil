@@ -14,7 +14,7 @@ export class MailService {
   private readonly logger = new Logger(MailService.name);
   private client: MailtrapClient;
   private readonly sender = {
-    email: "hello@mail.lvxlicitacao.com.br",
+    email: "hello@mail.licitacao.limvex.com",
     name: "LicitaFácil",
   };
 

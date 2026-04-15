@@ -92,7 +92,7 @@ function montarSnapshot() {
 
 // Responder ao ping do Limvex (para detecção e configuração remota de JWT)
 window.addEventListener('message', (event) => {
-  // Em produção: if (event.origin !== 'https://lvxlicitacao.com.br') return
+  // Em produção: if (event.origin !== 'https://licitacao.limvex.com') return
   if (!event.data || typeof event.data !== 'object') return
 
   if (event.data.tipo === 'LVX_PING') {

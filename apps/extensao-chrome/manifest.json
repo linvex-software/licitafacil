@@ -9,7 +9,7 @@
     "*://comprasnet.gov.br/*",
     "*://cnetmobile.estaleiro.serpro.gov.br/*",
     "http://localhost:3000/*",
-    "https://lvxlicitacao.com.br/*",
+    "https://licitacao.limvex.com/*",
     "https://*.vercel.app/*"
   ],
   "background": {
@@ -21,7 +21,7 @@
         "*://cnetmobile.estaleiro.serpro.gov.br/*",
         "*://comprasnet.gov.br/*",
         "http://localhost:3000/*",
-        "https://lvxlicitacao.com.br/*",
+        "https://licitacao.limvex.com/*",
         "https://*.vercel.app/*"
       ],
       "js": ["content.js"],

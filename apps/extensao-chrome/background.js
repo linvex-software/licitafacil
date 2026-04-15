@@ -1,6 +1,6 @@
 let ws = null
 let tentativaReconexao = null
-let config = { apiUrl: 'wss://api.lvxlicitacao.com.br', jwt: '', disputaIdAtiva: '' }
+let config = { apiUrl: 'wss://api.licitacao.limvex.com', jwt: '', disputaIdAtiva: '' }
 
 async function carregarConfig() {
   const dados = await chrome.storage.local.get(['apiUrl', 'jwt', 'disputaIdAtiva'])
