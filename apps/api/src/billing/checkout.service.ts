@@ -26,155 +26,189 @@ export class CheckoutService {
   ) {}
 
   async processarPix(dto: CheckoutPixDto) {
-    const contexto = this.obterContextoPlano(dto.plan, dto.cycle);
-    const asaasCliente = await this.asaas.criarCliente({
-      name: dto.name,
-      email: dto.email,
-      cpfCnpj: this.somenteDigitos(dto.cpfCnpj),
-      phone: dto.phone ? this.somenteDigitos(dto.phone) : undefined,
-    });
-
-    const clienteAsaas = await this.prisma.clienteAsaas.upsert({
-      where: { asaasCustomerId: asaasCliente.id },
-      update: {
-        nome: dto.name,
+    try {
+      const contexto = this.obterContextoPlano(dto.plan, dto.cycle);
+      const asaasCliente = await this.asaas.criarCliente({
+        name: dto.name,
         email: dto.email,
         cpfCnpj: this.somenteDigitos(dto.cpfCnpj),
-        telefone: dto.phone ? this.somenteDigitos(dto.phone) : null,
-      },
-      create: {
-        asaasCustomerId: asaasCliente.id,
-        nome: dto.name,
-        email: dto.email,
-        cpfCnpj: this.somenteDigitos(dto.cpfCnpj),
-        telefone: dto.phone ? this.somenteDigitos(dto.phone) : null,
-      },
-    });
+        phone: dto.phone ? this.somenteDigitos(dto.phone) : undefined,
+      });
 
-    const assinatura = await this.prisma.assinatura.create({
-      data: {
-        plano: contexto.plan.enum,
-        ciclo: contexto.cycleDb,
-        valorMensal: contexto.price.monthly,
-        valorTotal: contexto.price.total,
-        clienteAsaasId: clienteAsaas.id,
-      },
-    });
+      const clienteAsaas = await this.prisma.clienteAsaas.upsert({
+        where: { asaasCustomerId: asaasCliente.id },
+        update: {
+          nome: dto.name,
+          email: dto.email,
+          cpfCnpj: this.somenteDigitos(dto.cpfCnpj),
+          telefone: dto.phone ? this.somenteDigitos(dto.phone) : null,
+        },
+        create: {
+          asaasCustomerId: asaasCliente.id,
+          nome: dto.name,
+          email: dto.email,
+          cpfCnpj: this.somenteDigitos(dto.cpfCnpj),
+          telefone: dto.phone ? this.somenteDigitos(dto.phone) : null,
+        },
+      });
 
-    const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + 1);
+      const assinatura = await this.prisma.assinatura.create({
+        data: {
+          plano: contexto.plan.enum,
+          ciclo: contexto.cycleDb,
+          valorMensal: contexto.price.monthly,
+          valorTotal: contexto.price.total,
+          clienteAsaasId: clienteAsaas.id,
+        },
+      });
 
-    const pagamento = await this.asaas.criarCobrancaPix({
-      customer: asaasCliente.id,
-      value: contexto.price.total,
-      dueDate: dueDate.toISOString().split("T")[0],
-      description: `Limvex Licitação - Plano ${contexto.plan.name} (${contexto.price.months} meses)`,
-    });
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 1);
 
-    const qrCode = await this.asaas.buscarQrCodePix(pagamento.id);
+      const pagamento = await this.asaas.criarCobrancaPix({
+        customer: asaasCliente.id,
+        value: contexto.price.total,
+        dueDate: dueDate.toISOString().split("T")[0],
+        description: `Limvex Licitação - Plano ${contexto.plan.name} (${contexto.price.months} meses)`,
+      });
 
-    await this.prisma.fatura.create({
-      data: {
-        asaasPaymentId: pagamento.id,
-        valor: contexto.price.total,
-        status: FaturaStatus.PENDING,
-        metodo: MetodoPagamento.PIX,
-        dataVencimento: dueDate,
+      const qrCode = await this.asaas.buscarQrCodePix(pagamento.id);
+
+      await this.prisma.fatura.create({
+        data: {
+          asaasPaymentId: pagamento.id,
+          valor: contexto.price.total,
+          status: FaturaStatus.PENDING,
+          metodo: MetodoPagamento.PIX,
+          dataVencimento: dueDate,
+          pixQrCode: qrCode.encodedImage,
+          pixCopiaECola: qrCode.payload,
+          invoiceUrl: pagamento.invoiceUrl ?? null,
+          assinaturaId: assinatura.id,
+        },
+      });
+
+      return {
+        paymentId: pagamento.id,
         pixQrCode: qrCode.encodedImage,
         pixCopiaECola: qrCode.payload,
-        invoiceUrl: pagamento.invoiceUrl ?? null,
+        expirationDate: pagamento.expirationDate ?? dueDate.toISOString(),
         assinaturaId: assinatura.id,
-      },
-    });
-
-    return {
-      paymentId: pagamento.id,
-      pixQrCode: qrCode.encodedImage,
-      pixCopiaECola: qrCode.payload,
-      expirationDate: pagamento.expirationDate ?? dueDate.toISOString(),
-      assinaturaId: assinatura.id,
-    };
+      };
+    } catch (err: unknown) {
+      if (err instanceof BadRequestException || err instanceof ConflictException) {
+        throw err;
+      }
+      this.logger.error(
+        `processarPix: ${err instanceof Error ? err.message : String(err)}`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      const raw = err instanceof Error ? err.message : "Erro desconhecido";
+      const safe = /ASAAS_API_KEY|não configurada/i.test(raw)
+        ? "Pagamentos temporariamente indisponíveis. Tente mais tarde."
+        : raw.length > 400
+          ? `${raw.slice(0, 400)}…`
+          : raw;
+      throw new BadRequestException(safe || "Não foi possível gerar o Pix.");
+    }
   }
 
   async processarCartao(dto: CheckoutCartaoDto, remoteIp?: string) {
-    const contexto = this.obterContextoPlano(dto.plan, dto.cycle);
-    const asaasCliente = await this.asaas.criarCliente({
-      name: dto.name,
-      email: dto.email,
-      cpfCnpj: this.somenteDigitos(dto.cpfCnpj),
-      phone: dto.phone ? this.somenteDigitos(dto.phone) : undefined,
-    });
-
-    const clienteAsaas = await this.prisma.clienteAsaas.upsert({
-      where: { asaasCustomerId: asaasCliente.id },
-      update: {
-        nome: dto.name,
+    try {
+      const contexto = this.obterContextoPlano(dto.plan, dto.cycle);
+      const asaasCliente = await this.asaas.criarCliente({
+        name: dto.name,
         email: dto.email,
         cpfCnpj: this.somenteDigitos(dto.cpfCnpj),
-        telefone: dto.phone ? this.somenteDigitos(dto.phone) : null,
-      },
-      create: {
-        asaasCustomerId: asaasCliente.id,
-        nome: dto.name,
-        email: dto.email,
-        cpfCnpj: this.somenteDigitos(dto.cpfCnpj),
-        telefone: dto.phone ? this.somenteDigitos(dto.phone) : null,
-      },
-    });
-
-    const assinatura = await this.prisma.assinatura.create({
-      data: {
-        plano: contexto.plan.enum,
-        ciclo: contexto.cycleDb,
-        valorMensal: contexto.price.monthly,
-        valorTotal: contexto.price.total,
-        clienteAsaasId: clienteAsaas.id,
-      },
-    });
-
-    const dueDate = new Date().toISOString().split("T")[0];
-    const pagamento = await this.asaas.criarCobrancaCartao({
-      customer: asaasCliente.id,
-      value: contexto.price.total,
-      dueDate,
-      description: `Limvex Licitação - Plano ${contexto.plan.name}`,
-      creditCard: dto.creditCard,
-      creditCardHolderInfo: {
-        ...dto.creditCardHolderInfo,
-        cpfCnpj: this.somenteDigitos(dto.creditCardHolderInfo.cpfCnpj),
-        postalCode: this.somenteDigitos(dto.creditCardHolderInfo.postalCode),
-        phone: this.somenteDigitos(dto.creditCardHolderInfo.phone),
-      },
-      remoteIp,
-    });
-
-    const pagamentoConfirmado = this.statusEstaConfirmado(pagamento.status);
-
-    await this.prisma.fatura.create({
-      data: {
-        asaasPaymentId: pagamento.id,
-        valor: contexto.price.total,
-        status: pagamentoConfirmado ? FaturaStatus.CONFIRMED : FaturaStatus.PENDING,
-        metodo: MetodoPagamento.CREDIT_CARD,
-        dataPagamento: pagamentoConfirmado ? new Date() : null,
-        invoiceUrl: pagamento.invoiceUrl ?? null,
-        assinaturaId: assinatura.id,
-      },
-    });
-
-    if (pagamentoConfirmado) {
-      await this.prisma.assinatura.update({
-        where: { id: assinatura.id },
-        data: { status: AssinaturaStatus.ACTIVE },
+        phone: dto.phone ? this.somenteDigitos(dto.phone) : undefined,
       });
-      await this.provisionarConta(assinatura.id);
-    }
 
-    return {
-      paymentId: pagamento.id,
-      status: pagamento.status,
-      assinaturaId: assinatura.id,
-    };
+      const clienteAsaas = await this.prisma.clienteAsaas.upsert({
+        where: { asaasCustomerId: asaasCliente.id },
+        update: {
+          nome: dto.name,
+          email: dto.email,
+          cpfCnpj: this.somenteDigitos(dto.cpfCnpj),
+          telefone: dto.phone ? this.somenteDigitos(dto.phone) : null,
+        },
+        create: {
+          asaasCustomerId: asaasCliente.id,
+          nome: dto.name,
+          email: dto.email,
+          cpfCnpj: this.somenteDigitos(dto.cpfCnpj),
+          telefone: dto.phone ? this.somenteDigitos(dto.phone) : null,
+        },
+      });
+
+      const assinatura = await this.prisma.assinatura.create({
+        data: {
+          plano: contexto.plan.enum,
+          ciclo: contexto.cycleDb,
+          valorMensal: contexto.price.monthly,
+          valorTotal: contexto.price.total,
+          clienteAsaasId: clienteAsaas.id,
+        },
+      });
+
+      const dueDate = new Date().toISOString().split("T")[0];
+      const pagamento = await this.asaas.criarCobrancaCartao({
+        customer: asaasCliente.id,
+        value: contexto.price.total,
+        dueDate,
+        description: `Limvex Licitação - Plano ${contexto.plan.name}`,
+        creditCard: dto.creditCard,
+        creditCardHolderInfo: {
+          ...dto.creditCardHolderInfo,
+          cpfCnpj: this.somenteDigitos(dto.creditCardHolderInfo.cpfCnpj),
+          postalCode: this.somenteDigitos(dto.creditCardHolderInfo.postalCode),
+          phone: this.somenteDigitos(dto.creditCardHolderInfo.phone),
+        },
+        remoteIp,
+      });
+
+      const pagamentoConfirmado = this.statusEstaConfirmado(pagamento.status);
+
+      await this.prisma.fatura.create({
+        data: {
+          asaasPaymentId: pagamento.id,
+          valor: contexto.price.total,
+          status: pagamentoConfirmado ? FaturaStatus.CONFIRMED : FaturaStatus.PENDING,
+          metodo: MetodoPagamento.CREDIT_CARD,
+          dataPagamento: pagamentoConfirmado ? new Date() : null,
+          invoiceUrl: pagamento.invoiceUrl ?? null,
+          assinaturaId: assinatura.id,
+        },
+      });
+
+      if (pagamentoConfirmado) {
+        await this.prisma.assinatura.update({
+          where: { id: assinatura.id },
+          data: { status: AssinaturaStatus.ACTIVE },
+        });
+        await this.provisionarConta(assinatura.id);
+      }
+
+      return {
+        paymentId: pagamento.id,
+        status: pagamento.status,
+        assinaturaId: assinatura.id,
+      };
+    } catch (err: unknown) {
+      if (err instanceof BadRequestException || err instanceof ConflictException) {
+        throw err;
+      }
+      this.logger.error(
+        `processarCartao: ${err instanceof Error ? err.message : String(err)}`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      const raw = err instanceof Error ? err.message : "Erro desconhecido";
+      const safe = /ASAAS_API_KEY|não configurada/i.test(raw)
+        ? "Pagamentos temporariamente indisponíveis. Tente mais tarde."
+        : raw.length > 400
+          ? `${raw.slice(0, 400)}…`
+          : raw;
+      throw new BadRequestException(safe || "Não foi possível processar o cartão.");
+    }
   }
 
   async buscarStatus(paymentId: string) {

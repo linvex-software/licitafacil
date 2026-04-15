@@ -74,23 +74,76 @@ function maskedCardNumberPreview(digits: string): string {
   return out;
 }
 
+function parseCheckoutApiMessage(json: unknown, status: number, fallback: string): string {
+  if (json && typeof json === "object" && "message" in json) {
+    const m = (json as { message: unknown }).message;
+    if (typeof m === "string" && m.trim()) return m.trim();
+    if (Array.isArray(m)) {
+      const parts = m.filter((x): x is string => typeof x === "string");
+      if (parts.length) return parts.join(" ");
+    }
+  }
+  if (status === 502 || status === 503) return "Serviço de pagamento indisponível. Tente em alguns minutos.";
+  if (status >= 500) return "Erro no servidor. Se persistir, fale com o suporte.";
+  if (status === 401 || status === 403) return "Acesso negado ao serviço de pagamento.";
+  return fallback;
+}
+
 async function checkoutPix(data: unknown): Promise<PixResponse> {
-  const res = await fetch(`${API_URL}/checkout/pix`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json?.message || "Falha ao gerar Pix");
-  return json;
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/checkout/pix`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  } catch {
+    throw new Error("Sem conexão. Verifique sua internet e tente de novo.");
+  }
+  const text = await res.text();
+  let json: unknown = null;
+  try {
+    json = text ? JSON.parse(text) : null;
+  } catch {
+    throw new Error(`Resposta inválida do servidor (HTTP ${res.status}).`);
+  }
+  if (!res.ok) throw new Error(parseCheckoutApiMessage(json, res.status, "Não foi possível gerar o Pix."));
+  return json as PixResponse;
 }
+
 async function checkoutCartao(data: unknown): Promise<CardResponse> {
-  const res = await fetch(`${API_URL}/checkout/cartao`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json?.message || "Falha ao processar cartão");
-  return json;
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/checkout/cartao`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  } catch {
+    throw new Error("Sem conexão. Verifique sua internet e tente de novo.");
+  }
+  const text = await res.text();
+  let json: unknown = null;
+  try {
+    json = text ? JSON.parse(text) : null;
+  } catch {
+    throw new Error(`Resposta inválida do servidor (HTTP ${res.status}).`);
+  }
+  if (!res.ok) throw new Error(parseCheckoutApiMessage(json, res.status, "Não foi possível processar o cartão."));
+  return json as CardResponse;
 }
+
 async function checkPaymentStatus(paymentId: string): Promise<StatusResponse> {
   const res = await fetch(`${API_URL}/checkout/status/${paymentId}`);
-  const json = await res.json();
-  if (!res.ok) throw new Error(json?.message || "Falha ao consultar pagamento");
-  return json;
+  const text = await res.text();
+  let json: unknown = null;
+  try {
+    json = text ? JSON.parse(text) : null;
+  } catch {
+    throw new Error("Resposta inválida ao consultar pagamento.");
+  }
+  if (!res.ok) throw new Error(parseCheckoutApiMessage(json, res.status, "Falha ao consultar pagamento."));
+  return json as StatusResponse;
 }
 
 function FieldLabel({ htmlFor, children, required }: { htmlFor: string; children: ReactNode; required?: boolean }) {
@@ -120,7 +173,6 @@ export function CheckoutClient({ initialPlan, initialCycle }: CheckoutClientProp
     emailConfirm: "",
     cpfCnpj: "",
     phone: "",
-    workspace: "",
     holderName: "",
     cardNumber: "",
     expiry: "",
@@ -332,19 +384,6 @@ export function CheckoutClient({ initialPlan, initialCycle }: CheckoutClientProp
                     <FieldLabel htmlFor="co-phone">Telefone</FieldLabel>
                     <input id="co-phone" className="checkout-field" autoComplete="tel" value={form.phone} onChange={(e) => setForm((s) => ({ ...s, phone: formatPhone(e.target.value) }))} />
                   </div>
-                  <div className="space-y-2">
-                    <FieldLabel htmlFor="co-workspace" required>
-                      Nome do workspace
-                    </FieldLabel>
-                    <input
-                      id="co-workspace"
-                      className="checkout-field"
-                      placeholder="Nome da empresa"
-                      autoComplete="organization"
-                      value={form.workspace}
-                      onChange={(e) => setForm((s) => ({ ...s, workspace: e.target.value }))}
-                    />
-                  </div>
                 </div>
               </div>
             </div>
@@ -485,7 +524,10 @@ export function CheckoutClient({ initialPlan, initialCycle }: CheckoutClientProp
                   type="checkbox"
                   className="mt-1 size-4 shrink-0 rounded border border-[#333333] bg-[#111111] text-white accent-white"
                   checked={form.terms}
-                  onChange={(e) => setForm((s) => ({ ...s, terms: e.target.checked }))}
+                  onChange={(e) => {
+                    setError(null);
+                    setForm((s) => ({ ...s, terms: e.target.checked }));
+                  }}
                 />
                 <span>
                   Li e concordo com os{" "}
