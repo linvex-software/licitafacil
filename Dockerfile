@@ -45,5 +45,7 @@ COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
 
 EXPOSE 3001
-# Aplica migrações pendentes (ex.: billing) antes de subir a API — evita Prisma em tabelas inexistentes na produção.
+# Aplica migrações pendentes (ex.: billing) antes de subir a API.
+# Se migrate falhar com P3009 em 20260304181542_add_password_reset_fields (colunas já existem), rode UMA vez no mesmo DATABASE_URL:
+#   cd apps/api && pnpm prisma:resolve:password-reset-applied && pnpm prisma:deploy
 CMD ["/bin/sh", "-c", "set -e; cd /app/apps/api && npx prisma migrate deploy && cd /app && exec node apps/api/dist/main.js"]

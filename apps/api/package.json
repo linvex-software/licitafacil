@@ -19,6 +19,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
+    "prisma:resolve:password-reset-applied": "prisma migrate resolve --applied 20260304181542_add_password_reset_fields",
     "prisma:studio": "prisma studio",
     "prisma:format": "prisma format",
     "prisma:seed": "ts-node --transpile-only prisma/seed.ts",
