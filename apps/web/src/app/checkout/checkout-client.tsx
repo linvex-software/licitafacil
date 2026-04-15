@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState, useEffect } from "react";
 import { CheckCircle2, Copy } from "lucide-react";
+import { FlippableCreditCard } from "@/components/ui/credit-debit-card";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 const PLANOS_URL = "https://limvex.com/licitacao#planos";
@@ -59,6 +60,18 @@ function formatExpiry(value: string) {
   return digits.length <= 2 ? digits : `${digits.slice(0, 2)}/${digits.slice(2)}`;
 }
 
+/** Número exibido no preview: dígitos digitados + • nos demais slots (16 ou 19 posições). */
+function maskedCardNumberPreview(digits: string): string {
+  const d = digits.slice(0, 19);
+  const slotCount = d.length <= 16 ? 16 : 19;
+  let out = "";
+  for (let i = 0; i < slotCount; i++) {
+    if (i > 0 && i % 4 === 0) out += " ";
+    out += i < d.length ? d[i] : "•";
+  }
+  return out;
+}
+
 async function checkoutPix(data: unknown): Promise<PixResponse> {
   const res = await fetch(`${API_URL}/checkout/pix`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
   const json = await res.json();
@@ -89,10 +102,17 @@ export function CheckoutClient({ initialPlan, initialCycle }: CheckoutClientProp
   const [pixQrCode, setPixQrCode] = useState<string | null>(null);
   const [pixCopiaECola, setPixCopiaECola] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(30 * 60);
+  const [cardFlipped, setCardFlipped] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", emailConfirm: "", cpfCnpj: "", phone: "", holderName: "", cardNumber: "", expiry: "", ccv: "", postalCode: "", addressNumber: "", terms: false });
 
   const planData = CHECKOUT_PLANS[plan];
   const priceData = planData.prices[cycle];
+
+  const cardNumberPreview = useMemo(
+    () => maskedCardNumberPreview(onlyDigits(form.cardNumber)),
+    [form.cardNumber],
+  );
+  const cardholderPreview = form.holderName.toUpperCase();
 
   useEffect(() => {
     if (!paymentId || success || method !== "PIX") return;
@@ -269,11 +289,28 @@ export function CheckoutClient({ initialPlan, initialCycle }: CheckoutClientProp
           </div>
           {method === "CREDIT_CARD" && (
             <div className="mt-4 space-y-3">
+              <div className="flex justify-center">
+                <FlippableCreditCard
+                  cardNumber={cardNumberPreview}
+                  cardholderName={cardholderPreview}
+                  expiryDate={form.expiry}
+                  cvv={form.ccv}
+                  flipped={cardFlipped}
+                />
+              </div>
               <input className="checkout-input w-full rounded-lg border border-[#333333] bg-[#111111] px-3 py-2 text-[#ffffff]" placeholder="Nome no cartão" value={form.holderName} onChange={(e) => setForm((s) => ({ ...s, holderName: e.target.value }))} />
               <input className="checkout-input w-full rounded-lg border border-[#333333] bg-[#111111] px-3 py-2 text-[#ffffff]" placeholder="Número do cartão" value={form.cardNumber} onChange={(e) => setForm((s) => ({ ...s, cardNumber: formatCardNumber(e.target.value) }))} />
               <div className="grid grid-cols-2 gap-3">
                 <input className="checkout-input w-full rounded-lg border border-[#333333] bg-[#111111] px-3 py-2 text-[#ffffff]" placeholder="Validade MM/AA" value={form.expiry} onChange={(e) => setForm((s) => ({ ...s, expiry: formatExpiry(e.target.value) }))} />
-                <input className="checkout-input w-full rounded-lg border border-[#333333] bg-[#111111] px-3 py-2 text-[#ffffff]" placeholder="CVV" value={form.ccv} onChange={(e) => setForm((s) => ({ ...s, ccv: onlyDigits(e.target.value).slice(0, 4) }))} />
+                <input
+                  className="checkout-input w-full rounded-lg border border-[#333333] bg-[#111111] px-3 py-2 text-[#ffffff]"
+                  placeholder="CVV"
+                  value={form.ccv}
+                  onChange={(e) => setForm((s) => ({ ...s, ccv: onlyDigits(e.target.value).slice(0, 4) }))}
+                  onFocus={() => setCardFlipped(true)}
+                  onBlur={() => setCardFlipped(false)}
+                  autoComplete="cc-csc"
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <input className="checkout-input w-full rounded-lg border border-[#333333] bg-[#111111] px-3 py-2 text-[#ffffff]" placeholder="CEP" value={form.postalCode} onChange={(e) => setForm((s) => ({ ...s, postalCode: onlyDigits(e.target.value).slice(0, 8) }))} />
