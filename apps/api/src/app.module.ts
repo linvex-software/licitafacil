@@ -27,6 +27,7 @@ import { AnaliseModule } from "./analise/analise.module";
 import { DisputaModule } from "./disputa/disputa.module";
 import { NegociosModule } from "./negocios/negocios.module";
 import { MonitoramentoModule } from "./monitoramento/monitoramento.module";
+import { BillingModule } from "./billing/billing.module";
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { MonitoramentoModule } from "./monitoramento/monitoramento.module";
     DisputaModule,
     NegociosModule,
     MonitoramentoModule,
+    BillingModule,
   ],
   controllers: [AppController, HealthController],
   providers: [
