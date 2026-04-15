@@ -45,4 +45,5 @@ COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
 
 EXPOSE 3001
-CMD ["node", "apps/api/dist/main.js"]
+# Aplica migrações pendentes (ex.: billing) antes de subir a API — evita Prisma em tabelas inexistentes na produção.
+CMD ["/bin/sh", "-c", "set -e; cd /app/apps/api && npx prisma migrate deploy && cd /app && exec node apps/api/dist/main.js"]

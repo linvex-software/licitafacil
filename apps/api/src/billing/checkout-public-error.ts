@@ -22,6 +22,10 @@ const PADROES_INTERNO = [
   "resposta inválida do serviço de pagamento",
   "comunicação com o asaas falhou",
   "não foi possível conectar ao asaas",
+  "invalid `prisma.",
+  "does not exist in the current database",
+  "prismaclientknownrequesterror",
+  "prisma error",
 ];
 
 export function mensagemCheckoutParaCliente(mensagemInterna: string): string {
