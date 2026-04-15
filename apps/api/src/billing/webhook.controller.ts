@@ -1,8 +1,19 @@
-import { Body, Controller, HttpCode, Logger, Post } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Headers,
+  HttpCode,
+  Logger,
+  Post,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { AssinaturaStatus, FaturaStatus } from "@prisma/client";
 import { Public } from "../auth/decorators/public.decorator";
 import { PrismaService } from "../prisma/prisma.service";
 import { CheckoutService } from "./checkout.service";
+
+/** Header enviado pelo Asaas com o "Token de autenticação" configurado no painel. */
+const ASAAS_WEBHOOK_HEADER = "asaas-access-token";
 
 @Controller()
 export class WebhookController {
@@ -16,9 +27,22 @@ export class WebhookController {
   @Post("api/webhooks/asaas")
   @Public()
   @HttpCode(200)
-  async handleWebhook(@Body() body: any) {
-    const event = body?.event;
-    const payment = body?.payment;
+  async handleWebhook(
+    @Body() body: unknown,
+    @Headers(ASAAS_WEBHOOK_HEADER) accessToken: string | undefined,
+  ) {
+    const expected = process.env.ASAAS_WEBHOOK_TOKEN?.trim();
+    if (expected) {
+      const received = accessToken?.trim() ?? "";
+      if (received !== expected) {
+        this.logger.warn("Webhook Asaas rejeitado: token ausente ou inválido");
+        throw new UnauthorizedException();
+      }
+    }
+
+    const payload = body as { event?: string; payment?: { id?: string } };
+    const event = payload?.event;
+    const payment = payload?.payment;
 
     if (!payment?.id) {
       return { received: true };
