@@ -278,6 +278,16 @@ html.dark.high-contrast {
   filter: contrast(1.3) brightness(1.1);
 }
 
+/* Checkout (paridade CRM / Compliance — campos escuros) */
+.checkout-field,
+.checkout-input {
+  @apply h-11 w-full min-w-0 rounded-md border border-[#333333] bg-[#111111] px-3 text-base text-white outline-none transition-colors placeholder:text-[#666666] md:text-sm;
+  @apply focus-visible:border-[#444444] focus-visible:ring-1 focus-visible:ring-[#333333]/40 disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.checkout-field:-webkit-autofill,
+.checkout-field:-webkit-autofill:hover,
+.checkout-field:-webkit-autofill:focus,
 .checkout-input:-webkit-autofill,
 .checkout-input:-webkit-autofill:hover,
 .checkout-input:-webkit-autofill:focus {

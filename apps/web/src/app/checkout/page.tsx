@@ -21,7 +21,13 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
     : "annual";
 
   return (
-    <Suspense fallback={<main className="min-h-screen bg-zinc-950" />}>
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-[#000000] text-white">
+          <div className="size-10 animate-spin rounded-full border-2 border-[#666666] border-t-white" aria-hidden />
+        </main>
+      }
+    >
       <CheckoutClient initialPlan={initialPlan} initialCycle={initialCycle} />
     </Suspense>
   );
