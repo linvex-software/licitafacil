@@ -508,8 +508,12 @@ export function CheckoutClient({ initialPlan, initialCycle }: CheckoutClientProp
 
             <button
               type="submit"
-              disabled={loading}
-              className="inline-flex h-12 w-full shrink-0 items-center justify-center gap-2 rounded-md border-0 bg-white text-base font-semibold text-black transition-colors hover:bg-[#e0e0e0] disabled:pointer-events-none disabled:opacity-60"
+              disabled={loading || !form.terms}
+              className={`inline-flex h-12 w-full shrink-0 items-center justify-center gap-2 rounded-md border-0 text-base font-semibold transition-colors ${
+                !form.terms
+                  ? "cursor-not-allowed bg-[#999999] text-black hover:bg-[#999999]"
+                  : "bg-white text-black hover:bg-[#e0e0e0] disabled:pointer-events-none disabled:opacity-60"
+              }`}
             >
               {loading ? "Processando..." : method === "PIX" ? "Gerar Pix" : "Pagar com cartão"}
             </button>
