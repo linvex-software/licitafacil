@@ -11,6 +11,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { MailService } from "../mail/mail.service";
 import { AsaasService } from "./asaas.service";
 import { CHECKOUT_PLANS, type CheckoutCycle, type CheckoutPlanKey } from "./checkout-plans";
+import { mensagemCheckoutParaCliente } from "./checkout-public-error";
 import { CheckoutCartaoDto, CheckoutPixDto } from "./dto/checkout.dto";
 
 type StatusPagamento = "CONFIRMED" | "RECEIVED" | "PENDING" | "OVERDUE" | "REFUNDED" | string;
@@ -106,9 +107,7 @@ export class CheckoutService {
       const raw = err instanceof Error ? err.message : "Erro desconhecido";
       const safe = /ASAAS_API_KEY|não configurada/i.test(raw)
         ? "Pagamentos temporariamente indisponíveis. Tente mais tarde."
-        : raw.length > 400
-          ? `${raw.slice(0, 400)}…`
-          : raw;
+        : mensagemCheckoutParaCliente(raw);
       throw new BadRequestException(safe || "Não foi possível gerar o Pix.");
     }
   }
@@ -204,9 +203,7 @@ export class CheckoutService {
       const raw = err instanceof Error ? err.message : "Erro desconhecido";
       const safe = /ASAAS_API_KEY|não configurada/i.test(raw)
         ? "Pagamentos temporariamente indisponíveis. Tente mais tarde."
-        : raw.length > 400
-          ? `${raw.slice(0, 400)}…`
-          : raw;
+        : mensagemCheckoutParaCliente(raw);
       throw new BadRequestException(safe || "Não foi possível processar o cartão.");
     }
   }

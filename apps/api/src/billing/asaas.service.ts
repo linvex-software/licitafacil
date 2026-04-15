@@ -7,11 +7,23 @@ export class AsaasService {
   private readonly apiKey: string;
 
   constructor() {
-    const isSandbox = process.env.ASAAS_SANDBOX !== "false";
+    const apiKey = process.env.ASAAS_API_KEY || "";
+    const explicitProd = process.env.ASAAS_SANDBOX === "false";
+    const explicitSandbox = process.env.ASAAS_SANDBOX === "true";
+    /** Chave $aact_prod_* só funciona na API de produção; evita erro "não pertence a este ambiente" se ASAAS_SANDBOX faltar na Railway. */
+    const chaveProducao = apiKey.startsWith("$aact_prod_");
+    const isSandbox = explicitSandbox ? true : explicitProd ? false : !chaveProducao;
+
     this.baseUrl = isSandbox
       ? "https://sandbox.asaas.com/api/v3"
       : "https://api.asaas.com/api/v3";
-    this.apiKey = process.env.ASAAS_API_KEY || "";
+    this.apiKey = apiKey;
+
+    if (chaveProducao && isSandbox) {
+      this.logger.warn(
+        "ASAAS_API_KEY é de produção ($aact_prod_) mas o modo sandbox está ativo (ASAAS_SANDBOX=true). Ajuste ASAAS_SANDBOX=false.",
+      );
+    }
   }
 
   private async request(method: string, path: string, body?: unknown) {
