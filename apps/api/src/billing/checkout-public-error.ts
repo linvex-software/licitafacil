@@ -17,6 +17,11 @@ const PADROES_INTERNO = [
   "erro na api asaas",
   "sandbox",
   "internal server",
+  "unexpected end of json",
+  "json parse",
+  "resposta inválida do serviço de pagamento",
+  "comunicação com o asaas falhou",
+  "não foi possível conectar ao asaas",
 ];
 
 export function mensagemCheckoutParaCliente(mensagemInterna: string): string {
