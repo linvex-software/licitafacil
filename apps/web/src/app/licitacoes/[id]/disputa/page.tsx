@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { SimuladorDisputa } from "@/components/disputa/SimuladorDisputa";
+import { RegistrarResultadoLicitacaoCard } from "@/components/disputa/RegistrarResultadoLicitacaoCard";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -33,6 +34,8 @@ export default async function DisputaLicitacaoPage({ params }: PageProps) {
         </div>
 
         <SimuladorDisputa bidId={id} autoSave showHistorico />
+
+        <RegistrarResultadoLicitacaoCard bidId={id} />
       </div>
     </Layout>
   );

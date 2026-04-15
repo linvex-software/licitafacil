@@ -195,12 +195,29 @@ export class DisputaService {
     }
     await this.obterDisputaPorEmpresa(id, empresaId);
 
+    const base = await this.prisma.disputa.findFirst({
+      where: { id, empresaId },
+      include: { configuracoes: true, historico: true },
+    });
+    if (!base) {
+      throw new NotFoundException("Disputa não encontrada");
+    }
+
+    const resumo = this.calcularMetricasHistorico(base);
+
     const atualizada = await this.prisma.disputa.update({
       where: { id },
       data: {
         resultado,
         status: DisputaStatus.ENCERRADA,
-        encerradoEm: new Date(),
+        encerradoEm: base.encerradoEm ?? new Date(),
+        ...(dto.valorFinal != null ? { valorFinal: dto.valorFinal } : {}),
+        ...(dto.observacao != null ? { observacaoResultado: dto.observacao } : {}),
+        economiaGerada: resumo.economiaTotal,
+        totalLancesEnviados: resumo.totalLancesEnviados,
+        menorLanceEnviado: resumo.menorNossoLance,
+        melhorLanceGlobal: resumo.melhorLanceGlobal,
+        margemVsMelhorLance: resumo.margemVsMelhorLance,
       },
       include: { bid: true, credencial: true, configuracoes: true },
     });
@@ -470,26 +487,34 @@ export class DisputaService {
   }
 
   async encerrarDisputa(id: string, empresaId?: string, dto?: UpdateDisputaDto) {
-    if (empresaId) {
-      await this.obterDisputaPorEmpresa(id, empresaId);
-    } else {
-      const disputa = await this.prisma.disputa.findUnique({ where: { id } });
-      if (!disputa) {
-        throw new NotFoundException("Disputa não encontrada");
-      }
+    const base = empresaId
+      ? await this.prisma.disputa.findFirst({
+          where: { id, empresaId },
+          include: { configuracoes: true, historico: true },
+        })
+      : await this.prisma.disputa.findUnique({
+          where: { id },
+          include: { configuracoes: true, historico: true },
+        });
+
+    if (!base) {
+      throw new NotFoundException("Disputa não encontrada");
     }
+
+    const resumo = this.calcularMetricasHistorico(base);
 
     const atualizada = await this.prisma.disputa.update({
       where: { id },
       data: {
         status: DisputaStatus.ENCERRADA,
-        encerradoEm: new Date(),
+        encerradoEm: base.encerradoEm ?? new Date(),
+        economiaGerada: resumo.economiaTotal,
+        totalLancesEnviados: resumo.totalLancesEnviados,
+        menorLanceEnviado: resumo.menorNossoLance,
+        melhorLanceGlobal: resumo.melhorLanceGlobal,
+        margemVsMelhorLance: resumo.margemVsMelhorLance,
       },
-      include: {
-        bid: true,
-        credencial: true,
-        configuracoes: true,
-      },
+      include: { bid: true, credencial: true, configuracoes: true },
     });
 
     await this.emitirEvento(id, EventoDisputa.SESSAO_ENCERRADA, {
@@ -637,8 +662,12 @@ export class DisputaService {
     const itens = disputas.map((disputa) => {
       const resumo = this.calcularMetricasHistorico(disputa);
       let resultado: "GANHOU" | "PERDEU" | "CANCELOU";
-      if (disputa.status === DisputaStatus.CANCELADA) {
+      if (disputa.status === DisputaStatus.CANCELADA || disputa.resultado === ResultadoDisputa.CANCELADO) {
         resultado = "CANCELOU";
+      } else if (disputa.resultado === ResultadoDisputa.GANHOU) {
+        resultado = "GANHOU";
+      } else if (disputa.resultado === ResultadoDisputa.PERDEU || disputa.resultado === ResultadoDisputa.DESISTIU) {
+        resultado = "PERDEU";
       } else if (resumo.economiaTotal > 0) {
         resultado = "GANHOU";
       } else {
@@ -673,8 +702,57 @@ export class DisputaService {
       data = itens.filter((i) => i.resultado === "CANCELOU");
     }
 
+    const [totalEncerradas, vitorias, perdas, canceladas, ticketMedioGanhoAgg, margemMediaPerdidaAgg] =
+      await Promise.all([
+        this.prisma.disputa.count({
+          where: { ...where, status: DisputaStatus.ENCERRADA },
+        }),
+        this.prisma.disputa.count({
+          where: { ...where, status: DisputaStatus.ENCERRADA, resultado: ResultadoDisputa.GANHOU },
+        }),
+        this.prisma.disputa.count({
+          where: {
+            ...where,
+            status: DisputaStatus.ENCERRADA,
+            resultado: { in: [ResultadoDisputa.PERDEU, ResultadoDisputa.DESISTIU] },
+          },
+        }),
+        this.prisma.disputa.count({
+          where: { ...where, status: DisputaStatus.CANCELADA },
+        }),
+        this.prisma.disputa.aggregate({
+          where: { ...where, status: DisputaStatus.ENCERRADA, resultado: ResultadoDisputa.GANHOU },
+          _avg: { valorFinal: true },
+        }),
+        this.prisma.disputa.aggregate({
+          where: {
+            ...where,
+            status: DisputaStatus.ENCERRADA,
+            resultado: { in: [ResultadoDisputa.PERDEU, ResultadoDisputa.DESISTIU] },
+          },
+          _avg: { margemVsMelhorLance: true },
+        }),
+      ]);
+
+    const ticketMedioGanho = ticketMedioGanhoAgg._avg.valorFinal
+      ? Number(ticketMedioGanhoAgg._avg.valorFinal)
+      : null;
+    const margemMediaPerdida = margemMediaPerdidaAgg._avg.margemVsMelhorLance
+      ? Number(margemMediaPerdidaAgg._avg.margemVsMelhorLance)
+      : null;
+
     return {
       data,
+      metricasPeriodo: {
+        totalDisputas: total,
+        totalEncerradas,
+        totalVitorias: vitorias,
+        totalPerdas: perdas,
+        totalCanceladas: canceladas,
+        taxaVitoria: totalEncerradas > 0 ? Number(((vitorias / totalEncerradas) * 100).toFixed(2)) : 0,
+        ticketMedioGanho,
+        margemMediaPerdida,
+      },
       pagination: {
         page,
         limit,
@@ -848,6 +926,7 @@ export class DisputaService {
     const melhorPorItem = new Map<number, number>();
     let totalLancesEnviados = 0;
     let nossoUltimoLance: number | null = null;
+    let menorNossoLance: number | null = null;
 
     for (const h of disputa.historico) {
       if (h.melhorLance != null) {
@@ -863,7 +942,11 @@ export class DisputaService {
         (h.evento === EventoDisputa.LANCE_ENVIADO || h.evento === EventoDisputa.LANCE_MANUAL)
       ) {
         totalLancesEnviados += 1;
-        nossoUltimoLance = Number(h.valorEnviado);
+        const v = Number(h.valorEnviado);
+        nossoUltimoLance = v;
+        if (menorNossoLance == null || v < menorNossoLance) {
+          menorNossoLance = v;
+        }
       }
     }
 
@@ -897,6 +980,11 @@ export class DisputaService {
       duracaoSegundos,
       totalLancesEnviados,
       nossoUltimoLance,
+      menorNossoLance,
+      margemVsMelhorLance:
+        menorNossoLance != null && melhorLanceGlobal != null
+          ? Number((menorNossoLance - melhorLanceGlobal).toFixed(2))
+          : null,
     };
   }
 
@@ -916,6 +1004,8 @@ export class DisputaService {
       duracaoSegundos: number | null;
       totalLancesEnviados: number;
       nossoUltimoLance: number | null;
+      menorNossoLance: number | null;
+      margemVsMelhorLance: number | null;
     };
     timeline: Array<{
       id: string;
@@ -967,6 +1057,16 @@ export class DisputaService {
     const nossoUltimo =
       detalhe.metricas.nossoUltimoLance != null
         ? `R$ ${detalhe.metricas.nossoUltimoLance.toFixed(2)}`
+        : "-";
+
+    const nossoMenor =
+      detalhe.metricas.menorNossoLance != null
+        ? `R$ ${detalhe.metricas.menorNossoLance.toFixed(2)}`
+        : "-";
+
+    const margem =
+      detalhe.metricas.margemVsMelhorLance != null
+        ? `R$ ${detalhe.metricas.margemVsMelhorLance.toFixed(2)}`
         : "-";
 
     return `<!DOCTYPE html>
@@ -1036,6 +1136,14 @@ export class DisputaService {
       <div class="card">
         <div class="card-label">Seu último lance</div>
         <div class="card-value">${nossoUltimo}</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Seu menor lance</div>
+        <div class="card-value">${nossoMenor}</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Margem vs melhor lance</div>
+        <div class="card-value">${margem}</div>
       </div>
     </div>
 

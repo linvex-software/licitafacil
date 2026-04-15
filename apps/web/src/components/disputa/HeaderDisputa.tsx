@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/button";
 import type { DisputaStatus } from "@/lib/api";
 import type { StatusConexao, StatusExtensao } from "@/hooks/useDisputaSocket";
+import type { ReactNode } from "react";
 
 interface HeaderDisputaProps {
   titulo: string;
@@ -13,6 +14,7 @@ interface HeaderDisputaProps {
   statusExtensao: StatusExtensao;
   status: DisputaStatus | null;
   urlPortal?: string | null;
+  actions?: ReactNode;
 }
 
 export function HeaderDisputa({
@@ -21,6 +23,7 @@ export function HeaderDisputa({
   statusExtensao,
   status,
   urlPortal,
+  actions,
 }: HeaderDisputaProps) {
   const conexaoVariant =
     statusConexao === "conectado"
@@ -52,6 +55,8 @@ export function HeaderDisputa({
           <Badge variant={conexaoVariant}>WS: {statusConexao}</Badge>
           <Badge variant={extensaoVariant}>Extensão: {statusExtensao}</Badge>
           <Badge variant="secondary">Disputa: {status ?? "-"}</Badge>
+
+          {actions}
 
           {urlPortal && (
             <a href={urlPortal} target="_blank" rel="noreferrer">

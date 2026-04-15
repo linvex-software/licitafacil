@@ -209,6 +209,13 @@ export interface Disputa {
   numeroPregao?: string;
   uasg?: string;
   resultado?: "EM_ANDAMENTO" | "GANHOU" | "PERDEU" | "CANCELADO" | "DESISTIU";
+  valorFinal?: number | null;
+  observacaoResultado?: string | null;
+  economiaGerada?: number | null;
+  totalLancesEnviados?: number | null;
+  menorLanceEnviado?: number | null;
+  melhorLanceGlobal?: number | null;
+  margemVsMelhorLance?: number | null;
   credencial: DisputaCredencialPublica | null;
   configuracoes: DisputaConfiguracao[];
   historico?: Array<{
@@ -258,6 +265,44 @@ export async function buscarLicitacoes(): Promise<LicitacaoResumo[]> {
   return data?.data ?? [];
 }
 
+// ========================================================
+// Admin / Billing (PL-03)
+// ========================================================
+
+export type AdminPlanoTipo = "STARTER" | "PROFESSIONAL" | "ENTERPRISE";
+export type AdminClienteStatus = "ATIVO" | "SUSPENSO" | "CANCELADO" | "TRIAL";
+
+export async function adminUpdateCompanyPlan(companyId: string, plano: AdminPlanoTipo) {
+  const { data } = await api.patch(`/admin/billing/${companyId}/plan`, { plano });
+  return data;
+}
+
+export async function adminUpdateCompanyStatus(companyId: string, status: AdminClienteStatus) {
+  const { data } = await api.patch(`/admin/billing/${companyId}/status`, { status });
+  return data;
+}
+
+export async function adminUpdateCompanyRenewalDate(
+  companyId: string,
+  dataProximaCobranca: string,
+) {
+  const { data } = await api.patch(`/admin/billing/${companyId}/extend`, { dataProximaCobranca });
+  return data;
+}
+
+export async function adminGetCompanyBillingAudit(companyId: string): Promise<
+  Array<{
+    id: string;
+    action: string;
+    createdAt: string;
+    user: { id: string; name: string; email: string } | null;
+    metadata: unknown;
+  }>
+> {
+  const { data } = await api.get(`/admin/billing/${companyId}/audit`);
+  return data;
+}
+
 export async function listarDisputas(params?: {
   status?: DisputaStatus;
   bidId?: string;
@@ -290,6 +335,18 @@ export async function retomarDisputa(id: string) {
 export async function encerrarDisputa(id: string, detalhe?: string) {
   const { data } = await api.patch(`/disputa/${id}/encerrar`, { detalhe });
   return data;
+}
+
+export async function registrarResultadoDisputa(
+  id: string,
+  payload: {
+    resultado: "GANHOU" | "PERDEU" | "DESISTIU";
+    valorFinal?: number;
+    observacao?: string;
+  },
+) {
+  const { data } = await api.patch(`/disputa/${id}/resultado`, payload);
+  return data as Disputa;
 }
 
 export async function cancelarDisputa(id: string) {
