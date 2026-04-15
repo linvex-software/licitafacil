@@ -32,9 +32,10 @@ export class AsaasService {
     const chaveProducao = apiKey.startsWith("$aact_prod_");
     const isSandbox = explicitSandbox ? true : explicitProd ? false : !chaveProducao;
 
+    /** Base oficial v3: produção `https://api.asaas.com/v3`, sandbox `https://api-sandbox.asaas.com/v3` (não usar `/api/v3` nem sandbox.asaas.com/api — retorna 404). */
     this.baseUrl = isSandbox
-      ? "https://sandbox.asaas.com/api/v3"
-      : "https://api.asaas.com/api/v3";
+      ? "https://api-sandbox.asaas.com/v3"
+      : "https://api.asaas.com/v3";
     this.apiKey = apiKey;
 
     if (chaveProducao && isSandbox) {
