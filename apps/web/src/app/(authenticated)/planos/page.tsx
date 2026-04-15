@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
+import Link from "next/link";
 
 function planComparison(
   userPlan: PlanEnum,
@@ -108,12 +109,20 @@ export default function PlanosPage() {
                       </Button>
                     ) : null}
                     {cmp === "above" ? (
-                      <Button
-                        className="w-full bg-[#0078D1] text-white hover:bg-[#0078D1]/90"
-                        onClick={() => openUpgradeWhatsApp(plan.name)}
-                      >
-                        Falar com o suporte
-                      </Button>
+                      <div className="space-y-2">
+                        <Link href={`/checkout?plan=${plan.name.toLowerCase()}&cycle=annual`}>
+                          <Button className="w-full bg-[#0078D1] text-white hover:bg-[#0078D1]/90">
+                            Assinar {plan.name}
+                          </Button>
+                        </Link>
+                        <button
+                          type="button"
+                          className="w-full text-xs text-zinc-400 underline-offset-2 hover:text-zinc-200 hover:underline"
+                          onClick={() => openUpgradeWhatsApp(plan.name)}
+                        >
+                          Ou falar com o suporte no WhatsApp
+                        </button>
+                      </div>
                     ) : null}
                   </div>
                 </div>

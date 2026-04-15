@@ -59,6 +59,8 @@ model Empresa {
   credenciaisPortal  CredencialPortal[]
   // Relacionamento: Uma empresa tem muitos pregões monitorados
   pregoesMonitorados PregaoMonitorado[]
+  clienteAsaas       ClienteAsaas?
+  assinaturas        Assinatura[]
 
   minutosAlertaPregao Int     @default(15)
   segmento            String?
@@ -86,6 +88,33 @@ enum ClienteStatus {
   SUSPENSO
   CANCELADO
   TRIAL
+}
+
+enum CicloCobranca {
+  SEMIANNUAL
+  ANNUAL
+}
+
+enum AssinaturaStatus {
+  PENDING
+  ACTIVE
+  OVERDUE
+  CANCELLED
+}
+
+enum FaturaStatus {
+  PENDING
+  CONFIRMED
+  RECEIVED
+  OVERDUE
+  REFUNDED
+  CANCELLED
+}
+
+enum MetodoPagamento {
+  PIX
+  CREDIT_CARD
+  BOLETO
 }
 
 // Entidade User (Usuário)
@@ -620,6 +649,69 @@ model ClienteConfig {
   @@index([deletedAt])
   @@index([cnpj])
   @@map("clientes_config")
+}
+
+model ClienteAsaas {
+  id              String       @id @default(uuid())
+  asaasCustomerId String       @unique
+  nome            String
+  email           String
+  cpfCnpj         String
+  telefone        String?
+  empresaId       String?      @unique
+  empresa         Empresa?     @relation(fields: [empresaId], references: [id])
+  assinaturas     Assinatura[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([email])
+  @@index([cpfCnpj])
+  @@map("clientes_asaas")
+}
+
+model Assinatura {
+  id                  String           @id @default(uuid())
+  asaasSubscriptionId String?          @unique
+  plano               PlanoTipo
+  ciclo               CicloCobranca
+  status              AssinaturaStatus @default(PENDING)
+  valorMensal         Float
+  valorTotal          Float
+  dataInicio          DateTime         @default(now())
+  dataFim             DateTime?
+  clienteAsaasId      String
+  clienteAsaas        ClienteAsaas     @relation(fields: [clienteAsaasId], references: [id])
+  empresaId           String?
+  empresa             Empresa?         @relation(fields: [empresaId], references: [id])
+  faturas             Fatura[]
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  @@index([clienteAsaasId])
+  @@index([empresaId])
+  @@index([status])
+  @@map("assinaturas")
+}
+
+model Fatura {
+  id             String           @id @default(uuid())
+  asaasPaymentId String?          @unique
+  valor          Float
+  status         FaturaStatus     @default(PENDING)
+  metodo         MetodoPagamento?
+  dataPagamento  DateTime?
+  dataVencimento DateTime?
+  pixQrCode      String?          @db.Text
+  pixCopiaECola  String?          @db.Text
+  invoiceUrl     String?
+  assinaturaId   String
+  assinatura     Assinatura       @relation(fields: [assinaturaId], references: [id])
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([assinaturaId])
+  @@index([status])
+  @@map("faturas")
 }
 
 // Enums de contrato e pagamento
