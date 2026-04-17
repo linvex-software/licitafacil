@@ -29,13 +29,41 @@ import { NegociosModule } from "./negocios/negocios.module";
 import { MonitoramentoModule } from "./monitoramento/monitoramento.module";
 import { BillingModule } from "./billing/billing.module";
 
+/**
+ * Bull/ioredis.
+ * Preferir `REDIS_URL` (Railway e outros provedores costumam injetar essa string completa).
+ * Fallbacks sem underscore: `REDISHOST`, `REDISPORT`, `REDISPASSWORD`, `REDISUSER` (template Railway).
+ */
+function bullRedisOptions(): string | { host: string; port: number; password?: string; username?: string } {
+  const url = process.env.REDIS_URL?.trim();
+  if (url) return url;
+
+  const rawPort = process.env.REDIS_PORT ?? process.env.REDISPORT ?? "6379";
+  const parsedPort = parseInt(String(rawPort).trim(), 10);
+  const port =
+    Number.isFinite(parsedPort) && parsedPort > 0 && parsedPort < 65536
+      ? parsedPort
+      : 6379;
+
+  const host =
+    process.env.REDIS_HOST?.trim() ||
+    process.env.REDISHOST?.trim() ||
+    "localhost";
+  const password =
+    process.env.REDIS_PASSWORD?.trim() || process.env.REDISPASSWORD?.trim();
+  const username =
+    process.env.REDIS_USERNAME?.trim() || process.env.REDISUSER?.trim();
+
+  const opts: { host: string; port: number; password?: string; username?: string } = { host, port };
+  if (password) opts.password = password;
+  if (username) opts.username = username;
+  return opts;
+}
+
 @Module({
   imports: [
     BullModule.forRoot({
-      redis: {
-        host: process.env.REDIS_HOST || "localhost",
-        port: Number(process.env.REDIS_PORT || 6379),
-      },
+      redis: bullRedisOptions(),
     }),
     ThrottlerModule.forRoot([
       {
