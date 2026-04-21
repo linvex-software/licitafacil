@@ -56,9 +56,9 @@ const roleLabel: Record<string, string> = {
 };
 
 const roleBadgeClass: Record<string, string> = {
-  SUPER_ADMIN: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-800",
-  ADMIN: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/50 dark:text-purple-400 dark:border-purple-800",
-  COLABORADOR: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/50 dark:text-blue-400 dark:border-blue-800",
+  SUPER_ADMIN: "border-border bg-muted text-foreground",
+  ADMIN: "border-border bg-muted text-foreground",
+  COLABORADOR: "border-border bg-muted text-muted-foreground",
 };
 
 export default function UsuariosPage() {
@@ -255,14 +255,14 @@ export default function UsuariosPage() {
                         {usuario.ativo ? (
                           <Badge
                             variant="outline"
-                            className="bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800"
+                            className="border-border bg-muted text-foreground"
                           >
                             Ativo
                           </Badge>
                         ) : (
                           <Badge
                             variant="outline"
-                            className="bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800"
+                            className="border-destructive/25 bg-destructive/10 text-destructive"
                           >
                             Inativo
                           </Badge>
@@ -284,7 +284,7 @@ export default function UsuariosPage() {
                               size="sm"
                               onClick={() => deletarPermanente(usuario)}
                               disabled={usuario.id === user?.id}
-                              className="hover:bg-red-50 dark:hover:bg-red-950/50 text-red-600 dark:text-red-400 disabled:opacity-50"
+                              className="text-destructive hover:bg-destructive/10 disabled:opacity-50"
                               title={
                                 usuario.id === user?.id
                                   ? "Você não pode remover sua própria conta"

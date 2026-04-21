@@ -11,22 +11,22 @@ interface StatusConfig {
 }
 
 const statusConfig: Record<string, StatusConfig> = {
-    OK: { label: "Operacional", className: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400", icon: ShieldCheck },
-    EM_RISCO: { label: "Em Risco", className: "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400", icon: AlertTriangle },
-    aberta: { label: "Ativa", className: "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400", icon: CheckCircle2 },
-    vencida: { label: "Crítico", className: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-400", icon: Clock },
-    cancelada: { label: "Cancelada", className: "border-gray-200 bg-gray-50 text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400", icon: XCircle },
-    ANALISANDO: { label: "Analisando", className: "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400", icon: Eye },
-    PARTICIPANDO: { label: "Participando", className: "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-800 dark:bg-violet-950 dark:text-violet-400", icon: PlayCircle },
-    VENCIDA: { label: "Venceu", className: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400", icon: Trophy },
-    PERDIDA: { label: "Perdeu", className: "border-red-200 bg-red-50 text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400", icon: XCircle },
-    DESCARTADA: { label: "Descartada", className: "border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500", icon: Archive },
+    OK: { label: "Operacional", className: "border-border bg-muted text-foreground", icon: ShieldCheck },
+    EM_RISCO: { label: "Em Risco", className: "border-destructive/40 bg-destructive/10 text-destructive", icon: AlertTriangle },
+    aberta: { label: "Ativa", className: "border-border bg-muted text-foreground", icon: CheckCircle2 },
+    vencida: { label: "Crítico", className: "border-border bg-muted text-muted-foreground", icon: Clock },
+    cancelada: { label: "Cancelada", className: "border-border bg-muted/60 text-muted-foreground", icon: XCircle },
+    ANALISANDO: { label: "Analisando", className: "border-border bg-muted text-foreground", icon: Eye },
+    PARTICIPANDO: { label: "Participando", className: "border-border bg-muted text-foreground", icon: PlayCircle },
+    VENCIDA: { label: "Venceu", className: "border-border bg-muted text-foreground", icon: Trophy },
+    PERDIDA: { label: "Perdeu", className: "border-destructive/40 bg-destructive/10 text-destructive", icon: XCircle },
+    DESCARTADA: { label: "Descartada", className: "border-border bg-muted/60 text-muted-foreground", icon: Archive },
 };
 
 export function StatusBadge({ status }: { status: string }) {
     const config = statusConfig[status] || {
         label: status,
-        className: "border-gray-200 bg-gray-50 text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400",
+        className: "border-border bg-muted text-muted-foreground",
         icon: Clock,
     };
     const Icon = config.icon;

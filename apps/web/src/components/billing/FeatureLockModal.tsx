@@ -102,8 +102,8 @@ function FeatureLockedBody({
   return (
     <>
       <div className="flex justify-center mb-4">
-        <div className="rounded-full bg-[#0078D1]/15 p-3">
-          <Lock className="h-7 w-7 text-[#0078D1]" aria-hidden />
+        <div className="rounded-full bg-white/10 p-3">
+          <Lock className="h-7 w-7 text-white" aria-hidden />
         </div>
       </div>
       <h2 className="text-lg font-semibold text-center text-zinc-100">
@@ -116,7 +116,7 @@ function FeatureLockedBody({
         <ul className="mt-5 space-y-2 border-t border-zinc-800 pt-4">
           {planRow.features.slice(0, 6).map((f) => (
             <li key={f} className="flex gap-2 text-sm text-zinc-300">
-              <span className="shrink-0 text-[#0078D1]">✓</span>
+              <span className="shrink-0 text-white">✓</span>
               {f}
             </li>
           ))}
@@ -133,7 +133,7 @@ function FeatureLockedBody({
         </Button>
         <Button
           type="button"
-          className="bg-[#0078D1] hover:bg-[#0078D1]/90 text-white"
+          className="shadow-none"
           onClick={onVerPlanos}
         >
           Ver planos
@@ -157,8 +157,8 @@ function UserLimitBody({
   return (
     <>
       <div className="flex justify-center mb-4">
-        <div className="rounded-full bg-[#0078D1]/15 p-3">
-          <Users className="h-7 w-7 text-[#0078D1]" aria-hidden />
+        <div className="rounded-full bg-white/10 p-3">
+          <Users className="h-7 w-7 text-white" aria-hidden />
         </div>
       </div>
       <h2 className="text-lg font-semibold text-center text-zinc-100">Limite de usuários atingido</h2>
@@ -176,7 +176,7 @@ function UserLimitBody({
         </Button>
         <Button
           type="button"
-          className="bg-[#0078D1] hover:bg-[#0078D1]/90 text-white"
+          className="shadow-none"
           onClick={onVerPlanos}
         >
           Ver planos
@@ -198,8 +198,8 @@ function AccountInactiveBody({
   return (
     <>
       <div className="flex justify-center mb-4">
-        <div className="rounded-full bg-amber-500/15 p-3">
-          <AlertTriangle className="h-7 w-7 text-amber-500" aria-hidden />
+        <div className="rounded-full bg-muted p-3">
+          <AlertTriangle className="h-7 w-7 text-muted-foreground" aria-hidden />
         </div>
       </div>
       <h2 className="text-lg font-semibold text-center text-zinc-100">{titulo}</h2>
@@ -217,10 +217,10 @@ function AccountInactiveBody({
         </Button>
         <Button
           type="button"
-          className="bg-[#0078D1] hover:bg-[#0078D1]/90 text-white"
+          className="shadow-none"
           onClick={() => {
             window.open(
-              supportWhatsAppUrl("Olá, preciso de ajuda com o status da minha conta no Limvex Licitação."),
+              supportWhatsAppUrl("Olá, preciso de ajuda com o status da minha conta no LIMVEX LICITAÇÃO."),
               "_blank",
               "noopener,noreferrer",
             );

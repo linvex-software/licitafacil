@@ -217,10 +217,10 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
 
   if (loading) {
     return (
-      <Card className="shadow-sm border-gray-200 dark:border-gray-700">
+      <Card className="border-border shadow-sm">
         <CardContent className="py-16">
-          <div className="flex flex-col items-center justify-center gap-3 text-gray-500 dark:text-gray-400">
-            <div className="w-8 h-8 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+          <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-foreground" />
             <span>Carregando checklist...</span>
           </div>
         </CardContent>
@@ -230,11 +230,11 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
 
   if (error && items.length === 0) {
     return (
-      <Card className="shadow-sm border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/50">
+      <Card className="border-destructive/40 bg-destructive/5 shadow-sm">
         <CardContent className="py-12">
           <div className="text-center">
-            <p className="text-red-700 dark:text-red-400 font-medium mb-4">{error}</p>
-            <Button variant="outline" onClick={loadItems} className="border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950">
+            <p className="mb-4 font-medium text-destructive">{error}</p>
+            <Button variant="outline" onClick={loadItems} className="border-destructive/30 hover:bg-destructive/10">
               Tentar novamente
             </Button>
           </div>
@@ -250,34 +250,34 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-          <p className="text-sm text-red-800">{error}</p>
+        <div className="flex items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+          <p className="text-sm text-destructive">{error}</p>
         </div>
       )}
 
       {/* Resumo */}
-      <Card className="shadow-sm border-gray-200 dark:border-gray-700">
+      <Card className="border-border shadow-sm">
         <CardContent className="py-6">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <ListChecks className="w-6 h-6" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-foreground">
+                <ListChecks className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Progresso do checklist</p>
-                <p className="text-xl font-heading font-bold text-gray-900 dark:text-gray-100 mt-0.5">
+                <p className="text-sm font-medium text-muted-foreground">Progresso do checklist</p>
+                <p className="mt-0.5 font-heading text-xl font-bold text-foreground">
                   {completedCount} de {totalCount} itens concluídos
                 </p>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-3xl font-heading font-bold text-emerald-600 dark:text-emerald-400">{progress}%</p>
+              <p className="font-heading text-3xl font-bold text-foreground">{progress}%</p>
             </div>
           </div>
-          <div className="mt-4 w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2.5 overflow-hidden">
+          <div className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className="bg-emerald-500 h-2.5 rounded-full transition-all duration-300"
+              className="h-2.5 rounded-full bg-foreground transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -289,19 +289,19 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
         <Button
           variant="outline"
           onClick={handleOpenModal}
-          className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors gap-2"
+          className="gap-2 rounded-lg px-3 py-1.5 text-sm font-medium"
         >
           <Plus className="w-4 h-4" />
           Adicionar Item
         </Button>
         <Button
-          variant="outline"
+          variant="secondary"
           onClick={handleGerarIA}
           disabled={isGenerating}
-          className="border border-[#0078D1]/40 dark:border-[#0078D1]/50 text-[#0078D1] dark:text-[#60a5fa] bg-[#0078D1]/5 dark:bg-[#0078D1]/10 hover:bg-[#0078D1]/10 dark:hover:bg-[#0078D1]/20 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors gap-2"
+          className="gap-2 rounded-lg px-3 py-1.5 text-sm font-medium"
         >
           {isGenerating ? (
-            <div className="w-4 h-4 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-foreground" />
           ) : (
             <span className="text-lg leading-none">✨</span>
           )}
@@ -311,14 +311,14 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
 
       {/* Lista de itens */}
       {items.length === 0 ? (
-        <Card className="shadow-sm border-gray-200 dark:border-gray-700">
-          <CardContent className="py-16 px-4">
+        <Card className="border-border shadow-sm">
+          <CardContent className="px-4 py-16">
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 mb-4">
-                <ListChecks className="w-7 h-7" />
+              <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                <ListChecks className="h-7 w-7" />
               </div>
-              <p className="text-gray-600 dark:text-gray-300 font-medium mb-1">Nenhum item de checklist</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="mb-1 font-medium text-foreground">Nenhum item de checklist</p>
+              <p className="text-sm text-muted-foreground">
                 Os itens do checklist podem ser criados a partir dos templates ou extraídos do edital através da Inteligência Artificial. Não há itens cadastrados para esta licitação.
               </p>
             </div>
@@ -333,41 +333,41 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
             return (
               <Card
                 key={item.id}
-                className={`shadow-sm border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 transition-colors ${item.concluido ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20" : "hover:border-gray-300 dark:hover:border-gray-600"
+                className={`border-border bg-card shadow-sm transition-colors ${item.concluido ? "border-foreground/20 bg-muted/40" : "hover:border-border hover:bg-accent/30"
                   }`}
               >
                 <CardContent className="py-4">
                   <div className="flex items-start gap-4">
                     {isUpdating ? (
-                      <div className="flex-shrink-0 w-6 h-6 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin mt-1" />
+                      <div className="mt-1 h-6 w-6 flex-shrink-0 animate-spin rounded-full border-2 border-muted border-t-foreground" />
                     ) : (
                       <button
                         type="button"
                         onClick={() => handleToggleItem(item)}
                         disabled={!item.concluido && !canComplete}
-                        className="mt-0.5 flex-shrink-0 rounded-full p-1 text-emerald-600 hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+                        className="mt-0.5 flex-shrink-0 rounded-full p-1 text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
                         aria-label={item.concluido ? `Desmarcar ${item.titulo}` : `Marcar ${item.titulo} como concluído`}
                       >
                         {item.concluido ? (
-                          <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                          <CheckCircle2 className="h-6 w-6 text-foreground" />
                         ) : (
-                          <Circle className="w-6 h-6 text-slate-400" />
+                          <Circle className="h-6 w-6 text-muted-foreground" />
                         )}
                       </button>
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 flex-wrap">
                         <h3
-                          className={`font-heading font-medium ${item.concluido ? "text-gray-500 dark:text-gray-400 line-through" : "text-gray-800 dark:text-gray-200"
+                          className={`font-heading font-medium ${item.concluido ? "text-muted-foreground line-through" : "text-foreground"
                             }`}
                         >
                           {item.titulo}
                         </h3>
                         {item.exigeEvidencia && (
                           <span
-                            className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${item.evidenciaId
-                              ? "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-400"
-                              : "bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-400"
+                            className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${item.evidenciaId
+                              ? "bg-muted text-foreground"
+                              : "bg-muted text-muted-foreground"
                               }`}
                           >
                             {item.evidenciaId ? "Evidência OK" : "Exige evidência"}
@@ -376,7 +376,7 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
 
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 ml-auto text-gray-500">
+                            <Button variant="ghost" size="icon" className="ml-auto h-8 w-8 text-muted-foreground">
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -385,7 +385,7 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
                               <Pencil className="mr-2 h-4 w-4" />
                               <span>Editar</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => confirmDelete(item)} className="text-red-600 focus:text-red-700 focus:bg-red-50 dark:focus:bg-red-950/50">
+                            <DropdownMenuItem onClick={() => confirmDelete(item)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
                               <Trash2 className="mr-2 h-4 w-4" />
                               <span>Excluir</span>
                             </DropdownMenuItem>
@@ -394,18 +394,18 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
 
                       </div>
                       {item.descricao && (
-                        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">{item.descricao}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{item.descricao}</p>
                       )}
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                      <p className="mt-1 text-xs text-muted-foreground">
                         {item.exigeEvidencia ? "Documento Obrigatório" : "Documento Opcional"}
                       </p>
                       {item.concluido && item.concluidoEm && (
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                        <p className="mt-2 text-xs text-muted-foreground">
                           Concluído em {formatDate(item.concluidoEm)}
                         </p>
                       )}
                       {!item.concluido && item.exigeEvidencia && !item.evidenciaId && (
-                        <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
+                        <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
                           <AlertCircle className="w-3.5 h-3.5" />
                           Vincule um documento antes de marcar como concluído.
                         </p>
@@ -430,7 +430,7 @@ export function ChecklistPageClient({ licitacaoId }: ChecklistPageClientProps) {
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Título do Item <span className="text-red-500">*</span></Label>
+              <Label>Título do Item <span className="text-destructive">*</span></Label>
               <Input
                 placeholder="Ex: Requerer termo de compromisso"
                 value={newItemData.titulo}

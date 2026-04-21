@@ -226,7 +226,7 @@ export class MailService {
             </ol>
 
             <p>Em caso de dúvidas, entre em contato com nosso suporte:</p>
-            <p>Email: suporte@limvex.com.br</p>
+            <p>Email: comercial@limvex.com</p>
           </div>
           <div class="footer">
             <p>&copy; 2024-2026 Limvex Software. Todos os direitos reservados.</p>

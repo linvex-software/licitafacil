@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { chatComEdital, getChatHistorico, type ChatMensagem } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface PerguntasTabProps {
   bidId?: string;
@@ -192,7 +193,7 @@ export function PerguntasTab({ bidId: bidIdProp, emModal = false }: PerguntasTab
       )}
     >
       <div className="flex items-center gap-3 p-4 border-b border-border">
-        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
           L
         </div>
         <div>
@@ -202,7 +203,7 @@ export function PerguntasTab({ bidId: bidIdProp, emModal = false }: PerguntasTab
           </p>
         </div>
         <div className="ml-auto flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full bg-green-500"></div>
+          <div className="h-2 w-2 rounded-full bg-foreground" />
           <span className="text-xs text-muted-foreground">Online</span>
         </div>
       </div>
@@ -232,12 +233,13 @@ export function PerguntasTab({ bidId: bidIdProp, emModal = false }: PerguntasTab
                 Para usar o LicitaIA, primeiro analise o edital desta licitação.
               </p>
             </div>
-            <button
+            <Button
+              type="button"
               onClick={() => router.push(`/licitacoes/${bidId}`)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors"
+              className="shadow-none dark:hover:bg-[#e0e0e0]"
             >
               Ir para análise do edital
-            </button>
+            </Button>
           </div>
         ) : (
           <>
@@ -254,7 +256,7 @@ export function PerguntasTab({ bidId: bidIdProp, emModal = false }: PerguntasTab
                 <div key={mensagem.id}>
                   <div className="flex justify-end mb-4">
                     <div className="max-w-[75%]">
-                      <div className="bg-blue-600 text-white px-4 py-3 rounded-2xl rounded-tr-sm text-sm leading-relaxed whitespace-pre-wrap">
+                      <div className="rounded-2xl rounded-tr-sm bg-primary px-4 py-3 text-sm leading-relaxed text-primary-foreground whitespace-pre-wrap">
                         {mensagem.pergunta}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1 text-right">
@@ -264,7 +266,7 @@ export function PerguntasTab({ bidId: bidIdProp, emModal = false }: PerguntasTab
                   </div>
 
                   <div className="flex gap-3 mb-4">
-                    <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-1">
+                    <div className="mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                       L
                     </div>
                     <div className="max-w-[75%]">
@@ -286,7 +288,7 @@ export function PerguntasTab({ bidId: bidIdProp, emModal = false }: PerguntasTab
 
             {isRespondendo && (
               <div className="flex gap-3 mb-4">
-                <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-1">
+                <div className="mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                   L
                 </div>
                 <div className="bg-muted px-4 py-3 rounded-2xl rounded-tl-sm">
@@ -326,19 +328,20 @@ export function PerguntasTab({ bidId: bidIdProp, emModal = false }: PerguntasTab
               ajustarAlturaTextarea();
             }}
             disabled={isRespondendo || semAnalise}
-            className="flex-1 resize-none bg-muted rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px] max-h-[120px] disabled:opacity-50 disabled:cursor-not-allowed pointer-events-auto"
+            className="pointer-events-auto min-h-[44px] max-h-[120px] flex-1 resize-none rounded-xl border border-transparent bg-muted px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             placeholder="Pergunte sobre o edital..."
             rows={1}
           />
-          <button
+          <Button
+            type="button"
             onClick={() => void handleEnviarPergunta()}
             disabled={isRespondendo || semAnalise || pergunta.trim().length < 3}
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-3 text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="h-auto rounded-xl px-4 py-3 shadow-none dark:hover:bg-[#e0e0e0]"
           >
-            <Send className="w-4 h-4" />
-          </button>
+            <Send className="h-4 w-4" />
+          </Button>
         </div>
-        <p className="mt-2 text-center text-xs text-gray-400 dark:text-gray-500">
+        <p className="mt-2 text-center text-xs text-muted-foreground">
           ✦ LicitaAI pode cometer erros. Confirme as informações no edital original.
         </p>
       </div>

@@ -29,7 +29,7 @@ export function PainelItem({ item, onLance }: PainelItemProps) {
   const posicao = item.posicaoAtual ?? null;
   const badge = badgePosicao(posicao);
   const foraPrimeiro = (posicao ?? 999) > 1;
-  const ringClass = foraPrimeiro ? "ring-1 ring-amber-500/50 animate-pulse" : "";
+  const ringClass = foraPrimeiro ? "animate-pulse ring-1 ring-foreground/30" : "";
   const encerrado = item.statusItem === "ENCERRADO";
 
   const foraLiderancaLabel = useMemo(() => {
@@ -53,7 +53,7 @@ export function PainelItem({ item, onLance }: PainelItemProps) {
           <h3 className="text-sm md:text-base font-semibold text-foreground">
             Item {String(item.itemNumero).padStart(3, "0")} — {item.descricao || "Sem descricao"}
           </h3>
-          {foraLiderancaLabel && <p className="text-xs text-amber-400 mt-1">{foraLiderancaLabel}</p>}
+          {foraLiderancaLabel && <p className="mt-1 text-xs text-muted-foreground">{foraLiderancaLabel}</p>}
         </div>
         <Badge variant={badge.variant}>{badge.label} lugar</Badge>
       </div>
@@ -92,12 +92,12 @@ export function PainelItem({ item, onLance }: PainelItemProps) {
       </div>
 
       {item.lancePendente && (
-        <p className="text-xs text-amber-400">
+        <p className="text-xs text-muted-foreground">
           Preenchendo no portal: {formatarMoeda(item.lancePendente.valor)}
         </p>
       )}
       {item.lanceConfirmadoEm && Date.now() - item.lanceConfirmadoEm < 6000 && (
-        <p className="text-xs text-teal-400">Lance confirmado no portal.</p>
+        <p className="text-xs text-muted-foreground">Lance confirmado no portal.</p>
       )}
     </div>
   );

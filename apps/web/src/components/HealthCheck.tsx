@@ -39,17 +39,17 @@ export function HealthCheck() {
       <button
         onClick={checkHealth}
         disabled={status === "loading"}
-        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
+        className="w-full rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground transition-opacity duration-200 hover:opacity-90 disabled:opacity-50 dark:hover:bg-[#e0e0e0]"
       >
         {status === "loading" ? "Verificando..." : "Verificar Status da API"}
       </button>
 
       {status === "success" && data && (
-        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-          <p className="text-green-800 dark:text-green-300 font-semibold mb-2">
+        <div className="rounded-lg border border-border bg-muted p-4">
+          <p className="mb-2 font-semibold text-foreground">
             ✅ API está funcionando!
           </p>
-          <div className="text-sm text-green-700 dark:text-green-400">
+          <div className="text-sm text-muted-foreground">
             <p><strong>Status:</strong> {data.status}</p>
             <p><strong>Service:</strong> {data.service}</p>
           </div>
@@ -57,14 +57,14 @@ export function HealthCheck() {
       )}
 
       {status === "error" && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <p className="text-red-800 dark:text-red-300 font-semibold mb-2">
+        <div className="rounded-lg border border-destructive/25 bg-destructive/10 p-4">
+          <p className="mb-2 font-semibold text-destructive">
             ❌ Erro ao conectar com a API
           </p>
-          <p className="text-sm text-red-700 dark:text-red-400">
+          <p className="text-sm text-foreground/90">
             {error}
           </p>
-          <p className="text-xs text-red-600 dark:text-red-500 mt-2">
+          <p className="mt-2 text-xs text-muted-foreground">
             Certifique-se de que a API está disponível em {API_BASE_URL}
           </p>
         </div>

@@ -179,7 +179,7 @@ export function CriarClienteModal({ aberto, onFechar, onSucesso }: Props) {
                     isActive
                       ? "text-primary"
                       : isCompleted
-                        ? "text-green-600"
+                        ? "text-foreground"
                         : "text-muted-foreground"
                   }`}
                 >
@@ -209,7 +209,7 @@ export function CriarClienteModal({ aberto, onFechar, onSucesso }: Props) {
                   className="mt-1"
                 />
                 {errors.nomeEmpresa && (
-                  <p className="text-sm text-red-500 mt-1">{errors.nomeEmpresa.message}</p>
+                  <p className="text-sm text-destructive mt-1">{errors.nomeEmpresa.message}</p>
                 )}
               </div>
               <div>
@@ -226,7 +226,7 @@ export function CriarClienteModal({ aberto, onFechar, onSucesso }: Props) {
                   }}
                 />
                 {errors.cnpj && (
-                  <p className="text-sm text-red-500 mt-1">{errors.cnpj.message}</p>
+                  <p className="text-sm text-destructive mt-1">{errors.cnpj.message}</p>
                 )}
               </div>
               <div>
@@ -239,7 +239,7 @@ export function CriarClienteModal({ aberto, onFechar, onSucesso }: Props) {
                   className="mt-1"
                 />
                 {errors.email && (
-                  <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
+                  <p className="text-sm text-destructive mt-1">{errors.email.message}</p>
                 )}
               </div>
               <div>
@@ -280,7 +280,7 @@ export function CriarClienteModal({ aberto, onFechar, onSucesso }: Props) {
                     className="mt-1"
                   />
                   {errors.valorSetup && (
-                    <p className="text-sm text-red-500 mt-1">{errors.valorSetup.message}</p>
+                    <p className="text-sm text-destructive mt-1">{errors.valorSetup.message}</p>
                   )}
                 </div>
                 <div>
@@ -293,7 +293,7 @@ export function CriarClienteModal({ aberto, onFechar, onSucesso }: Props) {
                     className="mt-1"
                   />
                   {errors.mensalidade && (
-                    <p className="text-sm text-red-500 mt-1">{errors.mensalidade.message}</p>
+                    <p className="text-sm text-destructive mt-1">{errors.mensalidade.message}</p>
                   )}
                 </div>
               </div>
@@ -301,7 +301,7 @@ export function CriarClienteModal({ aberto, onFechar, onSucesso }: Props) {
                 <Label htmlFor="dataInicio">Data de Início *</Label>
                 <Input id="dataInicio" type="date" {...register("dataInicio")} className="mt-1" />
                 {errors.dataInicio && (
-                  <p className="text-sm text-red-500 mt-1">{errors.dataInicio.message}</p>
+                  <p className="text-sm text-destructive mt-1">{errors.dataInicio.message}</p>
                 )}
               </div>
             </div>
@@ -323,7 +323,7 @@ export function CriarClienteModal({ aberto, onFechar, onSucesso }: Props) {
                   className="mt-1"
                 />
                 {errors.nomeAdmin && (
-                  <p className="text-sm text-red-500 mt-1">{errors.nomeAdmin.message}</p>
+                  <p className="text-sm text-destructive mt-1">{errors.nomeAdmin.message}</p>
                 )}
               </div>
               <div>
@@ -336,7 +336,7 @@ export function CriarClienteModal({ aberto, onFechar, onSucesso }: Props) {
                   className="mt-1"
                 />
                 {errors.emailAdmin && (
-                  <p className="text-sm text-red-500 mt-1">{errors.emailAdmin.message}</p>
+                  <p className="text-sm text-destructive mt-1">{errors.emailAdmin.message}</p>
                 )}
               </div>
             </div>
@@ -381,8 +381,8 @@ export function CriarClienteModal({ aberto, onFechar, onSucesso }: Props) {
                   <p className="text-xs text-muted-foreground">{watch("emailAdmin")}</p>
                 </div>
               </div>
-              <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+              <div className="rounded-lg border border-border bg-muted p-4">
+                <p className="text-sm text-muted-foreground">
                   Ao confirmar, o cliente será criado e um email com credenciais de acesso será
                   enviado para <strong>{watch("emailAdmin")}</strong>.
                 </p>

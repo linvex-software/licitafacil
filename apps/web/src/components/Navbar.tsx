@@ -26,13 +26,13 @@ export function Navbar() {
   }
 
   return (
-    <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <nav className="border-b border-border bg-background">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-6">
             <Link
               href="/"
-              className="text-xl font-bold text-gray-900 dark:text-white hover:text-primary dark:hover:text-primary-300"
+              className="text-xl font-bold text-foreground hover:text-muted-foreground"
             >
               Licitafacil
             </Link>
@@ -58,7 +58,7 @@ export function Navbar() {
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="w-full px-4 py-2 text-left text-sm text-destructive hover:bg-accent"
                   >
                     Sair
                   </button>

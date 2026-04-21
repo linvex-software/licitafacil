@@ -234,7 +234,7 @@ export default function LicitacoesListPage() {
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
-                                <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 font-semibold py-0.5">
+                                <Badge variant="outline" className="border-border bg-muted py-0.5 font-semibold text-foreground">
                                     Gerenciamento
                                 </Badge>
                                 <span className="text-gray-300 dark:text-gray-600">•</span>
@@ -416,21 +416,21 @@ export default function LicitacoesListPage() {
                                     licitacoes.map((item) => (
                                         <TableRow
                                             key={item.id}
-                                            className="group hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-all cursor-pointer border-gray-100 dark:border-gray-800"
+                                            className="group cursor-pointer border-border/60 transition-colors hover:bg-accent/50"
                                             onClick={() => setModalBidId(item.id)}
                                         >
                                             <TableCell onClick={(e) => e.stopPropagation()}>
                                                 <Checkbox className="border-gray-200 dark:border-gray-600 group-hover:border-gray-400" />
                                             </TableCell>
                                             <TableCell className="py-4">
-                                                <div className="font-bold text-gray-900 dark:text-gray-100 group-hover:text-[#0078D1] transition-colors uppercase text-sm tracking-tight">{item.title}</div>
-                                                <div className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-1 flex items-center gap-1.5">
+                                                <div className="text-sm font-bold uppercase tracking-tight text-foreground">{item.title}</div>
+                                                <div className="mt-1 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                                                     <span className="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded uppercase">{item.agency.slice(0, 3)}</span>
                                                     <span className="truncate max-w-[250px]">{item.agency}</span>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-transparent font-semibold capitalize">
+                                                <Badge variant="secondary" className="border-transparent bg-muted font-semibold capitalize text-foreground">
                                                     {item.modality.replace('_', ' ')}
                                                 </Badge>
                                             </TableCell>
@@ -439,8 +439,8 @@ export default function LicitacoesListPage() {
                                                     <Tooltip>
                                                         <TooltipTrigger asChild>
                                                             <div className="flex items-center gap-2">
-                                                                <div className={`w-2 h-2 rounded-full ${item.legalStatus === 'Apta' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                                                                <span className="font-semibold text-gray-700 dark:text-gray-300 text-xs">
+                                                                <div className={`h-2 w-2 rounded-full ${item.legalStatus === 'Apta' ? 'bg-foreground' : 'bg-muted-foreground'}`} />
+                                                                <span className="text-xs font-semibold text-foreground">
                                                                     {item.legalStatus}
                                                                 </span>
                                                             </div>
@@ -472,9 +472,9 @@ export default function LicitacoesListPage() {
                                                 <div className="flex justify-end items-center gap-2">
                                                     <Link href={`/licitacoes/${item.id}`}>
                                                         <Button
-                                                            variant="outline"
+                                                            variant="default"
                                                             size="sm"
-                                                            className="h-9 font-semibold border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:text-[#0078D1] hover:bg-gray-50 dark:hover:bg-gray-700/50 bg-white dark:bg-transparent"
+                                                            className="h-9 shadow-none dark:hover:bg-[#e0e0e0]"
                                                         >
                                                             Acessar Processo
                                                         </Button>
@@ -502,7 +502,7 @@ export default function LicitacoesListPage() {
                                                             </DropdownMenuItem>
                                                             <DropdownMenuSeparator />
                                                             <DropdownMenuItem
-                                                                className="text-red-600 cursor-pointer"
+                                                                className="cursor-pointer text-destructive"
                                                                 onClick={() => setDeleteTargetId(item.id)}
                                                             >
                                                                 <Trash2 className="w-4 h-4 mr-2" />

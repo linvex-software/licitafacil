@@ -12,10 +12,12 @@ import {
   Plus, ChevronRight, Zap,
 } from "lucide-react";
 import { listarDisputas, type Disputa } from "@/lib/api";
+import { getDisputaListLabel } from "@/lib/disputa-display";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Layout } from "@/components/layout";
 import { AuthGuard } from "@/components/AuthGuard";
+import { Button } from "@/components/ui/button";
 
 /* ─── KPI Card ──────────────────────────────────────────── */
 function KpiCard({
@@ -27,11 +29,11 @@ function KpiCard({
   onClick?: () => void;
 }) {
   const map = {
-    blue: { bar: "bg-[#0078D1]", val: "text-[#0078D1] dark:text-[#66b1e7]" },
-    red: { bar: "bg-red-500", val: "text-red-700 dark:text-red-400" },
-    amber: { bar: "bg-amber-400", val: "text-amber-700 dark:text-amber-400" },
-    emerald: { bar: "bg-emerald-500", val: "text-emerald-700 dark:text-emerald-400" },
-    slate: { bar: "bg-gray-300 dark:bg-gray-600", val: "text-gray-700 dark:text-gray-300" },
+    blue: { bar: "bg-foreground", val: "text-foreground" },
+    red: { bar: "bg-destructive", val: "text-destructive" },
+    amber: { bar: "bg-muted-foreground", val: "text-foreground" },
+    emerald: { bar: "bg-foreground/50", val: "text-foreground" },
+    slate: { bar: "bg-border", val: "text-muted-foreground" },
   };
   const c = map[accent];
 
@@ -39,13 +41,13 @@ function KpiCard({
     <button
       type="button"
       onClick={onClick}
-      className="w-full rounded-xl border border-gray-100 bg-white p-6 text-left dark:border-gray-800 dark:bg-gray-900 animate-fade-up transition-colors cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60"
+      className="w-full cursor-pointer rounded-xl border border-border bg-card p-6 text-left text-card-foreground transition-colors animate-fade-up hover:bg-accent/60"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className={`mb-4 h-0.5 w-8 rounded-full ${c.bar}`} />
       <p className={`text-4xl font-bold tracking-tight stat-number ${c.val}`}>{value}</p>
-      <p className="mt-1 text-sm font-semibold text-gray-700 dark:text-gray-200">{label}</p>
-      {sub && <p className="text-xs text-gray-400 dark:text-gray-500">{sub}</p>}
+      <p className="mt-1 text-sm font-semibold text-foreground">{label}</p>
+      {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
     </button>
   );
 }
@@ -119,30 +121,24 @@ export default function DashboardPage() {
         <div className="page-enter space-y-7">
 
           {/* ── Hero ────────────────────────────────────────── */}
-          <div className="relative overflow-hidden rounded-2xl bg-[#0078D1] px-8 py-7">
-            <div
-              className="pointer-events-none absolute inset-0 opacity-[0.07]"
-              style={{
-                backgroundImage:
-                  "url(\"data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 40 0 L 0 0 0 40' fill='none' stroke='white' stroke-width='0.8'/%3E%3C/svg%3E\")",
-              }}
-            />
+          <div className="relative overflow-hidden rounded-2xl border border-border bg-card px-8 py-7 text-card-foreground">
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-muted/60 to-transparent dark:from-muted/25" />
 
             <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-white/50">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                   {formatDate(new Date())}
                 </p>
-                <h1 className="text-2xl font-bold tracking-tight text-white">
+                <h1 className="text-2xl font-bold tracking-tight text-foreground">
                   {greeting}, {firstName}.
                 </h1>
 
-                <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 backdrop-blur-sm">
+                <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1">
                   <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-muted-foreground opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-muted-foreground" />
                   </span>
-                  <span className="text-xs font-medium text-white/80">
+                  <span className="text-xs font-medium text-muted-foreground">
                     {totalAtRisk > 0
                       ? `${totalAtRisk} licitaç${totalAtRisk === 1 ? "ão requer" : "ões requerem"} atenção imediata`
                       : "Tudo operacional — sem alertas críticos"}
@@ -151,18 +147,18 @@ export default function DashboardPage() {
               </div>
 
               <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:flex sm:items-center sm:gap-3">
-                <Link href="/relatorios" className="flex-1">
-                  <button className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-white px-3 py-2 text-xs font-semibold text-[#0078D1] transition-colors hover:bg-white/90 sm:px-4 sm:text-sm">
+                <Button asChild variant="default" size="sm" className="w-full shadow-none sm:w-auto dark:hover:bg-[#e0e0e0]">
+                  <Link href="/relatorios" className="inline-flex items-center justify-center gap-2">
                     <BarChart2 className="h-4 w-4" />
                     Relatórios
-                  </button>
-                </Link>
-                <Link href="/licitacoes" className="flex-1">
-                  <button className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-white px-3 py-2 text-xs font-semibold text-[#0078D1] transition-colors hover:bg-white/90 sm:px-4 sm:text-sm">
+                  </Link>
+                </Button>
+                <Button asChild variant="default" size="sm" className="w-full shadow-none sm:w-auto dark:hover:bg-[#e0e0e0]">
+                  <Link href="/licitacoes" className="inline-flex items-center justify-center gap-2">
                     <Plus className="h-4 w-4" />
                     Nova Licitação
-                  </button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             </div>
           </div>
@@ -208,43 +204,43 @@ export default function DashboardPage() {
 
             {/* Pregões hoje */}
             <div
-              className="lg:col-span-5 rounded-xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 animate-fade-up"
+              className="animate-fade-up rounded-xl border border-border bg-card p-5 text-card-foreground lg:col-span-5"
               style={{ animationDelay: "80ms" }}
             >
-              <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                  <h2 className="section-label">
                     Pregões hoje
                   </h2>
-                  <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-200">
+                  <p className="mt-1 text-sm font-semibold text-foreground">
                     {totalPregoesHoje} pregão(ões) em andamento ou aguardando
                   </p>
-                  <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     Acompanhe em tempo real
                   </p>
                 </div>
-                <Link href="/monitoramento">
-                  <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#0078D1] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#0066b3] sm:text-sm">
+                <Button asChild variant="default" size="sm" className="shadow-none dark:hover:bg-[#e0e0e0]">
+                  <Link href="/monitoramento" className="inline-flex items-center justify-center gap-2">
                     Ver monitoramento
                     <ArrowRight className="h-4 w-4" />
-                  </button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             </div>
 
             {/* Disputas ao vivo */}
             <div
-              className="lg:col-span-5 rounded-xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 animate-fade-up"
+              className="animate-fade-up rounded-xl border border-border bg-card p-5 text-card-foreground lg:col-span-5"
               style={{ animationDelay: "90ms" }}
             >
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                <h2 className="section-label">
                   Disputas ativas
                 </h2>
                 {disputasAoVivo.length > 0 && (
                   <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive/60 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
                   </span>
                 )}
               </div>
@@ -256,12 +252,12 @@ export default function DashboardPage() {
                     <Link
                       key={d.id}
                       href={`/disputa/${d.id}/ao-vivo`}
-                      className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-gray-50 dark:hover:bg-zinc-800/50"
+                      className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-accent/50"
                     >
-                      <span className="max-w-[220px] truncate text-sm text-gray-800 dark:text-gray-200">
-                        {d.numeroPregao || "Disputa"}
+                      <span className="max-w-[220px] truncate text-sm text-foreground">
+                        {getDisputaListLabel(d)}
                       </span>
-                      <span className="animate-pulse rounded px-2 py-0.5 text-xs font-medium bg-red-500/20 text-red-400">
+                      <span className="animate-pulse rounded px-2 py-0.5 text-xs font-medium bg-destructive/15 text-destructive">
                         AO VIVO
                       </span>
                     </Link>
@@ -271,40 +267,40 @@ export default function DashboardPage() {
             </div>
 
             {/* Prazos */}
-            <div className="lg:col-span-3 rounded-xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 animate-fade-up"
+            <div className="animate-fade-up rounded-xl border border-border bg-card p-5 text-card-foreground lg:col-span-3"
               style={{ animationDelay: "100ms" }}>
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                <h2 className="section-label">
                   Próximos Prazos
                 </h2>
-                <Link href="/licitacoes" className="flex items-center gap-1 text-xs font-semibold text-[#0078D1] hover:underline">
+                <Link href="/licitacoes" className="flex items-center gap-1 text-xs font-semibold text-foreground underline-offset-4 hover:underline">
                   Todos os prazos
                   <ChevronRight className="h-3 w-3" />
                 </Link>
               </div>
-              <div className="divide-y divide-gray-50 dark:divide-gray-800">
+              <div className="divide-y divide-border">
                 {loadingPrazos ? (
                   [1, 2, 3].map(i => (
                     <div key={i} className="flex gap-4 items-center py-3.5">
-                      <div className="h-10 w-10 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse shrink-0" />
+                      <div className="h-10 w-10 shrink-0 animate-pulse rounded-xl bg-muted" />
                       <div className="flex-1 space-y-2">
-                        <div className="h-3 w-2/3 bg-gray-100 dark:bg-gray-800 rounded-full animate-pulse" />
-                        <div className="h-3 w-1/2 bg-gray-100 dark:bg-gray-800 rounded-full animate-pulse" />
+                        <div className="h-3 w-2/3 animate-pulse rounded-full bg-muted" />
+                        <div className="h-3 w-1/2 animate-pulse rounded-full bg-muted" />
                       </div>
                     </div>
                   ))
                 ) : upcomingPrazos.filter((p) => (p.diasRestantes ?? 0) >= 0).length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 text-center">
-                    <div className="mb-3 rounded-full bg-gray-100 p-3 dark:bg-gray-800">
-                      <Calendar className="h-5 w-5 text-gray-400" />
+                    <div className="mb-3 rounded-full bg-muted p-3 ring-1 ring-border">
+                      <Calendar className="h-5 w-5 text-muted-foreground" />
                     </div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    <p className="text-sm font-medium text-foreground">
                       Nenhum prazo cadastrado
                     </p>
-                    <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+                    <p className="mt-0.5 text-xs text-muted-foreground">
                       Adicione prazos nas suas licitações ativas
                     </p>
-                    <Link href="/licitacoes" className="mt-3 text-xs font-semibold text-[#0078D1] hover:underline">
+                    <Link href="/licitacoes" className="mt-3 text-xs font-semibold text-foreground underline-offset-4 hover:underline">
                       Ver licitações →
                     </Link>
                   </div>
@@ -319,28 +315,28 @@ export default function DashboardPage() {
                     const isPast = dias < 0;
                     return (
                       <Link key={p.id} href={`/licitacoes/${p.bidId}/prazos`}
-                        className="flex items-center gap-4 rounded-lg px-3 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
-                        <div className={`shrink-0 w-11 text-center rounded-xl py-1.5 border ${isPast ? "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800" :
-                          isUrgent ? "bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800" :
-                            "bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700"
+                        className="group flex items-center gap-4 rounded-lg px-3 py-3.5 transition-colors hover:bg-accent/50">
+                        <div className={`shrink-0 w-11 text-center rounded-xl py-1.5 border ${isPast ? "border-destructive/50 bg-destructive/10" :
+                          isUrgent ? "border-border bg-muted" :
+                            "border-border bg-muted"
                           }`}>
-                          <p className={`text-[9px] font-bold uppercase tracking-wider ${isPast ? "text-red-400" : "text-gray-400 dark:text-gray-500"}`}>
+                          <p className={`text-[9px] font-bold uppercase tracking-wider ${isPast ? "text-destructive" : "text-muted-foreground"}`}>
                             {format(d, "MMM", { locale: ptBR })}
                           </p>
-                          <p className={`text-[16px] font-bold leading-none mt-0.5 ${isPast ? "text-red-600 dark:text-red-400" : isUrgent ? "text-amber-600 dark:text-amber-400" : "text-gray-700 dark:text-gray-300"
+                          <p className={`mt-0.5 text-[16px] font-bold leading-none ${isPast ? "text-destructive" : "text-foreground"
                             }`}>
                             {format(d, "d")}
                           </p>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-semibold text-gray-800 dark:text-gray-200 truncate group-hover:text-primary dark:group-hover:text-primary-300 transition-colors">{p.titulo}</p>
-                          <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 truncate">{p.bidTitle || "Licitação"}</p>
+                          <p className="truncate text-[13px] font-semibold text-foreground transition-colors group-hover:text-muted-foreground">{p.titulo}</p>
+                          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{p.bidTitle || "Licitação"}</p>
                         </div>
                         <span className={`shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full border ${isPast
-                          ? "bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800"
+                          ? "border-destructive/50 bg-destructive/10 text-destructive"
                           : isUrgent
-                            ? "bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800"
-                            : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-800"
+                            ? "border-border bg-muted text-foreground"
+                            : "border-border bg-muted text-muted-foreground"
                           }`}>
                           {isPast ? `−${Math.abs(dias)}d` : dias === 0 ? "Hoje" : `+${dias}d`}
                         </span>
@@ -352,30 +348,30 @@ export default function DashboardPage() {
             </div>
 
             {/* Docs críticos */}
-            <div className="lg:col-span-2 rounded-xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 animate-fade-up"
+            <div className="animate-fade-up rounded-xl border border-border bg-card p-5 text-card-foreground lg:col-span-2"
               style={{ animationDelay: "160ms" }}>
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                <h2 className="section-label">
                   Docs Vencendo
                 </h2>
-                <Link href="/documentos" className="flex items-center gap-1 text-xs font-semibold text-[#0078D1] hover:underline">
+                <Link href="/documentos" className="flex items-center gap-1 text-xs font-semibold text-foreground underline-offset-4 hover:underline">
                   Ver todos
                   <ChevronRight className="h-3 w-3" />
                 </Link>
               </div>
-              <div className="divide-y divide-gray-50 dark:divide-gray-800">
+              <div className="divide-y divide-border">
                 {criticalDocs.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 text-center">
-                    <div className="mb-3 rounded-full bg-gray-100 p-3 dark:bg-gray-800">
-                      <FileText className="h-5 w-5 text-gray-400" />
+                    <div className="mb-3 rounded-full bg-muted p-3 ring-1 ring-border">
+                      <FileText className="h-5 w-5 text-muted-foreground" />
                     </div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    <p className="text-sm font-medium text-foreground">
                       Sem documentos críticos
                     </p>
-                    <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+                    <p className="mt-0.5 text-xs text-muted-foreground">
                       Nenhum documento vence nos próximos 30 dias
                     </p>
-                    <Link href="/documentos" className="mt-3 text-xs font-semibold text-[#0078D1] hover:underline">
+                    <Link href="/documentos" className="mt-3 text-xs font-semibold text-foreground underline-offset-4 hover:underline">
                       Gerenciar documentos →
                     </Link>
                   </div>
@@ -384,15 +380,15 @@ export default function DashboardPage() {
                     const exp = doc.expiresAt ? new Date(doc.expiresAt) : null;
                     return (
                       <Link key={doc.id} href={doc.bidId ? `/licitacoes/${doc.bidId}/documentos` : "/documentos"}
-                        className="flex items-center gap-3 rounded-lg px-3 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
-                        <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950 flex items-center justify-center shrink-0 border border-amber-200 dark:border-amber-800">
-                          <FileText className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                        className="group flex items-center gap-3 rounded-lg px-3 py-3.5 transition-colors hover:bg-accent/50">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border bg-muted">
+                          <FileText className="h-3.5 w-3.5 text-foreground" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-medium text-gray-700 dark:text-gray-300 truncate group-hover:text-primary dark:group-hover:text-primary-300 transition-colors">{doc.name}</p>
-                          {exp && <p className="text-[11px] text-amber-600 dark:text-amber-400 font-medium mt-0.5">{format(exp, "dd/MM/yyyy")}</p>}
+                          <p className="truncate text-[13px] font-medium text-foreground transition-colors group-hover:text-muted-foreground">{doc.name}</p>
+                          {exp && <p className="mt-0.5 text-[11px] font-medium text-muted-foreground">{format(exp, "dd/MM/yyyy")}</p>}
                         </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400 shrink-0" />
+                        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" />
                       </Link>
                     );
                   })
@@ -404,72 +400,72 @@ export default function DashboardPage() {
           {/* ── Recent Bids ─────────────────────────────────── */}
           <div className="animate-fade-up" style={{ animationDelay: "220ms" }}>
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+              <h2 className="section-label">
                 Licitações Recentes
               </h2>
-              <Link href="/licitacoes" className="flex items-center gap-1 text-xs font-semibold text-[#0078D1] hover:underline">
+              <Link href="/licitacoes" className="flex items-center gap-1 text-xs font-semibold text-foreground underline-offset-4 hover:underline">
                 Ver todos
                 <ChevronRight className="h-3 w-3" />
               </Link>
             </div>
-            <div className="rounded-xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+            <div className="rounded-xl border border-border bg-card p-5 text-card-foreground">
               {isLoading ? (
-                <div className="divide-y divide-gray-50 dark:divide-gray-800">
+                <div className="divide-y divide-border">
                   {[1, 2, 3].map(i => (
                     <div key={i} className="flex items-center gap-4 py-4">
-                      <div className="h-4 w-48 bg-gray-100 dark:bg-gray-800 rounded-full animate-pulse" />
-                      <div className="ml-auto h-5 w-16 bg-gray-100 dark:bg-gray-800 rounded-full animate-pulse" />
+                      <div className="h-4 w-48 animate-pulse rounded-full bg-muted" />
+                      <div className="ml-auto h-5 w-16 animate-pulse rounded-full bg-muted" />
                     </div>
                   ))}
                 </div>
               ) : licitacoes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 text-center">
-                  <div className="mb-3 rounded-full bg-gray-100 p-3 dark:bg-gray-800">
-                    <Zap className="h-5 w-5 text-gray-400" />
+                  <div className="mb-3 rounded-full bg-muted p-3 ring-1 ring-border">
+                    <Zap className="h-5 w-5 text-muted-foreground" />
                   </div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <p className="text-sm font-medium text-foreground">
                     Nenhuma licitação encontrada
                   </p>
-                  <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     Cadastre sua primeira licitação para começar
                   </p>
-                  <Link href="/licitacoes" className="mt-3 text-xs font-semibold text-[#0078D1] hover:underline">
+                  <Link href="/licitacoes" className="mt-3 text-xs font-semibold text-foreground underline-offset-4 hover:underline">
                     Ir para licitações →
                   </Link>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-50 dark:divide-gray-800">
+                <div className="divide-y divide-border">
                   {licitacoes.slice(0, 6).map((item, idx) => (
                     <Link key={item.id} href={`/licitacoes/${item.id}`}
-                      className="flex items-center gap-4 rounded-lg px-3 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer group">
-                      <span className="w-6 shrink-0 text-xs font-mono text-gray-300 dark:text-gray-600 stat-number tabular-nums">
+                      className="group flex cursor-pointer items-center gap-4 rounded-lg px-3 py-3.5 transition-colors hover:bg-accent/50">
+                      <span className="stat-number w-6 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
                         {String(idx + 1).padStart(2, "0")}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-gray-800 dark:text-gray-200">{item.title}</p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500">{item.agency}</p>
+                        <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
+                        <p className="text-xs text-muted-foreground">{item.agency}</p>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="hidden md:inline-flex rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs font-medium text-gray-600 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-400">
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className="hidden rounded-md border border-border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground md:inline-flex">
                           {modalidadeLabel[item.modality] ?? item.modality.replace(/_/g, " ")}
                         </span>
                         {item.operationalState === "OK" ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-semibold text-foreground">
+                            <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
                             Ativa
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                            <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-destructive/40 bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive">
+                            <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
                             Em risco
                           </span>
                         )}
-                        <ChevronRight className="h-4 w-4 text-gray-300 dark:text-gray-600" />
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </div>
                     </Link>
                   ))}
                   <Link href="/licitacoes"
-                    className="flex items-center justify-center gap-1.5 py-3.5 text-[12px] font-medium text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors rounded-lg">
+                    className="flex items-center justify-center gap-1.5 rounded-lg py-3.5 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground">
                     Ver todas as licitações
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>

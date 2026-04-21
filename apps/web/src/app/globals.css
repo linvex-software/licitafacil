@@ -1,40 +1,35 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/**
+ * Tema claro: monocromático neutro (fundo claro, texto escuro).
+ * Tema escuro: LIMVEX (DESIGN_MONOCROMATICO_LIMVEX.md).
+ */
 :root {
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
 
-  /* Palette — Light */
-  --background: 220 20% 97%;
-  /* #f6f7f9 */
-  --foreground: 222 14% 28%;
-  /* #3d4554 */
+  --background: 0 0% 100%;
+  --foreground: 222 14% 11%;
 
   --card: 0 0% 100%;
-  --card-foreground: 222 14% 28%;
+  --card-foreground: 222 14% 11%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 222 14% 28%;
+  --popover-foreground: 222 14% 11%;
 
-  --primary: 207 100% 41%;
-  /* #0078D1 */
+  /* CTA: preto no claro */
+  --primary: 0 0% 9%;
   --primary-foreground: 0 0% 100%;
-  --primary-light: 213 100% 97%;
-  /* #eff6ff */
 
   --secondary: 220 14% 96%;
-  /* #f1f3f5 */
-  --secondary-foreground: 222 14% 35%;
+  --secondary-foreground: 222 14% 28%;
 
   --muted: 220 14% 96%;
-  --muted-foreground: 220 10% 35%;
-  /* #7c8494 */
+  --muted-foreground: 220 9% 46%;
 
-  --accent: 221 83% 97%;
-  --accent-foreground: 221 83% 45%;
+  --accent: 220 14% 96%;
+  --accent-foreground: 222 14% 11%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
@@ -43,72 +38,65 @@
   --success-foreground: 0 0% 100%;
 
   --warning: 38 92% 50%;
-  --warning-foreground: 0 0% 100%;
+  --warning-foreground: 0 0% 0%;
 
   --border: 220 13% 91%;
-  /* #e2e6ee */
   --input: 220 13% 91%;
-  --ring: 207 100% 41%;
+  --ring: 0 0% 9%;
 
-  --radius: 0.5rem;
+  --radius: 0.75rem;
 
-  /* Topbar/sidebar surface colors */
   --surface: 0 0% 100%;
-  --surface-border: 220 20% 94%;
-  /* #f0f1f5 */
-  --surface-hover: 220 20% 98%;
-  /* #f8f9fc */
-  --surface-subtle: 220 17% 97%;
-  /* #f3f4f6 */
+  --surface-border: 220 13% 91%;
+  --surface-hover: 220 14% 97%;
+  --surface-subtle: 220 17% 98%;
 }
 
-/* ─── Dark mode tokens ────────────────────────────────── */
 .dark {
-  --background: 240 10% 4%;
-  /* #09090b - pure black/dark zinc */
-  --foreground: 0 0% 98%;
-  /* #fafafa */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
 
-  --card: 240 10% 4%;
-  /* #09090b */
-  --card-foreground: 0 0% 98%;
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
 
-  --popover: 240 10% 4%;
-  --popover-foreground: 0 0% 98%;
+  --card: 0 0% 6.7%;
+  --card-foreground: 0 0% 100%;
 
-  --primary: 207 100% 41%;
-  --primary-foreground: 0 0% 100%;
-  --primary-light: 221 50% 18%;
+  --popover: 0 0% 6.7%;
+  --popover-foreground: 0 0% 100%;
 
-  --secondary: 240 4% 16%;
-  --secondary-foreground: 0 0% 98%;
+  --primary: 0 0% 100%;
+  --primary-foreground: 0 0% 0%;
 
-  --muted: 240 4% 16%;
-  --muted-foreground: 240 5% 80%;
+  --secondary: 0 0% 6.7%;
+  --secondary-foreground: 0 0% 100%;
 
-  --accent: 240 4% 16%;
-  --accent-foreground: 0 0% 98%;
+  --muted: 0 0% 6.7%;
+  --muted-foreground: 240 5% 65%;
 
-  --destructive: 0 72% 51%;
+  --accent: 0 0% 10%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
 
-  --success: 142 60% 42%;
+  --success: 142 71% 45%;
   --success-foreground: 0 0% 100%;
 
-  --warning: 38 85% 48%;
-  --warning-foreground: 0 0% 100%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 0%;
 
-  --border: 240 4% 16%;
-  --input: 240 4% 16%;
-  --ring: 207 100% 41%;
+  --border: 0 0% 13.3%;
+  --input: 0 0% 20%;
+  --ring: 0 0% 20%;
 
-  --surface: 240 10% 4%;
-  --surface-border: 240 4% 16%;
-  --surface-hover: 240 4% 12%;
-  --surface-subtle: 240 5% 10%;
+  --radius: 0.75rem;
+
+  --surface: 0 0% 0%;
+  --surface-border: 0 0% 13.3%;
+  --surface-hover: 0 0% 10%;
+  --surface-subtle: 0 0% 3.9%;
 }
 
-/* ─── Base ───────────────────────────────────────────── */
 @layer base {
   * {
     border-color: hsl(var(--border));
@@ -232,7 +220,7 @@
 .section-label {
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: hsl(var(--muted-foreground));
 }
@@ -253,7 +241,7 @@
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: hsl(var(--muted-foreground) / 0.4);
+  background-color: hsl(var(--muted-foreground) / 0.45);
 }
 
 /* Tamanho de texto */
@@ -267,18 +255,18 @@ html.font-xlarge {
 
 /* Alto contraste */
 html.high-contrast {
-  --foreground: #000000;
-  --background: #ffffff;
+  --foreground: 0 0% 0%;
+  --background: 0 0% 100%;
   filter: contrast(1.25);
 }
 
 html.dark.high-contrast {
-  --foreground: #ffffff;
-  --background: #000000;
+  --foreground: 0 0% 100%;
+  --background: 0 0% 0%;
   filter: contrast(1.3) brightness(1.1);
 }
 
-/* Checkout (paridade CRM / Compliance — campos escuros) */
+/* Checkout / formulários escuros (paridade CRM) */
 .checkout-field,
 .checkout-input {
   @apply h-11 w-full min-w-0 rounded-md border border-[#333333] bg-[#111111] px-3 text-base text-white outline-none transition-colors placeholder:text-[#666666] md:text-sm;

@@ -50,10 +50,10 @@ interface Contrato {
 }
 
 const statusContratoVariant: Record<string, string> = {
-  TRIAL: "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 border-blue-200 dark:border-blue-800",
-  ATIVO: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 border-green-200 dark:border-green-800",
-  SUSPENSO: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800",
-  CANCELADO: "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 border-red-200 dark:border-red-800",
+  TRIAL: "border-border bg-muted text-foreground",
+  ATIVO: "border-border bg-muted text-foreground",
+  SUSPENSO: "border-border bg-muted text-muted-foreground",
+  CANCELADO: "border-destructive/40 bg-destructive/10 text-destructive",
 };
 
 export default function ClienteDetalhesPage() {

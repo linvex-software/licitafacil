@@ -15,24 +15,24 @@ interface PredictionBadgeProps {
 const RECOMENDACAO_CONFIG = {
   PARTICIPAR: {
     label: "Participar",
-    color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
-    border: "border-emerald-200 dark:border-emerald-800",
+    color: "bg-muted text-foreground",
+    border: "border-border",
     icon: TrendingUp,
-    iconColor: "text-emerald-600 dark:text-emerald-400",
+    iconColor: "text-foreground",
   },
   ANALISAR: {
     label: "Analisar",
-    color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
-    border: "border-amber-200 dark:border-amber-800",
+    color: "bg-muted text-muted-foreground",
+    border: "border-border",
     icon: Minus,
-    iconColor: "text-amber-600 dark:text-amber-400",
+    iconColor: "text-muted-foreground",
   },
   DESCARTAR: {
     label: "Descartar",
-    color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-    border: "border-red-200 dark:border-red-800",
+    color: "bg-destructive/10 text-destructive",
+    border: "border-destructive/30",
     icon: TrendingDown,
-    iconColor: "text-red-600 dark:text-red-400",
+    iconColor: "text-destructive",
   },
 } as const;
 
@@ -52,7 +52,7 @@ export function PredictionBadge({
       <span
         className={cn(
           "inline-flex items-center gap-1 rounded-full border px-2 py-0.5",
-          "bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700",
+          "border-border bg-muted text-muted-foreground",
           size === "md" && "px-3 py-1",
           className,
         )}
@@ -68,7 +68,7 @@ export function PredictionBadge({
       <span
         className={cn(
           "inline-flex items-center gap-1 rounded-full border px-2 py-0.5",
-          "bg-gray-100 text-gray-400 border-gray-200 dark:bg-gray-800 dark:text-gray-500 dark:border-gray-700",
+          "border-border bg-muted text-muted-foreground",
           size === "md" && "px-3 py-1",
           className,
         )}
@@ -113,13 +113,13 @@ export function PredictionScoreBar({
   className?: string;
 }) {
   const getColor = (s: number) => {
-    if (s >= 70) return "bg-emerald-500";
-    if (s >= 40) return "bg-amber-500";
-    return "bg-red-500";
+    if (s >= 70) return "bg-foreground";
+    if (s >= 40) return "bg-muted-foreground";
+    return "bg-destructive";
   };
 
   return (
-    <div className={cn("w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2", className)}>
+    <div className={cn("h-2 w-full rounded-full bg-muted", className)}>
       <div
         className={cn("h-2 rounded-full transition-all duration-500", getColor(score))}
         style={{ width: `${score}%` }}

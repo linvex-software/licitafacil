@@ -31,9 +31,9 @@ function alertHref(alert: Alert): string | null {
 }
 
 function severityDot(severity: string) {
-  if (severity === "CRITICAL") return "bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.5)]";
-  if (severity === "WARNING") return "bg-amber-500";
-  return "bg-blue-500";
+  if (severity === "CRITICAL") return "bg-destructive shadow-[0_0_6px_hsl(var(--destructive)/0.35)]";
+  if (severity === "WARNING") return "bg-muted-foreground";
+  return "bg-foreground";
 }
 
 export function AlertsDropdown() {
@@ -52,7 +52,7 @@ export function AlertsDropdown() {
         <Button variant="ghost" size="icon" className="relative hover:bg-gray-100 dark:hover:bg-gray-800 h-10 w-10">
           <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           {unseenCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 bg-red-500 text-[10px] font-bold text-white rounded-full flex items-center justify-center border-2 border-white dark:border-gray-900">
+            <span className="absolute right-1.5 top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-background bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
               {unseenCount > 99 ? "99+" : unseenCount}
             </span>
           )}

@@ -103,38 +103,38 @@ export default function PerfilPage() {
 
                 {/* Header */}
                 <div>
-                    <h1 className="text-2xl font-bold flex items-center gap-2 text-gray-900 dark:text-gray-100">
-                        <User className="w-6 h-6 text-blue-600" />
+                    <h1 className="flex items-center gap-2 text-2xl font-bold text-foreground">
+                        <User className="h-6 w-6 text-muted-foreground" />
                         Meu Perfil
                     </h1>
-                    <p className="text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="mt-1 text-muted-foreground">
                         Gerencie suas informações pessoais e preferências de acessibilidade.
                     </p>
                 </div>
 
                 {/* Card: Informações da conta (somente leitura) */}
-                <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6">
-                    <div className="flex items-center gap-3 mb-5">
-                        <div className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-white text-xl font-bold select-none">
+                <div className="rounded-xl border border-border bg-card p-6 text-card-foreground">
+                    <div className="mb-5 flex items-center gap-3">
+                        <div className="flex h-14 w-14 select-none items-center justify-center rounded-full bg-muted text-xl font-bold text-foreground ring-1 ring-border">
                             {user?.name?.substring(0, 2).toUpperCase() || "??"}
                         </div>
                         <div>
-                            <p className="font-semibold text-slate-900 dark:text-slate-100 text-lg">{user?.name}</p>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">{user?.email}</p>
+                            <p className="text-lg font-semibold">{user?.name}</p>
+                            <p className="text-sm text-muted-foreground">{user?.email}</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 py-2 px-3 rounded-lg bg-slate-50 dark:bg-slate-800 w-fit">
-                        <ShieldCheck className="w-4 h-4 text-blue-500" />
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <div className="flex w-fit items-center gap-2 rounded-lg bg-muted px-3 py-2 ring-1 ring-border">
+                        <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium text-foreground">
                             {ROLE_LABELS[user?.role || ""] || user?.role}
                         </span>
                     </div>
                 </div>
 
                 {/* Card: Editar nome */}
-                <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6">
-                    <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                        <User className="w-4 h-4" /> Editar nome
+                <div className="rounded-xl border border-border bg-card p-6 text-card-foreground">
+                    <h2 className="mb-4 flex items-center gap-2 text-base font-semibold">
+                        <User className="h-4 w-4" /> Editar nome
                     </h2>
                     <Form {...nomeForm}>
                         <form onSubmit={nomeForm.handleSubmit(onSaveNome)} className="flex gap-3">
@@ -165,9 +165,9 @@ export default function PerfilPage() {
                 </div>
 
                 {/* Card: Alterar senha */}
-                <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6">
-                    <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                        <Lock className="w-4 h-4" /> Alterar senha
+                <div className="rounded-xl border border-border bg-card p-6 text-card-foreground">
+                    <h2 className="mb-4 flex items-center gap-2 text-base font-semibold">
+                        <Lock className="h-4 w-4" /> Alterar senha
                     </h2>
                     <Form {...senhaForm}>
                         <form onSubmit={senhaForm.handleSubmit(onSaveSenha)} className="space-y-4">
@@ -188,7 +188,7 @@ export default function PerfilPage() {
                                         <button
                                             type="button"
                                             onClick={() => setShowSenhaAtual(p => !p)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                             aria-label={showSenhaAtual ? "Ocultar senha atual" : "Mostrar senha atual"}
                                         >
                                             {showSenhaAtual ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -215,7 +215,7 @@ export default function PerfilPage() {
                                         <button
                                             type="button"
                                             onClick={() => setShowNovaSenha(p => !p)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                             aria-label={showNovaSenha ? "Ocultar nova senha" : "Mostrar nova senha"}
                                         >
                                             {showNovaSenha ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -242,7 +242,7 @@ export default function PerfilPage() {
                                         <button
                                             type="button"
                                             onClick={() => setShowConfirmar(p => !p)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                             aria-label={showConfirmar ? "Ocultar confirmação de senha" : "Mostrar confirmação de senha"}
                                         >
                                             {showConfirmar ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

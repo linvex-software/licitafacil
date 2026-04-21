@@ -38,14 +38,14 @@ export function FunilColumn({ id, title, bids, onMove, onOpenDetails, titleColor
                 <h3 className={`font-bold text-sm ${titleColor}`}>
                     {title}
                 </h3>
-                <span className="bg-gray-300 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 text-[10px] font-bold px-1.5 py-0.5 rounded-md leading-none">
+                <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-bold leading-none text-muted-foreground">
                     {bids.length}
                 </span>
             </div>
 
             <div
                 ref={setNodeRef}
-                className={`flex-1 bg-gray-100/50 dark:bg-zinc-800/50 rounded-lg p-2 overflow-y-auto transition-colors ${isOver ? "bg-blue-50/50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800" : "border border-transparent"
+                className={`flex-1 rounded-lg bg-muted/50 p-2 overflow-y-auto transition-colors ${isOver ? "border border-border bg-accent/40" : "border border-transparent"
                     }`}
             >
                 <SortableContext items={bids.map(b => b.id)} strategy={verticalListSortingStrategy}>

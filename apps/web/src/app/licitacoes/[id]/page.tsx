@@ -91,8 +91,8 @@ function getStatusBadge(licitacao: Bid) {
   if (licitacao.operationalState === "SUSPENSA") {
     return (
       <div className="flex items-center gap-2">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-100 px-3 py-1 text-xs font-semibold text-red-600 dark:border-red-800/40 dark:bg-red-900/20 dark:text-red-400">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-destructive/25 bg-destructive/10 px-3 py-1 text-xs font-semibold text-destructive">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-destructive" />
           Suspensa — Recurso em análise
         </span>
         <span className="text-xs text-gray-400">Efeito suspensivo ativo</span>
@@ -102,8 +102,8 @@ function getStatusBadge(licitacao: Bid) {
 
   if (licitacao.isVencedorProvisorio && !licitacao.dataHomologacao) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-400">
-        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-xs font-semibold text-foreground">
+        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
         Vencedor Provisório — Aguarda homologação
       </span>
     );
@@ -111,8 +111,8 @@ function getStatusBadge(licitacao: Bid) {
 
   if (licitacao.dataHomologacao) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:border-green-800/40 dark:bg-green-900/20 dark:text-green-400">
-        <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-xs font-semibold text-foreground">
+        <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
         Homologado
       </span>
     );
@@ -303,7 +303,7 @@ export default function LicitacaoDetailPage() {
       <Layout>
         <div className="flex flex-col items-center justify-center min-h-[50vh]">
           <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Licitação não encontrada</h2>
-          <Link href="/licitacoes" className="mt-4 text-emerald-600 dark:text-emerald-400 hover:underline">
+          <Link href="/licitacoes" className="mt-4 text-foreground underline-offset-4 hover:underline">
             Voltar para lista
           </Link>
         </div>
@@ -394,9 +394,9 @@ export default function LicitacaoDetailPage() {
 
         {proximoPregao && (
           <div className="mb-5">
-            <Card className="border-amber-200 bg-amber-50/70 shadow-sm dark:border-amber-800/40 dark:bg-amber-950/30">
+            <Card className="border-border bg-muted/50 shadow-sm">
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-heading flex items-center gap-2 text-amber-900 dark:text-amber-200">
+                <CardTitle className="flex items-center gap-2 font-heading text-lg text-foreground">
                   <Swords className="w-5 h-5" />
                   Próxima disputa
                 </CardTitle>
@@ -418,7 +418,7 @@ export default function LicitacaoDetailPage() {
                       })}
                     </span>
                     {countdown && (
-                      <span className="rounded-full border border-amber-200 bg-white/60 px-2.5 py-0.5 font-semibold text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
+                      <span className="rounded-full border border-border bg-card px-2.5 py-0.5 font-semibold text-foreground">
                         {countdown}
                       </span>
                     )}
@@ -428,7 +428,7 @@ export default function LicitacaoDetailPage() {
                   href={proximoPregao.urlSalaDisputa || proximoPregao.linkPncp || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 transition-colors"
+                  className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 dark:hover:bg-[#e0e0e0]"
                 >
                   Abrir sala
                   <ChevronRight className="ml-1.5 h-4 w-4" />
@@ -440,13 +440,13 @@ export default function LicitacaoDetailPage() {
 
         {licitacao.janelaIntencaoRecursoTermino &&
           new Date() < new Date(licitacao.janelaIntencaoRecursoTermino) && (
-            <div className="mb-4 flex items-start gap-3 rounded-xl border border-orange-200 bg-orange-50 p-4 dark:border-orange-800/40 dark:bg-orange-900/10">
-              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-orange-500" />
+            <div className="mb-4 flex items-start gap-3 rounded-xl border border-border bg-muted p-4">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
               <div>
-                <p className="text-sm font-semibold text-orange-700 dark:text-orange-400">
+                <p className="text-sm font-semibold text-foreground">
                   Janela de intenção de recurso aberta
                 </p>
-                <p className="mt-1 text-xs text-orange-600 dark:text-orange-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   O resultado ainda é provisório. Encerra em{" "}
                   <span className="font-mono font-bold">
                     {new Date(licitacao.janelaIntencaoRecursoTermino).toLocaleTimeString("pt-BR", {
@@ -510,7 +510,7 @@ export default function LicitacaoDetailPage() {
           <Card className="shadow-sm border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-transparent">
             <CardHeader>
               <CardTitle className="text-lg font-heading flex items-center gap-2">
-                <FileText className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                <FileText className="h-5 w-5 text-muted-foreground" />
                 Documentos
               </CardTitle>
             </CardHeader>
@@ -519,12 +519,12 @@ export default function LicitacaoDetailPage() {
                 Edite, envie, baixe e acompanhe os documentos desta licitação.
               </p>
               <Link href={`/licitacoes/${id}/documentos`}>
-                <Button variant="outline" className="mt-4 w-full justify-between group border-gray-200 dark:border-gray-700 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/50">
+                <Button variant="outline" className="group mt-4 w-full justify-between">
                   <span className="flex items-center gap-2">
-                    <Download className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400" />
+                    <Download className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
                     Ver e baixar documentos
                   </span>
-                  <ChevronRight className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-emerald-600 dark:group-hover:text-emerald-400" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
                 </Button>
               </Link>
             </CardContent>
@@ -542,7 +542,7 @@ export default function LicitacaoDetailPage() {
           </div>
         ) : !temAnaliseEditalValida ? (
           <div className="mb-6 rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center dark:border-gray-700 dark:bg-gray-900/30">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-amber-100 bg-amber-50">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-border bg-muted">
               <span className="text-xl">🔒</span>
             </div>
             <h3 className="mb-1 text-sm font-semibold text-gray-800 dark:text-gray-100">
@@ -557,7 +557,7 @@ export default function LicitacaoDetailPage() {
                 onAplicar={handleAplicarAnalise}
                 triggerLabel="Analisar Edital primeiro →"
                 triggerVariant="default"
-                triggerClassName="rounded-lg bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-gray-800"
+                triggerClassName="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-none hover:opacity-90 dark:hover:bg-[#e0e0e0]"
               />
             </div>
           </div>
@@ -567,7 +567,7 @@ export default function LicitacaoDetailPage() {
               <div>
                 <h3 className="font-heading text-base font-semibold text-gray-900 dark:text-gray-100">
                   Análise Preditiva de Sucesso
-                  <span className="ml-2 text-xs font-medium px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+                  <span className="ml-2 rounded border border-border bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
                     Beta
                   </span>
                 </h3>
@@ -579,7 +579,7 @@ export default function LicitacaoDetailPage() {
                 {isAnalyzing ? "Analisando..." : (
                   <>
                     Analisar com IA
-                    <span className="ml-2 text-xs font-medium px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+                    <span className="ml-2 rounded border border-border bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
                       Beta
                     </span>
                   </>
@@ -595,16 +595,16 @@ export default function LicitacaoDetailPage() {
             <Link
               key={action.href}
               href={action.href}
-              className="group flex flex-col gap-2 rounded-xl border border-gray-100 bg-white p-4 transition-all duration-150 hover:border-[#0078D1]/30 hover:bg-blue-50/30 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-[#0078D1]/30 dark:hover:bg-[#0078D1]/5"
+              className="group flex flex-col gap-2 rounded-xl border border-border bg-card p-4 text-card-foreground transition-colors hover:border-muted-foreground/40 hover:bg-accent/60"
             >
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-50 transition-colors group-hover:bg-[#0078D1]/10 dark:bg-gray-800">
-                <action.icon className="h-3.5 w-3.5 text-gray-400 transition-colors group-hover:text-[#0078D1]" />
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-colors group-hover:text-foreground">
+                <action.icon className="h-3.5 w-3.5" />
               </div>
               <div>
-                <p className="text-xs font-semibold leading-tight text-gray-700 transition-colors group-hover:text-[#0078D1] dark:text-gray-300">
+                <p className="text-xs font-semibold leading-tight text-foreground">
                   {action.label}
                 </p>
-                <p className="mt-0.5 line-clamp-2 text-sm leading-relaxed text-gray-400 dark:text-gray-500">
+                <p className="mt-0.5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
                   {action.description}
                 </p>
               </div>
@@ -621,17 +621,17 @@ export default function LicitacaoDetailPage() {
 
         {/* Alerta de Risco */}
         {licitacao.operationalState === 'EM_RISCO' && (
-          <Card id="risco-operacional" className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 mb-8">
+          <Card id="risco-operacional" className="mb-8 border-destructive/25 bg-destructive/10">
             <CardContent className="pt-6">
               <div className="flex gap-4">
-                <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400 shrink-0" />
+                <AlertTriangle className="h-6 w-6 shrink-0 text-destructive" />
                 <div>
-                  <h4 className="font-bold text-red-900 dark:text-red-300">Motivo do Risco</h4>
-                  <p className="text-sm text-red-800 dark:text-red-400 mt-1">
+                  <h4 className="font-bold text-destructive">Motivo do Risco</h4>
+                  <p className="mt-1 text-sm text-foreground/90">
                     {licitacao.riskReason || "Esta licitação foi sinalizada com problemas operacionais ou pendências críticas no checklist."}
                   </p>
                   {licitacao.lastRiskAnalysisAt && (
-                    <p className="text-xs text-red-600 dark:text-red-500 mt-2 font-medium">
+                    <p className="mt-2 text-xs font-medium text-destructive/90">
                       Análise realizada em: {format(new Date(licitacao.lastRiskAnalysisAt), "dd/MM/yyyy HH:mm")}
                     </p>
                   )}

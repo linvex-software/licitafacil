@@ -95,8 +95,8 @@ function NavDropdown({ item, pathname }: { item: NavItem; pathname: string }) {
             <button className={cn(
                 "flex items-center gap-1 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-150",
                 isActive
-                    ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-300"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+                    ? "bg-accent text-foreground dark:bg-white/10 dark:text-white"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
             )}>
                 {item.label}
                 <ChevronDown className={cn("w-3 h-3 transition-transform duration-150", open ? "rotate-180" : "")} />
@@ -104,11 +104,11 @@ function NavDropdown({ item, pathname }: { item: NavItem; pathname: string }) {
 
             {open && item.subItems && (
                 <div
-                    className="absolute top-full left-0 mt-1.5 z-[99] bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 py-2 min-w-[200px]"
+                    className="absolute left-0 top-full z-[99] mt-1.5 min-w-[200px] rounded-xl border border-border bg-popover py-2 text-popover-foreground shadow-none"
                     onMouseEnter={show}
                     onMouseLeave={hide}
                 >
-                    <p className="section-label px-4 pb-2 mb-1 border-b border-gray-50 dark:border-gray-800">{item.label}</p>
+                    <p className="section-label mb-1 border-b border-border px-4 pb-2">{item.label}</p>
                     {item.subItems.map((sub) => {
                         const subActive = pathname === sub.href;
                         const Icon = sub.icon;
@@ -117,12 +117,12 @@ function NavDropdown({ item, pathname }: { item: NavItem; pathname: string }) {
                                 className={cn(
                                     "flex items-center gap-2.5 mx-1 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors",
                                     subActive
-                                        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-300"
-                                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+                                        ? "bg-accent text-foreground dark:bg-white/10 dark:text-white"
+                                        : "text-muted-foreground hover:bg-accent hover:text-foreground"
                                 )}
                                 onClick={() => setOpen(false)}
                             >
-                                {Icon && <Icon className={cn("w-3.5 h-3.5 shrink-0", subActive ? "text-primary" : "text-gray-400 dark:text-gray-500")} />}
+                                {Icon && <Icon className={cn("w-3.5 h-3.5 shrink-0", subActive ? "text-foreground dark:text-white" : "text-muted-foreground")} />}
                                 {sub.label}
                             </Link>
                         );
@@ -148,8 +148,8 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
             className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-150",
                 isActive
-                    ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-300"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+                    ? "bg-accent text-foreground dark:bg-white/10 dark:text-white"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
             )}
         >
             {item.label}
@@ -165,7 +165,7 @@ function NavItemEmDesenvolvimento({ item, onOpen }: { item: NavItem; onOpen: () 
             onClick={onOpen}
             className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-150",
-                "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+                "text-muted-foreground hover:bg-accent hover:text-foreground"
             )}
         >
             {item.label}
@@ -190,8 +190,8 @@ function MobileSidebarContent({
     };
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-gray-900">
-            <div className="px-4 py-4 border-b border-gray-100 dark:border-gray-800">
+        <div className="flex h-full flex-col bg-background">
+            <div className="border-b border-border px-4 py-4">
                 <div className="flex items-center gap-3">
                     <Logo size="sm" />
                 </div>
@@ -217,11 +217,11 @@ function MobileSidebarContent({
                                             className={cn(
                                                 "flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-colors",
                                                 isActive || isSubItemActive
-                                                    ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-300"
-                                                    : "text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
+                                                    ? "bg-accent text-foreground dark:bg-white/10 dark:text-white"
+                                                    : "text-muted-foreground hover:bg-accent dark:hover:bg-white/5"
                                             )}
                                         >
-                                            <item.icon className={cn("w-4 h-4 shrink-0", isActive || isSubItemActive ? "text-primary dark:text-primary-300" : "text-gray-400 dark:text-gray-500")} />
+                                            <item.icon className={cn("w-4 h-4 shrink-0", isActive || isSubItemActive ? "text-foreground dark:text-white" : "text-muted-foreground")} />
                                             <span className="flex-1 text-left">{item.label}</span>
                                             <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", isSubmenuOpen ? "rotate-180" : "")} />
                                         </button>
@@ -229,21 +229,21 @@ function MobileSidebarContent({
                                         <button
                                             type="button"
                                             onClick={() => onOpenEmDev()}
-                                            className={cn("flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-colors",
-                                                "text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
+                                            className={cn("flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium transition-colors",
+                                                "text-muted-foreground hover:bg-accent dark:hover:bg-white/5"
                                             )}
                                         >
-                                            <item.icon className="w-4 h-4 shrink-0 text-gray-400 dark:text-gray-500" />
+                                            <item.icon className="h-4 w-4 shrink-0 text-muted-foreground" />
                                             {item.label}
                                         </button>
                                     ) : (
                                         <Link href={item.href}
                                             className={cn("flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-colors",
                                                 isActive
-                                                    ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-300"
-                                                    : "text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
+                                                    ? "bg-accent text-foreground dark:bg-white/10 dark:text-white"
+                                                    : "text-muted-foreground hover:bg-accent dark:hover:bg-white/5"
                                             )}>
-                                            <item.icon className={cn("w-4 h-4 shrink-0", isActive ? "text-primary dark:text-primary-300" : "text-gray-400 dark:text-gray-500")} />
+                                            <item.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-foreground dark:text-white" : "text-muted-foreground")} />
                                             {item.label}
                                         </Link>
                                     )}
@@ -254,8 +254,8 @@ function MobileSidebarContent({
                                                     <Link href={sub.href}
                                                         className={cn("block px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors",
                                                             pathname === sub.href
-                                                                ? "text-primary dark:text-primary-300"
-                                                                : "text-gray-500 hover:text-gray-800 dark:text-gray-500 dark:hover:text-gray-200"
+                                                                ? "text-foreground dark:text-white"
+                                                                : "text-muted-foreground hover:text-foreground dark:hover:text-white"
                                                         )}>
                                                         {sub.label}
                                                     </Link>
@@ -279,26 +279,26 @@ function MobileSidebarContent({
                     <div className="mb-3">
                         <p className="section-label px-2 mb-1">Equipe</p>
                         <Link href="/usuarios"
-                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium text-gray-600 dark:text-gray-400 hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary dark:hover:text-primary-300">
-                            <Users className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                            className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium text-muted-foreground hover:bg-accent hover:text-foreground">
+                            <Users className="h-4 w-4 text-muted-foreground" />
                             Usuários
                         </Link>
                     </div>
                 )}
                 {user?.role === "SUPER_ADMIN" && (
                     <div className="mb-3">
-                        <p className="section-label px-2 mb-1 text-amber-600">Admin</p>
+                        <p className="section-label mb-1 px-2 text-muted-foreground">Admin</p>
                         <Link href="/admin/clientes"
-                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium text-gray-600 dark:text-gray-400 hover:bg-amber-50 dark:hover:bg-amber-950 hover:text-amber-700 dark:hover:text-amber-400">
-                            <ShieldCheck className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                            className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium text-muted-foreground hover:bg-accent hover:text-foreground">
+                            <ShieldCheck className="h-4 w-4 text-muted-foreground" />
                             Gerenciar Clientes
                         </Link>
                     </div>
                 )}
             </nav>
-            <div className="p-3 border-t border-gray-100 dark:border-gray-800">
+            <div className="border-t border-border p-3">
                 <button onClick={logout}
-                    className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-[13px] font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950 transition-colors">
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-[13px] font-medium text-destructive transition-colors hover:bg-destructive/10">
                     <LogOut className="w-4 h-4" /> Sair da conta
                 </button>
             </div>
@@ -324,11 +324,11 @@ export function Layout({ children, fullWidth = false }: {
     const moduleItems = navGroups.find(g => g.group === "Módulos")?.items ?? [];
 
     return (
-        <div className="min-h-screen flex flex-col bg-[#f6f7f9] dark:bg-gray-950">
+        <div className="flex min-h-screen flex-col bg-background">
 
             {/* ── Topbar ─────────────────────────────────────── */}
             <header
-                className="h-14 bg-white dark:bg-gray-900 sticky top-0 z-50 flex items-center px-4 gap-3 border-b border-gray-100 dark:border-gray-800"
+                className="sticky top-0 z-50 flex h-14 items-center gap-3 border-b border-border bg-background px-4"
             >
                 {/* Logo */}
                 <Link href="/" className="flex items-center shrink-0 mr-2 md:mr-4">
@@ -347,7 +347,7 @@ export function Layout({ children, fullWidth = false }: {
                     ))}
 
                     {/* Divider */}
-                    <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1.5" />
+                    <div className="mx-1.5 h-5 w-px bg-border" />
 
                     {/* Module items with dropdowns */}
                     {moduleItems.map(item => (
@@ -377,22 +377,22 @@ export function Layout({ children, fullWidth = false }: {
                 {/* Right side */}
                 <div className="ml-auto flex items-center gap-1 shrink-0">
                     <ThemeToggle />
-                    <div className="hidden md:block h-5 w-px bg-gray-100 dark:bg-gray-800 mx-1" />
+                    <div className="mx-1 hidden h-5 w-px bg-border md:block" />
                     <AlertsDropdown />
-                    <div className="hidden md:block h-5 w-px bg-gray-100 dark:bg-gray-800 mx-1" />
+                    <div className="mx-1 hidden h-5 w-px bg-border md:block" />
 
                     {/* User dropdown */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <button className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <button className="flex items-center gap-2 rounded-xl py-1 pl-1 pr-2 transition-colors hover:bg-accent">
                                 <Avatar className="h-7 w-7">
-                                    <AvatarFallback className="text-[10px] font-bold bg-primary text-white">
+                                    <AvatarFallback className="bg-muted text-[10px] font-bold text-foreground">
                                         {user?.name?.substring(0, 2).toUpperCase() || "US"}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div className="hidden sm:flex flex-col items-start">
-                                    <span className="text-[12px] font-semibold text-gray-800 dark:text-gray-200 leading-none">{user?.name || "Usuário"}</span>
-                                    <span className="text-[10px] text-gray-400 dark:text-gray-500 leading-none mt-0.5">{user?.role || "Acesso"}</span>
+                                    <span className="text-[12px] font-semibold leading-none text-foreground">{user?.name || "Usuário"}</span>
+                                    <span className="mt-0.5 text-[10px] leading-none text-muted-foreground">{user?.role || "Acesso"}</span>
                                 </div>
                             </button>
                         </DropdownMenuTrigger>
@@ -426,7 +426,7 @@ export function Layout({ children, fullWidth = false }: {
                                 Tour do sistema
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={logout} className="text-red-600 focus:text-red-600 rounded-lg">
+                            <DropdownMenuItem onClick={logout} className="rounded-lg text-destructive focus:text-destructive">
                                 <LogOut className="mr-2 h-4 w-4" /> Sair
                             </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -436,7 +436,7 @@ export function Layout({ children, fullWidth = false }: {
                     <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
                         <SheetTrigger asChild>
                             <Button variant="ghost" size="icon" className="lg:hidden">
-                                <Menu className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                                <Menu className="h-5 w-5 text-muted-foreground" />
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" className="p-0 w-[280px] border-0">
@@ -454,7 +454,7 @@ export function Layout({ children, fullWidth = false }: {
 
             {/* Popup "Em desenvolvimento" (ex.: Disputa) */}
             <Dialog open={emDevDialogOpen} onOpenChange={setEmDevDialogOpen}>
-                <DialogContent className="sm:max-w-md bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+                <DialogContent className="sm:max-w-md">
                     <DialogHeader className="text-center space-y-2">
                         <DialogTitle className="text-base font-semibold text-center">Em manutenção</DialogTitle>
                         <DialogDescription className="text-center">

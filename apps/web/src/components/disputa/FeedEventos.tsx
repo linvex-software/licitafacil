@@ -10,17 +10,17 @@ interface FeedEventosProps {
 }
 
 function classNameSeveridade(severidade: EventoAoVivo["severidade"]) {
-  if (severidade === "ok") return "text-teal-400";
-  if (severidade === "warn") return "text-amber-400";
-  if (severidade === "danger") return "text-red-400";
-  return "text-blue-300";
+  if (severidade === "ok") return "text-foreground";
+  if (severidade === "warn") return "text-muted-foreground";
+  if (severidade === "danger") return "text-destructive";
+  return "text-muted-foreground";
 }
 
 function classNameTipo(evento: EventoAoVivo) {
-  if (evento.tipo === "LANCE_CONFIRMADO") return "text-teal-400";
-  if (evento.tipo === "POSICAO_PERDIDA") return "text-amber-400";
-  if (evento.tipo === "ITEM_ENCERRADO") return "text-slate-400";
-  if (evento.tipo === "MENSAGEM") return "text-blue-300";
+  if (evento.tipo === "LANCE_CONFIRMADO") return "text-foreground";
+  if (evento.tipo === "POSICAO_PERDIDA") return "text-muted-foreground";
+  if (evento.tipo === "ITEM_ENCERRADO") return "text-muted-foreground";
+  if (evento.tipo === "MENSAGEM") return "text-muted-foreground";
   return classNameSeveridade(evento.severidade);
 }
 

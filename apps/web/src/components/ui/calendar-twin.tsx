@@ -17,7 +17,7 @@ export interface CalendarEvent {
     id: string;
     date: Date;
     title: string;
-    color?: "red" | "amber" | "blue";
+    color?: "red" | "amber" | "blue"; // legado: mapeado para tons neutros/destrutivos
     data?: unknown;
 }
 
@@ -33,15 +33,15 @@ interface CalendarTwinProps {
 const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 const EVENT_COLOR_MAP = {
-    red: "bg-red-500 text-white",
-    amber: "bg-amber-400 text-white",
-    blue: "bg-blue-500 text-white",
+    red: "bg-destructive text-destructive-foreground",
+    amber: "bg-muted text-foreground",
+    blue: "bg-foreground text-background",
 };
 
 const EVENT_BADGE_MAP = {
-    red: "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400",
-    amber: "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400",
-    blue: "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400",
+    red: "bg-destructive/10 text-destructive",
+    amber: "bg-muted text-muted-foreground",
+    blue: "bg-muted text-foreground",
 };
 
 export function CalendarTwin({
@@ -117,16 +117,16 @@ export function CalendarTwin({
                                 className={cn(
                                     "h-14 flex flex-col items-start px-1 py-0.5 rounded-lg transition-colors border",
                                     isHoje
-                                        ? "border-blue-400/50 bg-blue-50/80 dark:bg-blue-950/30 dark:border-blue-700/50"
-                                        : "border-transparent hover:bg-slate-100/70 dark:hover:bg-slate-800/50",
+                                        ? "border-border bg-accent"
+                                        : "border-transparent hover:bg-accent/50",
                                 )}
                             >
                                 <span
                                     className={cn(
                                         "text-xs font-medium self-end mb-0.5",
                                         isHoje
-                                            ? "text-blue-600 dark:text-blue-400 font-bold"
-                                            : "text-slate-600 dark:text-slate-400"
+                                            ? "font-bold text-foreground"
+                                            : "text-muted-foreground"
                                     )}
                                 >
                                     {day.getDate()}
@@ -148,7 +148,7 @@ export function CalendarTwin({
                                     {extras > 0 && (
                                         <button
                                             onClick={() => setDiaDialog({ date: day, events: dayEvents })}
-                                            className="text-[10px] text-blue-500 dark:text-blue-400 pl-1 text-left hover:underline font-medium"
+                                            className="pl-1 text-left text-[10px] font-medium text-muted-foreground hover:text-foreground hover:underline"
                                         >
                                             +{extras} mais
                                         </button>
@@ -185,8 +185,8 @@ export function CalendarTwin({
                             className={cn(
                                 "h-10 rounded-lg text-sm font-medium transition-colors",
                                 y === currentYear
-                                    ? "bg-blue-500 text-white"
-                                    : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
                             )}
                         >
                             {y}
@@ -201,42 +201,42 @@ export function CalendarTwin({
         <>
             <div
                 className={cn(
-                    "rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm",
+                    "rounded-xl border border-border bg-card shadow-sm",
                     className
                 )}
             >
                 {/* Header de navegação — apenas setas */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800">
-                    <Button variant="ghost" size="icon" onClick={goPrev} className="h-8 w-8 text-slate-500">
+                <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                    <Button variant="ghost" size="icon" onClick={goPrev} className="h-8 w-8 text-muted-foreground">
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
 
                     <button
                         onClick={() => setView(view === "month" ? "year" : "month")}
-                        className="text-sm font-semibold text-slate-800 dark:text-slate-100 capitalize hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                        className="text-sm font-semibold capitalize text-foreground transition-colors hover:text-muted-foreground"
                     >
                         {view === "year" ? `${currentMonth.getFullYear()}` : null}
                     </button>
 
-                    <Button variant="ghost" size="icon" onClick={goNext} className="h-8 w-8 text-slate-500">
+                    <Button variant="ghost" size="icon" onClick={goNext} className="h-8 w-8 text-muted-foreground">
                         <ChevronRight className="h-4 w-4" />
                     </Button>
                 </div>
 
                 {/* Legenda de cores */}
                 {view === "month" && (
-                    <div className="flex items-center gap-4 px-4 py-2 border-b border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center gap-4 border-b border-border px-4 py-2">
                         <div className="flex items-center gap-1.5">
-                            <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" />
-                            <span className="text-xs text-slate-500 dark:text-slate-400">Urgente (≤3d)</span>
+                            <span className="inline-block h-2.5 w-2.5 rounded-full bg-destructive" />
+                            <span className="text-xs text-muted-foreground">Urgente (≤3d)</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" />
-                            <span className="text-xs text-slate-500 dark:text-slate-400">Atenção (≤7d)</span>
+                            <span className="inline-block h-2.5 w-2.5 rounded-full bg-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">Atenção (≤7d)</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                            <span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block" />
-                            <span className="text-xs text-slate-500 dark:text-slate-400">Normal</span>
+                            <span className="inline-block h-2.5 w-2.5 rounded-full bg-foreground" />
+                            <span className="text-xs text-muted-foreground">Normal</span>
                         </div>
                     </div>
                 )}
@@ -246,7 +246,7 @@ export function CalendarTwin({
                     {view === "month" ? (
                         <div className="flex gap-8">
                             <div className="flex-1">{renderMonth(currentMonth)}</div>
-                            <div className="hidden md:block w-px bg-slate-100 dark:bg-slate-800" />
+                            <div className="hidden h-auto w-px bg-border md:block" />
                             <div className="hidden md:block flex-1">{renderMonth(addMonths(currentMonth, 1))}</div>
                         </div>
                     ) : (
@@ -261,12 +261,12 @@ export function CalendarTwin({
                     <DialogContent className="max-w-md">
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2 capitalize">
-                                <Clock className="w-4 h-4 text-blue-500" />
+                                <Clock className="h-4 w-4 text-muted-foreground" />
                                 {format(diaDialog.date, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                             </DialogTitle>
                         </DialogHeader>
 
-                        <p className="text-xs text-slate-500 dark:text-slate-400 -mt-2">
+                        <p className="-mt-2 text-xs text-muted-foreground">
                             {diaDialog.events.length} prazo{diaDialog.events.length !== 1 ? "s" : ""} neste dia
                         </p>
 

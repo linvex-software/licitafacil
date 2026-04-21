@@ -91,7 +91,7 @@ export function SalvarBuscaModal({
           <div className="bg-gray-50 p-3 rounded text-xs text-gray-600 space-y-0.5">
             <p className="flex justify-between items-center mb-1">
               <strong>Filtros salvos:</strong>
-              <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">
+              <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
                 {totalResultados} {totalResultados === 1 ? 'resultado atual' : 'resultados atuais'}
               </span>
             </p>

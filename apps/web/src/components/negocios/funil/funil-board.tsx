@@ -33,10 +33,10 @@ interface FunilBoardProps {
 
 const COLUMNS = [
     { id: "ANALISANDO", title: "Analisando", color: "text-gray-700 dark:text-gray-300" },
-    { id: "PARTICIPANDO", title: "Participando", color: "text-blue-700 dark:text-blue-400" },
-    { id: "AGUARDANDO_RESULTADO", title: "Aguardando Resultado", color: "text-orange-600 dark:text-orange-400" },
-    { id: "VENCIDA", title: "Vencidas ✅", color: "text-green-700 dark:text-green-400" },
-    { id: "PERDIDA", title: "Perdidas ❌", color: "text-red-700 dark:text-red-400" },
+    { id: "PARTICIPANDO", title: "Participando", color: "text-foreground" },
+    { id: "AGUARDANDO_RESULTADO", title: "Aguardando Resultado", color: "text-muted-foreground" },
+    { id: "VENCIDA", title: "Vencidas ✅", color: "text-foreground" },
+    { id: "PERDIDA", title: "Perdidas ❌", color: "text-destructive" },
 ];
 
 export function FunilBoard({ initialBids, onOpenDetails }: FunilBoardProps) {

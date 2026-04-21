@@ -360,11 +360,11 @@ export default function AnaliseConcorrentesPage() {
                       setCnpjErro(null);
                     }}
                     onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
-                    className={`mt-1 ${cnpjErro ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                    className={`mt-1 ${cnpjErro ? "border-destructive focus-visible:ring-destructive" : ""}`}
                   />
                   {cnpjErro ? (
                     <div className="mt-1 space-y-0.5">
-                      <p className="text-xs text-red-500">{cnpjErro}</p>
+                      <p className="text-xs text-destructive">{cnpjErro}</p>
                       <p className="text-xs text-gray-400 dark:text-gray-500">
                         Dica: use o CNPJ completo com 14 dígitos. Ex: 00.394.544/0001-85
                       </p>
@@ -396,12 +396,12 @@ export default function AnaliseConcorrentesPage() {
 
           {/* Erro da API */}
           {erro && tipoErro === "pncp_instavel" && (
-            <Alert className="border-yellow-400 bg-yellow-50 dark:bg-yellow-950/30 dark:border-yellow-700">
-              <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
-              <AlertTitle className="text-yellow-800 dark:text-yellow-400">
+            <Alert className="border-border bg-muted">
+              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+              <AlertTitle className="text-foreground">
                 Serviço instável
               </AlertTitle>
-              <AlertDescription className="text-yellow-700 dark:text-yellow-500">
+              <AlertDescription className="text-muted-foreground">
                 O serviço do PNCP está instável no momento. Os dados podem estar
                 desatualizados ou indisponíveis. Tente novamente em alguns minutos.
               </AlertDescription>
@@ -409,7 +409,7 @@ export default function AnaliseConcorrentesPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-yellow-500 text-yellow-700 hover:bg-yellow-100 dark:text-yellow-400 dark:border-yellow-700 dark:hover:bg-yellow-950/50"
+                  className="border-border"
                   onClick={() => executarBusca(ultimoCnpjBuscado)}
                   disabled={loading}
                 >
@@ -427,7 +427,7 @@ export default function AnaliseConcorrentesPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-red-400 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
+                  className="border-destructive/40 text-destructive hover:bg-destructive/10"
                   onClick={() => executarBusca(ultimoCnpjBuscado)}
                   disabled={loading}
                 >
@@ -534,7 +534,7 @@ export default function AnaliseConcorrentesPage() {
                           />
                           <Bar
                             dataKey="contratos"
-                            fill="#3b82f6"
+                            fill="#404040"
                             radius={[4, 4, 0, 0]}
                           />
                         </BarChart>

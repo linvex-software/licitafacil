@@ -154,7 +154,7 @@ export function DocumentsList({ bidId, onError, onUploadRequest: _onUploadReques
       <Card className="shadow-sm border-slate-200">
         <CardContent className="py-16">
           <div className="flex flex-col items-center justify-center gap-3 text-slate-500">
-            <div className="w-8 h-8 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-foreground" />
             <span>Carregando documentos...</span>
           </div>
         </CardContent>
@@ -177,8 +177,7 @@ export function DocumentsList({ bidId, onError, onUploadRequest: _onUploadReques
                   setSearchQuery(e.target.value);
                   setPage(1);
                 }}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100
-                  focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring"
               />
             </div>
             <div className="sm:w-48">
@@ -188,8 +187,7 @@ export function DocumentsList({ bidId, onError, onUploadRequest: _onUploadReques
                   setSelectedCategory(e.target.value);
                   setPage(1);
                 }}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100
-                  focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-foreground focus:border-ring focus:ring-2 focus:ring-ring"
               >
                 <option value="">Todas as categorias</option>
                 {Object.entries(DocumentCategory).map(([key, value]) => (
@@ -246,7 +244,7 @@ export function DocumentsList({ bidId, onError, onUploadRequest: _onUploadReques
                             <span>•</span>
                             <Link
                               href={`/licitacoes/${doc.bidId}/documentos`}
-                              className="text-emerald-600 hover:text-emerald-700 font-medium"
+                              className="font-medium text-foreground hover:underline"
                             >
                               Ver na licitação
                             </Link>
@@ -257,7 +255,7 @@ export function DocumentsList({ bidId, onError, onUploadRequest: _onUploadReques
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-shrink-0">
                       {(doc as any).status === "PENDENTE" ? (
                         <>
-                          <Badge variant="outline" className="border-orange-500 text-orange-600 dark:border-orange-400 dark:text-orange-400 mr-2">
+                          <Badge variant="outline" className="mr-2 border-border text-muted-foreground">
                             Pendente
                           </Badge>
                           <>
@@ -284,7 +282,7 @@ export function DocumentsList({ bidId, onError, onUploadRequest: _onUploadReques
                       ) : (
                         <button
                           onClick={() => void handleOpenFile(doc)}
-                          className="px-3 py-1.5 text-sm bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 rounded-lg font-medium transition-colors"
+                          className="rounded-lg bg-muted px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-accent"
                         >
                           Abrir
                         </button>
@@ -305,7 +303,7 @@ export function DocumentsList({ bidId, onError, onUploadRequest: _onUploadReques
                       <button
                         onClick={() => handleDelete(doc.id)}
                         disabled={isDeleting === doc.id}
-                        className="px-3 py-1.5 text-sm bg-red-50 dark:bg-red-950/50 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-700 dark:text-red-400 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="rounded-lg border border-destructive/25 bg-destructive/10 px-3 py-1.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/15 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {isDeleting === doc.id ? "Excluindo..." : "Excluir"}
                       </button>

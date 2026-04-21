@@ -184,7 +184,7 @@ export default function DiariosPage() {
                         <Card>
                             <CardHeader className="border-b border-gray-100 dark:border-zinc-800 pb-4">
                                 <CardTitle className="text-[16px] flex items-center gap-2">
-                                    <Search className="w-4 h-4 text-blue-500" />
+                                    <Search className="h-4 w-4 text-muted-foreground" />
                                     Filtrar Publicações
                                 </CardTitle>
                             </CardHeader>
@@ -240,7 +240,7 @@ export default function DiariosPage() {
                                         <Button
                                             onClick={handleBuscar}
                                             disabled={buscando}
-                                            className="bg-blue-600 hover:bg-blue-700 text-white min-w-[140px]"
+                                            className="min-w-[140px] bg-primary text-primary-foreground shadow-none hover:opacity-90 dark:hover:bg-[#e0e0e0]"
                                         >
                                             {buscando ? (
                                                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Buscando...</>
@@ -266,7 +266,7 @@ export default function DiariosPage() {
                                     <Button
                                         onClick={handleImportar}
                                         disabled={selecionadas.size === 0 || importando}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
+                                        className="gap-2 bg-primary text-primary-foreground shadow-none hover:opacity-90 dark:hover:bg-[#e0e0e0]"
                                     >
                                         {importando ? (
                                             <><Loader2 className="w-4 h-4 animate-spin" /> Importando...</>
@@ -305,11 +305,11 @@ export default function DiariosPage() {
                                                         <p className="font-medium text-gray-900 dark:text-gray-200">
                                                             {new Date(r.dataPublicacao).toLocaleDateString("pt-BR")}
                                                         </p>
-                                                        {r.modalidadeNome && <Badge variant="secondary" className="mt-1 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-0">{r.modalidadeNome}</Badge>}
+                                                        {r.modalidadeNome && <Badge variant="secondary" className="mt-1 border-0">{r.modalidadeNome}</Badge>}
                                                     </td>
                                                     <td className="p-4 align-top">
                                                         {r.linkPdf ? (
-                                                            <a href={r.linkPdf} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 font-medium text-[13px] hover:underline">
+                                                            <a href={r.linkPdf} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-foreground hover:underline">
                                                                 Acessar Diário <ExternalLink className="w-3.5 h-3.5" />
                                                             </a>
                                                         ) : (

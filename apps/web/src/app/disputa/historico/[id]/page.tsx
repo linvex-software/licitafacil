@@ -119,7 +119,7 @@ export default function DisputaHistoricoDetalhePage() {
   if (loading || !data) {
     return (
       <Layout>
-        <div className="mx-auto py-10 text-center text-slate-500 text-sm">
+        <div className="mx-auto py-10 text-center text-muted-foreground text-sm">
           Carregando detalhes da disputa...
         </div>
       </Layout>
@@ -147,10 +147,10 @@ export default function DisputaHistoricoDetalhePage() {
       <div className="mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-heading font-bold text-slate-900">
+            <h1 className="text-2xl md:text-3xl font-heading font-bold text-foreground">
               Detalhes da Disputa
             </h1>
-            <p className="text-slate-600 mt-1">
+            <p className="text-muted-foreground mt-1">
               Histórico completo de lances e métricas da disputa.
             </p>
           </div>
@@ -158,37 +158,37 @@ export default function DisputaHistoricoDetalhePage() {
             type="button"
             onClick={handleExportPdf}
             disabled={downloading}
-            className="bg-slate-900 hover:bg-slate-800 text-white"
+            className="shadow-none dark:hover:bg-[#e0e0e0]"
           >
             <Download className="w-4 h-4 mr-2" />
             Exportar PDF
           </Button>
         </div>
 
-        <Card className="border-slate-200">
+        <Card className="border-border">
           <CardHeader>
             <CardTitle className="text-lg font-heading">Resumo</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-3">
             <div>
-              <p className="text-xs text-slate-500 mb-1">Licitação</p>
-              <p className="text-sm font-medium text-slate-900">
+              <p className="text-xs text-muted-foreground mb-1">Licitação</p>
+              <p className="text-sm font-medium text-foreground">
                 {disputa.bid?.title ?? "Disputa sem licitação vinculada"}
               </p>
-              <p className="text-xs text-slate-500 mt-0.5">{disputa.bid?.agency ?? "-"}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{disputa.bid?.agency ?? "-"}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 mb-1">Portal / Status</p>
-              <p className="text-sm font-medium text-slate-900">
+              <p className="text-xs text-muted-foreground mb-1">Portal / Status</p>
+              <p className="text-sm font-medium text-foreground">
                 {disputa.portal} • {disputa.status}
               </p>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 Início:{" "}
                 {disputa.iniciadoEm
                   ? new Date(disputa.iniciadoEm).toLocaleString("pt-BR")
                   : "-"}
               </p>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 Encerramento:{" "}
                 {disputa.encerradoEm
                   ? new Date(disputa.encerradoEm).toLocaleString("pt-BR")
@@ -196,20 +196,20 @@ export default function DisputaHistoricoDetalhePage() {
               </p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs text-slate-500 mb-1">Métricas</p>
-              <p className="text-sm text-slate-700">
+              <p className="text-xs text-muted-foreground mb-1">Métricas</p>
+              <p className="text-sm text-foreground">
                 Valor máximo total:{" "}
                 <span className="font-semibold">
                   R$ {metricas.valorMaximoTotal.toFixed(2)}
                 </span>
               </p>
-              <p className="text-sm text-slate-700">
+              <p className="text-sm text-foreground">
                 Economia gerada:{" "}
-                <span className="font-semibold text-emerald-600">
+                <span className="font-semibold text-foreground">
                   R$ {metricas.economiaTotal.toFixed(2)}
                 </span>
               </p>
-              <p className="text-sm text-slate-700">
+              <p className="text-sm text-foreground">
                 Lance vencedor (melhor lance):{" "}
                 <span className="font-semibold">
                   {metricas.melhorLanceGlobal != null
@@ -217,7 +217,7 @@ export default function DisputaHistoricoDetalhePage() {
                     : "-"}
                 </span>
               </p>
-              <p className="text-sm text-slate-700">
+              <p className="text-sm text-foreground">
                 Seu lance final:{" "}
                 <span className="font-semibold">
                   {metricas.nossoUltimoLance != null
@@ -225,7 +225,7 @@ export default function DisputaHistoricoDetalhePage() {
                     : "-"}
                 </span>
               </p>
-              <p className="text-sm text-slate-700">
+              <p className="text-sm text-foreground">
                 Seu menor lance:{" "}
                 <span className="font-semibold">
                   {metricas.menorNossoLance != null
@@ -233,7 +233,7 @@ export default function DisputaHistoricoDetalhePage() {
                     : "-"}
                 </span>
               </p>
-              <p className="text-sm text-slate-700">
+              <p className="text-sm text-foreground">
                 Margem vs melhor lance:{" "}
                 <span className="font-semibold">
                   {metricas.margemVsMelhorLance != null
@@ -241,11 +241,11 @@ export default function DisputaHistoricoDetalhePage() {
                     : "-"}
                 </span>
               </p>
-              <p className="text-sm text-slate-700">
+              <p className="text-sm text-foreground">
                 Total de lances enviados:{" "}
                 <span className="font-semibold">{metricas.totalLancesEnviados}</span>
               </p>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 Duração aproximada: {duracaoMin != null ? `${duracaoMin} min` : "-"}
               </p>
             </div>
@@ -253,7 +253,7 @@ export default function DisputaHistoricoDetalhePage() {
         </Card>
 
         {chartData.length > 0 && (
-          <Card className="border-slate-200">
+          <Card className="border-border">
             <CardHeader>
               <CardTitle className="text-lg font-heading">
                 Evolução do melhor lance ao longo da sessão
@@ -263,16 +263,17 @@ export default function DisputaHistoricoDetalhePage() {
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis
                       dataKey="time"
-                      tick={{ fontSize: 10 }}
+                      tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
                       tickMargin={8}
-                      stroke="#64748b"
+                      stroke="hsl(var(--border))"
                     />
                     <YAxis
                       tickFormatter={(v: number) => `R$ ${v.toFixed(0)}`}
-                      stroke="#64748b"
+                      tick={{ fill: "hsl(var(--muted-foreground))" }}
+                      stroke="hsl(var(--border))"
                       width={70}
                     />
                     <Tooltip
@@ -287,7 +288,7 @@ export default function DisputaHistoricoDetalhePage() {
                     <Line
                       type="monotone"
                       dataKey="melhorLance"
-                      stroke="#0f172a"
+                      stroke="hsl(var(--foreground))"
                       strokeWidth={2}
                       dot={{ r: 2 }}
                       activeDot={{ r: 4 }}
@@ -299,13 +300,13 @@ export default function DisputaHistoricoDetalhePage() {
           </Card>
         )}
 
-        <Card className="border-slate-200">
+        <Card className="border-border">
           <CardHeader>
             <CardTitle className="text-lg font-heading">Linha do tempo de lances</CardTitle>
           </CardHeader>
           <CardContent>
             {timeline.length === 0 ? (
-              <p className="text-sm text-slate-500 py-4">
+              <p className="text-sm text-muted-foreground py-4">
                 Nenhum evento registrado para esta disputa.
               </p>
             ) : (

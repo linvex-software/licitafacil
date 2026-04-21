@@ -245,10 +245,10 @@ export function CompanyDocumentsPageClient() {
   };
 
   const statusClasses: Record<ReturnType<typeof displayStatus>, string> = {
-    PENDENTE: "bg-amber-100 text-amber-800 border-amber-200",
-    ENVIADO: "bg-blue-100 text-blue-800 border-blue-200",
-    APROVADO: "bg-emerald-100 text-emerald-800 border-emerald-200",
-    VENCIDO: "bg-red-100 text-red-800 border-red-200",
+    PENDENTE: "border-border bg-muted text-muted-foreground",
+    ENVIADO: "border-border bg-muted text-foreground",
+    APROVADO: "border-border bg-muted text-foreground",
+    VENCIDO: "border-destructive/25 bg-destructive/10 text-destructive",
   };
 
   const renderDocCard = (doc: Document) => {
@@ -312,7 +312,7 @@ export function CompanyDocumentsPageClient() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
-                    className="text-red-600 dark:text-red-400"
+                    className="text-destructive focus:text-destructive"
                     onClick={() => deleteMutation.mutate(doc.id)}
                   >
                     Excluir documento

@@ -143,7 +143,7 @@ export function BuscasSalvasPanel({ onExecutar }: BuscasSalvasPanelProps) {
                     size="sm"
                     variant="outline"
                     onClick={() => deletarBusca(busca.id)}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-destructive hover:text-destructive/80"
                   >
                     <Trash2 className="w-3 h-3" />
                   </Button>

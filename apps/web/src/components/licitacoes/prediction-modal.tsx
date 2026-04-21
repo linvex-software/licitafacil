@@ -40,41 +40,41 @@ const RECOMENDACAO_CONFIG = {
     label: "Recomendamos Participar",
     description: "As condições são favoráveis para esta licitação.",
     icon: TrendingUp,
-    badgeClass: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800",
-    headerClass: "from-emerald-50 to-white dark:from-emerald-950/30 dark:to-gray-900",
-    scoreClass: "text-emerald-600 dark:text-emerald-400",
-    iconClass: "text-emerald-600 dark:text-emerald-400",
+    badgeClass: "border-border bg-muted text-foreground",
+    headerClass: "from-muted to-background dark:from-muted/40 dark:to-background",
+    scoreClass: "text-foreground",
+    iconClass: "text-foreground",
   },
   ANALISAR: {
     label: "Analise com Cuidado",
     description: "Há pontos de atenção que merecem avaliação antes de decidir.",
     icon: Minus,
-    badgeClass: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800",
-    headerClass: "from-amber-50 to-white dark:from-amber-950/30 dark:to-gray-900",
-    scoreClass: "text-amber-600 dark:text-amber-400",
-    iconClass: "text-amber-600 dark:text-amber-400",
+    badgeClass: "border-border bg-muted text-muted-foreground",
+    headerClass: "from-muted to-background dark:from-muted/40 dark:to-background",
+    scoreClass: "text-muted-foreground",
+    iconClass: "text-muted-foreground",
   },
   DESCARTAR: {
     label: "Não Recomendamos",
     description: "As condições atuais não são favoráveis para participar.",
     icon: TrendingDown,
-    badgeClass: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800",
-    headerClass: "from-red-50 to-white dark:from-red-950/30 dark:to-gray-900",
-    scoreClass: "text-red-600 dark:text-red-400",
-    iconClass: "text-red-600 dark:text-red-400",
+    badgeClass: "border-destructive/30 bg-destructive/10 text-destructive",
+    headerClass: "from-destructive/10 to-background dark:from-destructive/15 dark:to-background",
+    scoreClass: "text-destructive",
+    iconClass: "text-destructive",
   },
 } as const;
 
 function getFatorIcon(score: number) {
-  if (score >= 70) return <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />;
-  if (score >= 40) return <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />;
-  return <XCircle className="w-4 h-4 text-red-500 shrink-0" />;
+  if (score >= 70) return <CheckCircle2 className="h-4 w-4 shrink-0 text-foreground" />;
+  if (score >= 40) return <AlertTriangle className="h-4 w-4 shrink-0 text-muted-foreground" />;
+  return <XCircle className="h-4 w-4 shrink-0 text-destructive" />;
 }
 
 function getFatorScoreColor(score: number) {
-  if (score >= 70) return "text-emerald-600 dark:text-emerald-400";
-  if (score >= 40) return "text-amber-600 dark:text-amber-400";
-  return "text-red-600 dark:text-red-400";
+  if (score >= 70) return "text-foreground";
+  if (score >= 40) return "text-muted-foreground";
+  return "text-destructive";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -85,20 +85,20 @@ function FatorCard({ fator }: { fator: FatorAnalise }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+    <div className="overflow-hidden rounded-lg border border-border">
       <button
-        className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
+        className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-accent/50"
         onClick={() => setExpanded(!expanded)}
       >
         {getFatorIcon(fator.score)}
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+            <span className="truncate text-sm font-medium text-foreground">
               {fator.nome}
             </span>
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-xs text-gray-500 dark:text-gray-400">
+              <span className="text-xs text-muted-foreground">
                 {Math.round(fator.peso * 100)}%
               </span>
               <span className={cn("text-sm font-bold tabular-nums", getFatorScoreColor(fator.score))}>
@@ -110,16 +110,16 @@ function FatorCard({ fator }: { fator: FatorAnalise }) {
         </div>
 
         {expanded ? (
-          <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" />
+          <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
         )}
       </button>
 
       {expanded && (
-        <div className="px-3 pb-3 pt-0 border-t border-gray-100 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-800/20">
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 mb-1">{fator.descricao}</p>
-          <p className="text-sm text-gray-700 dark:text-gray-300">{fator.detalhe}</p>
+        <div className="border-t border-border bg-muted/30 px-3 pb-3 pt-0">
+          <p className="mb-1 mt-2 text-xs text-muted-foreground">{fator.descricao}</p>
+          <p className="text-sm text-foreground">{fator.detalhe}</p>
 
           {fator.dados && Object.keys(fator.dados).length > 0 && (
             <div className="mt-2 flex flex-wrap gap-2">
@@ -129,7 +129,7 @@ function FatorCard({ fator }: { fator: FatorAnalise }) {
                 .map(([key, value]) => (
                   <span
                     key={key}
-                    className="inline-flex items-center gap-1 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded px-2 py-0.5 text-gray-600 dark:text-gray-400"
+                    className="inline-flex items-center gap-1 rounded border border-border bg-card px-2 py-0.5 text-xs text-muted-foreground"
                   >
                     <span className="font-medium capitalize">{key.replace(/([A-Z])/g, " $1").trim()}:</span>
                     <span>{String(value)}</span>
@@ -176,21 +176,21 @@ export function PredictionModal({
         <div
           className={cn(
             "bg-gradient-to-b p-6 pb-4",
-            config?.headerClass ?? "from-gray-50 to-white dark:from-gray-900 dark:to-gray-900",
+            config?.headerClass ?? "from-muted/50 to-background",
           )}
         >
           <DialogHeader>
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                <DialogTitle className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-purple-500" />
+                <DialogTitle className="flex items-center gap-2 text-lg font-bold text-foreground">
+                  <Sparkles className="h-5 w-5 text-muted-foreground" />
                   Análise Preditiva de Sucesso
-                  <span className="ml-2 text-xs font-medium px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+                  <span className="ml-2 rounded border border-border bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
                     Beta
                   </span>
                 </DialogTitle>
                 {bidTitle && (
-                  <DialogDescription className="mt-1 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+                  <DialogDescription className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                     {bidTitle}
                   </DialogDescription>
                 )}
@@ -215,7 +215,7 @@ export function PredictionModal({
                   <span className={cn("text-5xl font-black tabular-nums", config.scoreClass)}>
                     {prediction.score}
                   </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">/ 100</span>
+                  <span className="text-xs font-medium text-muted-foreground">/ 100</span>
                 </div>
 
                 <div className="flex-1">
@@ -226,7 +226,7 @@ export function PredictionModal({
                     </span>
                   </div>
                   <PredictionScoreBar score={prediction.score} />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     {config.description}
                   </p>
                 </div>
@@ -235,9 +235,9 @@ export function PredictionModal({
 
             {/* Estado vazio */}
             {!prediction && !isLoading && !isAnalyzing && (
-              <div className="mt-4 text-center py-6">
-                <Sparkles className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              <div className="mt-4 py-6 text-center">
+                <Sparkles className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
+                <p className="mb-4 text-sm text-muted-foreground">
                   Nenhuma análise realizada ainda. Clique em &quot;Analisar&quot; para obter uma previsão de sucesso baseada em 6 fatores.
                 </p>
                 <Button onClick={onAnalisar} disabled={isAnalyzing}>
@@ -249,9 +249,9 @@ export function PredictionModal({
 
             {/* Loading state */}
             {(isLoading || isAnalyzing) && !prediction && (
-              <div className="mt-4 text-center py-6">
-                <RefreshCw className="w-8 h-8 text-purple-400 mx-auto mb-3 animate-spin" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+              <div className="mt-4 py-6 text-center">
+                <RefreshCw className="mx-auto mb-3 h-8 w-8 animate-spin text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
                   {isAnalyzing ? "Calculando 6 fatores com IA..." : "Carregando análise..."}
                 </p>
               </div>
@@ -262,7 +262,7 @@ export function PredictionModal({
         {prediction && (
           <div className="p-6 pt-4 space-y-5">
             {/* Aviso Permanente de Limitações da IA */}
-            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 lg:p-4 text-sm text-amber-800 dark:text-amber-400 flex gap-3">
+            <div className="flex gap-3 rounded-lg border border-border bg-muted p-3 text-sm text-muted-foreground lg:p-4">
               <AlertTriangle className="w-5 h-5 shrink-0" />
               <div>
                 <strong className="block mb-1">Aviso Importante:</strong>
@@ -272,14 +272,14 @@ export function PredictionModal({
 
             {/* Explicação da IA */}
             {prediction.explicacao && (
-              <div className="bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+              <div className="rounded-lg border border-border bg-muted/50 p-4">
                 <div className="flex items-start gap-3">
-                  <Sparkles className="w-4 h-4 text-purple-500 shrink-0 mt-0.5" />
+                  <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                   <div>
-                    <p className="text-xs font-semibold text-purple-700 dark:text-purple-400 mb-1 uppercase tracking-wide">
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-foreground">
                       Avaliação da IA
                     </p>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                    <p className="text-sm leading-relaxed text-foreground">
                       {prediction.explicacao}
                     </p>
                   </div>
@@ -291,7 +291,7 @@ export function PredictionModal({
 
             {/* Fatores de análise */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+              <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
                 <span>Breakdown dos 6 Fatores</span>
                 <Badge variant="outline" className="text-xs font-normal">
                   Clique para expandir
@@ -309,17 +309,17 @@ export function PredictionModal({
               <>
                 <Separator />
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-                    <Lightbulb className="w-4 h-4 text-amber-500" />
+                  <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <Lightbulb className="h-4 w-4 text-muted-foreground" />
                     Ações Recomendadas
                   </h3>
                   <ul className="space-y-2">
                     {prediction.acoes.map((acao, i) => (
                       <li key={i} className="flex items-start gap-3">
-                        <span className="flex-shrink-0 w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-bold flex items-center justify-center mt-0.5">
+                        <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-foreground">
                           {i + 1}
                         </span>
-                        <span className="text-sm text-gray-700 dark:text-gray-300">{acao}</span>
+                        <span className="text-sm text-foreground">{acao}</span>
                       </li>
                     ))}
                   </ul>
@@ -329,7 +329,7 @@ export function PredictionModal({
 
             {/* Rodapé com metadados */}
             <Separator />
-            <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Clock className="w-3 h-3" />
               <span>
                 {`Analisado em ${format(new Date(prediction.updatedAt), "dd/MM/yyyy 'às' HH:mm", {

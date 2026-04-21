@@ -14,97 +14,34 @@ import {
 } from "lucide-react";
 import { listarEventosLicitacao, type EventoLicitacao } from "@/lib/api";
 
+const E = { neutral: { color: "text-foreground", bgColor: "bg-muted" } as const, risk: { color: "text-destructive", bgColor: "bg-destructive/10" } as const };
+
 const EVENTO_CONFIG: Record<
   string,
   { label: string; icon: React.ElementType; color: string; bgColor: string }
 > = {
-  EDITAL_PUBLICADO: { label: "Edital publicado", icon: FileText, color: "text-blue-500", bgColor: "bg-blue-500/10" },
-  SESSAO_ABERTA: { label: "Sessão aberta", icon: Flag, color: "text-green-500", bgColor: "bg-green-500/10" },
-  ESCLARECIMENTO_PUBLICADO: {
-    label: "Esclarecimento publicado",
-    icon: MessageSquare,
-    color: "text-purple-500",
-    bgColor: "bg-purple-500/10",
-  },
-  ADENDO_EMITIDO: { label: "Adendo emitido", icon: FileText, color: "text-amber-500", bgColor: "bg-amber-500/10" },
-  PRAZO_PROPOSTA_REABERTO: {
-    label: "Prazo de proposta reaberto",
-    icon: Clock,
-    color: "text-amber-500",
-    bgColor: "bg-amber-500/10",
-  },
-  JULGAMENTO_ENCERRADO: { label: "Julgamento encerrado", icon: Gavel, color: "text-blue-500", bgColor: "bg-blue-500/10" },
-  JANELA_RECURSO_ABERTA: {
-    label: "Janela de recurso aberta",
-    icon: Clock,
-    color: "text-orange-500",
-    bgColor: "bg-orange-500/10",
-  },
-  JANELA_RECURSO_ENCERRADA: {
-    label: "Janela de recurso encerrada",
-    icon: CheckCircle,
-    color: "text-green-500",
-    bgColor: "bg-green-500/10",
-  },
-  INTENCAO_RECURSO_REGISTRADA: {
-    label: "Intenção de recurso",
-    icon: AlertTriangle,
-    color: "text-orange-500",
-    bgColor: "bg-orange-500/10",
-  },
-  RECURSO_INTERPOSTO: { label: "Recurso interposto", icon: Scale, color: "text-red-500", bgColor: "bg-red-500/10" },
-  RECURSO_DECIDIDO: { label: "Recurso decidido", icon: Gavel, color: "text-blue-500", bgColor: "bg-blue-500/10" },
-  CONTRA_RAZOES_APRESENTADAS: {
-    label: "Contra-razões apresentadas",
-    icon: FileText,
-    color: "text-purple-500",
-    bgColor: "bg-purple-500/10",
-  },
-  SUSPENSA_POR_RECURSO: {
-    label: "Suspensa por recurso",
-    icon: XCircle,
-    color: "text-red-500",
-    bgColor: "bg-red-500/10",
-  },
-  SUSPENSAO_ENCERRADA: {
-    label: "Suspensão encerrada",
-    icon: CheckCircle,
-    color: "text-green-500",
-    bgColor: "bg-green-500/10",
-  },
-  HABILITACAO_ANALISADA: {
-    label: "Habilitação analisada",
-    icon: CheckCircle,
-    color: "text-green-500",
-    bgColor: "bg-green-500/10",
-  },
-  INABILITACAO_REGISTRADA: {
-    label: "Inabilitação registrada",
-    icon: XCircle,
-    color: "text-red-500",
-    bgColor: "bg-red-500/10",
-  },
-  ADJUDICACAO: { label: "Adjudicação", icon: Gavel, color: "text-green-500", bgColor: "bg-green-500/10" },
-  HOMOLOGACAO: { label: "Homologação", icon: CheckCircle, color: "text-green-600", bgColor: "bg-green-600/10" },
-  HOMOLOGACAO_ANULADA: {
-    label: "Homologação anulada",
-    icon: XCircle,
-    color: "text-red-600",
-    bgColor: "bg-red-600/10",
-  },
-  REVOGACAO: { label: "Revogação", icon: XCircle, color: "text-red-600", bgColor: "bg-red-600/10" },
-  IMPUGNACAO_RECEBIDA: {
-    label: "Impugnação recebida",
-    icon: AlertTriangle,
-    color: "text-orange-500",
-    bgColor: "bg-orange-500/10",
-  },
-  IMPUGNACAO_DECIDIDA: {
-    label: "Impugnação decidida",
-    icon: Gavel,
-    color: "text-blue-500",
-    bgColor: "bg-blue-500/10",
-  },
+  EDITAL_PUBLICADO: { label: "Edital publicado", icon: FileText, ...E.neutral },
+  SESSAO_ABERTA: { label: "Sessão aberta", icon: Flag, ...E.neutral },
+  ESCLARECIMENTO_PUBLICADO: { label: "Esclarecimento publicado", icon: MessageSquare, ...E.neutral },
+  ADENDO_EMITIDO: { label: "Adendo emitido", icon: FileText, ...E.neutral },
+  PRAZO_PROPOSTA_REABERTO: { label: "Prazo de proposta reaberto", icon: Clock, ...E.neutral },
+  JULGAMENTO_ENCERRADO: { label: "Julgamento encerrado", icon: Gavel, ...E.neutral },
+  JANELA_RECURSO_ABERTA: { label: "Janela de recurso aberta", icon: Clock, ...E.neutral },
+  JANELA_RECURSO_ENCERRADA: { label: "Janela de recurso encerrada", icon: CheckCircle, ...E.neutral },
+  INTENCAO_RECURSO_REGISTRADA: { label: "Intenção de recurso", icon: AlertTriangle, ...E.neutral },
+  RECURSO_INTERPOSTO: { label: "Recurso interposto", icon: Scale, ...E.risk },
+  RECURSO_DECIDIDO: { label: "Recurso decidido", icon: Gavel, ...E.neutral },
+  CONTRA_RAZOES_APRESENTADAS: { label: "Contra-razões apresentadas", icon: FileText, ...E.neutral },
+  SUSPENSA_POR_RECURSO: { label: "Suspensa por recurso", icon: XCircle, ...E.risk },
+  SUSPENSAO_ENCERRADA: { label: "Suspensão encerrada", icon: CheckCircle, ...E.neutral },
+  HABILITACAO_ANALISADA: { label: "Habilitação analisada", icon: CheckCircle, ...E.neutral },
+  INABILITACAO_REGISTRADA: { label: "Inabilitação registrada", icon: XCircle, ...E.risk },
+  ADJUDICACAO: { label: "Adjudicação", icon: Gavel, ...E.neutral },
+  HOMOLOGACAO: { label: "Homologação", icon: CheckCircle, ...E.neutral },
+  HOMOLOGACAO_ANULADA: { label: "Homologação anulada", icon: XCircle, ...E.risk },
+  REVOGACAO: { label: "Revogação", icon: XCircle, ...E.risk },
+  IMPUGNACAO_RECEBIDA: { label: "Impugnação recebida", icon: AlertTriangle, ...E.neutral },
+  IMPUGNACAO_DECIDIDA: { label: "Impugnação decidida", icon: Gavel, ...E.neutral },
 };
 
 const getDetalheLabel = (tipo: string, detalhes?: Record<string, unknown> | null) => {
@@ -129,7 +66,7 @@ export function LicitacaoTimeline({ bidId }: { bidId: string }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#0078D1] border-t-transparent" />
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
       </div>
     );
   }
@@ -173,19 +110,19 @@ export function LicitacaoTimeline({ bidId }: { bidId: string }) {
               <div
                 className={`mb-2 flex-1 rounded-xl border px-4 py-3 ${
                   i === eventos.length - 1
-                    ? "border-[#0078D1]/20 bg-[#0078D1]/5 dark:bg-[#0078D1]/10"
+                    ? "border-white/20 bg-white/5"
                     : "border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900"
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <p
                     className={`text-sm font-medium leading-snug ${
-                      i === eventos.length - 1 ? "text-[#0078D1]" : "text-gray-700 dark:text-gray-300"
+                      i === eventos.length - 1 ? "text-white" : "text-[#d4d4d8]"
                     }`}
                   >
                     {config.label}
                     {i === eventos.length - 1 && (
-                      <span className="ml-2 rounded-full bg-[#0078D1]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#0078D1]">
+                      <span className="ml-2 rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold text-white">
                         ATUAL
                       </span>
                     )}

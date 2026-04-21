@@ -225,7 +225,7 @@ export function JuridicoTab({ bidId }: JuridicoTabProps) {
                 <TableBody>
                   {peticoes.map((peticao) => (
                     <TableRow key={peticao.id}>
-                      <TableCell className="font-medium text-gray-900 dark:text-gray-100">
+                      <TableCell className="font-medium text-foreground">
                         {getTipoLabel(peticao.tipo)}
                       </TableCell>
                       <TableCell>{formatDateTime(peticao.createdAt)}</TableCell>
@@ -233,8 +233,8 @@ export function JuridicoTab({ bidId }: JuridicoTabProps) {
                         <span
                           className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
                             peticao.status === "ENVIADO"
-                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                              : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                              ? "bg-muted text-foreground"
+                              : "bg-muted/70 text-muted-foreground"
                           }`}
                         >
                           {getStatusLabel(peticao.status)}

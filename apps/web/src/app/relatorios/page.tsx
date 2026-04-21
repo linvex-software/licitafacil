@@ -48,14 +48,16 @@ import { useToast } from "@/hooks/use-toast";
 import { EnviarEmailModal } from "@/components/relatorios/enviar-email-modal";
 import { AuthGuard } from "@/components/AuthGuard";
 
+/** Paleta monocromática para séries distintas (legível em fundo claro e escuro). */
 const CORES_STATUS: Record<string, string> = {
-  VENCIDA: "#16a34a",
-  PARTICIPANDO: "#2563eb",
-  ANALISANDO: "#d97706",
-  PERDIDA: "#dc2626",
-  DESCARTADA: "#6b7280",
-  AGUARDANDO_RESULTADO: "#8b5cf6",
+  VENCIDA: "#404040",
+  PARTICIPANDO: "#171717",
+  ANALISANDO: "#737373",
+  PERDIDA: "#525252",
+  DESCARTADA: "#a3a3a3",
+  AGUARDANDO_RESULTADO: "#262626",
 };
+const COR_PADRAO_STATUS = "#737373";
 
 export default function RelatoriosPage() {
   const { toast } = useToast();
@@ -242,7 +244,7 @@ export default function RelatoriosPage() {
                 </Card>
                 <Card>
                   <CardContent className="pt-6 text-center">
-                    <div className="text-3xl font-bold text-green-600">
+                    <div className="text-3xl font-bold text-foreground">
                       {dados.metricas.ganhas}
                     </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center justify-center gap-1">
@@ -252,7 +254,7 @@ export default function RelatoriosPage() {
                 </Card>
                 <Card>
                   <CardContent className="pt-6 text-center">
-                    <div className="text-3xl font-bold text-blue-600">
+                    <div className="text-3xl font-bold text-muted-foreground">
                       {dados.metricas.taxaSucesso}%
                     </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center justify-center gap-1">
@@ -262,7 +264,7 @@ export default function RelatoriosPage() {
                 </Card>
                 <Card>
                   <CardContent className="pt-6 text-center">
-                    <div className="text-3xl font-bold text-amber-600">
+                    <div className="text-3xl font-bold text-foreground">
                       {dados.metricas.emAndamento}
                     </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center justify-center gap-1">
@@ -296,7 +298,7 @@ export default function RelatoriosPage() {
                             (entry: any, index: number) => (
                               <Cell
                                 key={index}
-                                fill={CORES_STATUS[entry.status] || "#8884d8"}
+                                fill={CORES_STATUS[entry.status] || COR_PADRAO_STATUS}
                               />
                             ),
                           )}
@@ -318,7 +320,7 @@ export default function RelatoriosPage() {
                         <XAxis dataKey="modalidade" tick={{ fontSize: 10 }} />
                         <YAxis />
                         <Tooltip />
-                        <Bar dataKey="quantidade" fill="#2563eb" />
+                        <Bar dataKey="quantidade" fill="#525252" />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>
@@ -342,20 +344,28 @@ export default function RelatoriosPage() {
                         <Line
                           type="monotone"
                           dataKey="total"
-                          stroke="#2563eb"
+                          stroke="#171717"
+                          strokeWidth={2}
                           name="Total"
+                          dot={false}
                         />
                         <Line
                           type="monotone"
                           dataKey="ganhas"
-                          stroke="#16a34a"
+                          stroke="#737373"
+                          strokeDasharray="6 4"
+                          strokeWidth={2}
                           name="Vencidas"
+                          dot={false}
                         />
                         <Line
                           type="monotone"
                           dataKey="perdidas"
-                          stroke="#dc2626"
+                          stroke="#a3a3a3"
+                          strokeDasharray="2 3"
+                          strokeWidth={2}
                           name="Perdidas"
+                          dot={false}
                         />
                       </LineChart>
                     </ResponsiveContainer>
@@ -397,8 +407,8 @@ export default function RelatoriosPage() {
                                 className="px-2 py-1 rounded-full text-xs font-medium"
                                 style={{
                                   background:
-                                    (CORES_STATUS[l.status] || "#6b7280") + "20",
-                                  color: CORES_STATUS[l.status] || "#6b7280",
+                                    (CORES_STATUS[l.status] || COR_PADRAO_STATUS) + "33",
+                                  color: CORES_STATUS[l.status] || COR_PADRAO_STATUS,
                                 }}
                               >
                                 {l.status}

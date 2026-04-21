@@ -130,14 +130,14 @@ export function GerarPeticaoModal({
           </div>
 
           {tipo === "INTENCAO_RECURSO" && (
-            <div className="mt-2 rounded-xl border border-orange-200 bg-orange-50 p-4 dark:border-orange-800/40 dark:bg-orange-900/10">
+            <div className="mt-2 rounded-xl border border-border bg-muted p-4">
               <div className="mb-3 flex gap-2">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-orange-500" />
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                 <div>
-                  <p className="text-xs font-semibold text-orange-700 dark:text-orange-400">
+                  <p className="text-xs font-semibold text-foreground">
                     Motivação obrigatória
                   </p>
-                  <p className="mt-0.5 text-xs leading-relaxed text-orange-600 dark:text-orange-500">
+                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
                     O pregoeiro pode rejeitar intenções com fundamentação genérica.
                     Seja específico: cite a empresa, o item contestado e o fundamento legal.
                   </p>
@@ -148,9 +148,9 @@ export function GerarPeticaoModal({
                 onChange={(e) => setMotivoIntencao(e.target.value)}
                 placeholder="Ex: Recorro contra a habilitação da empresa X por entender que o atestado apresentado não comprova capacidade técnica para o item Y, conforme §3º do art. 67 da Lei 14.133/2021."
                 rows={4}
-                className="w-full resize-none rounded-lg border border-orange-200 bg-white p-3 text-sm text-gray-700 placeholder-gray-400 transition-colors focus:border-orange-400 focus:outline-none dark:border-orange-800/40 dark:bg-gray-900 dark:text-gray-300 dark:placeholder-gray-500"
+                className="w-full resize-none rounded-lg border border-input bg-background p-3 text-sm text-foreground placeholder:text-muted-foreground transition-colors focus-visible:border-ring focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
-              <p className="mt-1.5 text-right text-[11px] text-orange-500">
+              <p className="mt-1.5 text-right text-[11px] text-muted-foreground">
                 {motivoIntencao.length} caracteres · mínimo recomendado: 100
               </p>
             </div>
@@ -169,7 +169,7 @@ export function GerarPeticaoModal({
                     onClick={() => setEscopoImpugnacao(escopo)}
                     className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                       escopoImpugnacao === escopo
-                        ? "border-[#0078D1] bg-[#0078D1]/10 text-[#0078D1]"
+                        ? "border-white/40 bg-white/10 text-white"
                         : "border-gray-200 text-gray-500 dark:border-gray-700 dark:text-gray-400"
                     }`}
                   >
@@ -237,14 +237,14 @@ export function GerarPeticaoModal({
             />
           </div>
 
-          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+          {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose} disabled={submitting}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={submitting} className="bg-emerald-600 hover:bg-emerald-700">
+          <Button onClick={handleSubmit} disabled={submitting} className="shadow-none dark:hover:bg-[#e0e0e0]">
             {submitting ? "Gerando..." : "Gerar .docx"}
           </Button>
         </DialogFooter>

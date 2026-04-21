@@ -22,7 +22,7 @@ const FlippableCreditCard = React.forwardRef<HTMLDivElement, FlippableCreditCard
           <div className="absolute h-full w-full rounded-xl border border-[#333333] bg-[#111111] text-white [backface-visibility:hidden]">
             <div className="relative flex h-full flex-col justify-between p-5">
               <div className="flex items-start justify-between">
-                <div className="h-8 w-10 rounded bg-amber-500/80" />
+                <div className="h-8 w-10 rounded bg-muted-foreground/40" />
                 <p className="text-xs font-bold tracking-widest text-[#999]">CREDIT</p>
               </div>
               <div className="text-center font-mono text-lg tracking-wider">

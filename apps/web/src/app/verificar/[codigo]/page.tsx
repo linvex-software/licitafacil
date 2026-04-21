@@ -100,8 +100,9 @@ export default async function VerificarPage({
             style={{
               width: 40,
               height: 40,
-              background: "#0078D1",
+              background: "#111111",
               borderRadius: 8,
+              border: "1px solid #333333",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -111,11 +112,16 @@ export default async function VerificarPage({
               LX
             </span>
           </div>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#111", letterSpacing: "0.04em" }}>
-              LIMVEX
-            </div>
-            <div style={{ fontSize: 10, color: "#94a3b8", letterSpacing: "0.15em" }}>LICITAÇÃO</div>
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 700,
+              color: "#111",
+              letterSpacing: "0.02em",
+              fontFamily: "var(--font-oswald), ui-sans-serif, system-ui, sans-serif",
+            }}
+          >
+            LIMVEX LICITAÇÃO
           </div>
         </div>
 
@@ -136,8 +142,15 @@ export default async function VerificarPage({
             <p style={{ fontSize: 13, fontWeight: 700, color: "#15803d", margin: 0 }}>
               Documento autêntico verificado
             </p>
-            <p style={{ fontSize: 11, color: "#16a34a", margin: 0 }}>
-              Este documento foi gerado pela plataforma Limvex Licitação
+            <p
+              style={{
+                fontSize: 11,
+                color: "#16a34a",
+                margin: 0,
+                fontFamily: "var(--font-oswald), ui-sans-serif, system-ui, sans-serif",
+              }}
+            >
+              Este documento foi gerado pela plataforma LIMVEX LICITAÇÃO
             </p>
           </div>
         </div>
@@ -190,6 +203,7 @@ export default async function VerificarPage({
             color: "#cbd5e1",
             textAlign: "center",
             marginTop: 20,
+            fontFamily: "var(--font-oswald), ui-sans-serif, system-ui, sans-serif",
           }}
         >
           limvex.com · Plataforma de gestão de licitações públicas

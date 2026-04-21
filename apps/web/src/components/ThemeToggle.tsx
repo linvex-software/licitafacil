@@ -7,14 +7,20 @@ import { cn } from "@/lib/utils";
 export function ThemeToggle({ className }: { className?: string }) {
     const { theme, toggleTheme } = useTheme();
 
+    const title =
+        theme === "system"
+            ? "Alternar tema claro/escuro (atual: sistema)"
+            : theme === "dark"
+              ? "Mudar para tema claro"
+              : "Mudar para tema escuro";
+
     return (
         <button
             onClick={toggleTheme}
-            title={theme === "dark" ? "Mudar para tema claro" : "Mudar para tema escuro"}
+            title={title}
             className={cn(
-                "relative h-8 w-8 rounded-lg flex items-center justify-center transition-colors",
-                "text-gray-500 hover:bg-gray-100 hover:text-gray-700",
-                "dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200",
+                "relative flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
+                "text-muted-foreground hover:bg-accent hover:text-foreground",
                 className
             )}
         >

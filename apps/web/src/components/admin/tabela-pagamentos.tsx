@@ -33,9 +33,9 @@ const tipoLabel: Record<string, string> = {
 };
 
 const tipoCor: Record<string, string> = {
-  SETUP: "bg-blue-100 text-blue-800 border-blue-200",
-  MENSALIDADE: "bg-purple-100 text-purple-800 border-purple-200",
-  EXTRA: "bg-orange-100 text-orange-800 border-orange-200",
+  SETUP: "border-border bg-muted text-foreground",
+  MENSALIDADE: "border-border bg-muted text-muted-foreground",
+  EXTRA: "border-border bg-muted text-foreground",
 };
 
 export function TabelaPagamentos({ pagamentos }: TabelaPagamentosProps) {
@@ -77,13 +77,13 @@ export function TabelaPagamentos({ pagamentos }: TabelaPagamentosProps) {
             </TableCell>
             <TableCell>
               {pag.dataPago ? (
-                <span className="text-green-600 font-medium">
+                <span className="font-medium text-foreground">
                   {format(new Date(pag.dataPago), "dd/MM/yyyy", {
                     locale: ptBR,
                   })}
                 </span>
               ) : (
-                <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">
+                <Badge variant="outline" className="border-border bg-muted text-muted-foreground">
                   Pendente
                 </Badge>
               )}
