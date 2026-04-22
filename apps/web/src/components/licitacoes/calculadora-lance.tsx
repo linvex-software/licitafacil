@@ -135,10 +135,10 @@ export function CalculadoraLance({ valorReferencia }: CalculadoraLanceProps) {
   }, [valorReais, descontoStr]);
 
   return (
-    <Card className="shadow-sm border-gray-200 dark:border-gray-700">
+    <Card className="border-border shadow-sm">
       <CardHeader>
-        <CardTitle className="text-lg font-heading flex items-center gap-2">
-          <Calculator className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+        <CardTitle className="flex items-center gap-2 font-heading text-lg">
+          <Calculator className="h-5 w-5 text-muted-foreground" />
           Calculadora de Lance
         </CardTitle>
       </CardHeader>
@@ -168,7 +168,7 @@ export function CalculadoraLance({ valorReferencia }: CalculadoraLanceProps) {
                 onChange={handleDescontoChange}
                 className="pr-8"
               />
-              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-400 dark:text-gray-500">
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">
                 %
               </span>
             </div>
@@ -181,37 +181,37 @@ export function CalculadoraLance({ valorReferencia }: CalculadoraLanceProps) {
               label="Lance Conservador"
               value={resultado.conservador}
               desconto={resultado.descontoConservador}
-              borderColor="border-emerald-200 dark:border-emerald-800/40"
-              bgColor="bg-emerald-50 dark:bg-emerald-950/30"
-              labelColor="text-emerald-700 dark:text-emerald-400"
-              valueColor="text-emerald-900 dark:text-emerald-100"
-              subColor="text-emerald-600/70 dark:text-emerald-400/70"
+              borderColor="border-border"
+              bgColor="bg-muted"
+              labelColor="text-muted-foreground"
+              valueColor="text-foreground"
+              subColor="text-muted-foreground"
             />
             <LanceCard
               label="Lance Sugerido"
               value={resultado.sugerido}
               desconto={resultado.descontoSugerido}
-              borderColor="border-blue-200 dark:border-blue-800/40"
-              bgColor="bg-blue-50 dark:bg-blue-950/30"
-              labelColor="text-blue-700 dark:text-blue-400"
-              valueColor="text-blue-900 dark:text-blue-100"
-              subColor="text-blue-600/70 dark:text-blue-400/70"
+              borderColor="border-border"
+              bgColor="bg-card"
+              labelColor="text-muted-foreground"
+              valueColor="text-foreground"
+              subColor="text-muted-foreground"
             />
             <LanceCard
               label="Lance Agressivo"
               value={resultado.agressivo}
               desconto={resultado.descontoAgressivo}
-              borderColor="border-amber-200 dark:border-amber-800/40"
-              bgColor="bg-amber-50 dark:bg-amber-950/30"
-              labelColor="text-amber-700 dark:text-amber-400"
-              valueColor="text-amber-900 dark:text-amber-100"
-              subColor="text-amber-600/70 dark:text-amber-400/70"
+              borderColor="border-border"
+              bgColor="bg-muted"
+              labelColor="text-muted-foreground"
+              valueColor="text-foreground"
+              subColor="text-muted-foreground"
             />
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-gray-200 dark:border-gray-700 py-8 text-center">
-            <Calculator className="mx-auto mb-2 h-8 w-8 text-gray-300 dark:text-gray-600" />
-            <p className="text-sm text-gray-400 dark:text-gray-500">
+          <div className="rounded-xl border border-dashed border-border py-8 text-center">
+            <Calculator className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">
               Preencha os campos acima para calcular os lances instantaneamente.
             </p>
           </div>

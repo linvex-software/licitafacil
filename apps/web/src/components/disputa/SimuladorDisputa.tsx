@@ -189,9 +189,9 @@ export function SimuladorDisputa({
 
   return (
     <div className="space-y-6">
-      <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900">
+      <Card className="border-border bg-muted">
         <CardContent className="pt-5">
-          <p className="text-sm text-amber-900 dark:text-amber-300">
+          <p className="text-sm text-muted-foreground">
             Simulador apenas — o envio do lance deve ser feito manualmente no ComprasNet.
           </p>
         </CardContent>
@@ -265,36 +265,36 @@ export function SimuladorDisputa({
           <Card>
             <CardContent className="pt-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="rounded-xl border border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-900 p-4">
-                  <p className="text-xs uppercase font-semibold text-blue-700 dark:text-blue-300">
+                <div className="rounded-xl border border-border bg-card p-4">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">
                     Lance sugerido
                   </p>
-                  <p className="text-2xl font-bold text-blue-900 dark:text-blue-200 mt-2">
+                  <p className="mt-2 text-2xl font-bold text-foreground">
                     {formatBRL(resultado.lanceSugerido)}
                   </p>
-                  <p className="text-xs text-blue-700/80 dark:text-blue-300/80 mt-1">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     Melhor equilíbrio para competitividade.
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-4">
-                  <p className="text-xs uppercase font-semibold text-gray-600 dark:text-gray-300">
+                <div className="rounded-xl border border-border bg-muted/40 p-4">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">
                     Lance mínimo
                   </p>
-                  <p className="text-xl font-semibold text-gray-900 dark:text-gray-100 mt-2">
+                  <p className="mt-2 text-xl font-semibold text-foreground">
                     {formatBRL(resultado.lanceMinimo)}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">Limite mais seguro.</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Limite mais seguro.</p>
                 </div>
 
-                <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-4">
-                  <p className="text-xs uppercase font-semibold text-gray-600 dark:text-gray-300">
+                <div className="rounded-xl border border-border bg-muted/40 p-4">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">
                     Lance agressivo
                   </p>
-                  <p className="text-xl font-semibold text-gray-900 dark:text-gray-100 mt-2">
+                  <p className="mt-2 text-xl font-semibold text-foreground">
                     {formatBRL(resultado.lanceAgressivo)}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">Cenário para maximizar chance de vitória.</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Cenário para maximizar chance de vitória.</p>
                 </div>
               </div>
             </CardContent>
@@ -302,7 +302,7 @@ export function SimuladorDisputa({
 
           <Card>
             <CardContent className="pt-5">
-              <p className="text-sm text-gray-700 dark:text-gray-200">
+              <p className="text-sm text-foreground">
                 Economia estimada:{" "}
                 <strong>{formatBRL(resultado.economia)}</strong> (
                 <strong>{resultado.percentualEconomia.toFixed(2)}%</strong> abaixo)
@@ -319,7 +319,7 @@ export function SimuladorDisputa({
           )}
 
           {autoSave && (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Salvamento automático {isSaving ? "em andamento..." : "ativo"}.
             </p>
           )}
@@ -333,9 +333,9 @@ export function SimuladorDisputa({
           </CardHeader>
           <CardContent>
             {isLoadingHistorico ? (
-              <p className="text-sm text-gray-500">Carregando histórico...</p>
+              <p className="text-sm text-muted-foreground">Carregando histórico...</p>
             ) : historico.length === 0 ? (
-              <p className="text-sm text-gray-500">Nenhuma simulação registrada para esta licitação.</p>
+              <p className="text-sm text-muted-foreground">Nenhuma simulação registrada para esta licitação.</p>
             ) : (
               <Table>
                 <TableHeader>

@@ -14,6 +14,10 @@ import { useAuth } from "@/contexts/auth-context";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
+function titleUsesLimvexFont(title: string) {
+  return title.toLowerCase().includes("limvex");
+}
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const TOTAL_STEPS = 9;
@@ -31,7 +35,7 @@ interface StepConfig {
 const STEPS: StepConfig[] = [
   {
     icon: "🎯",
-    title: "Bem-vindo ao Limvex Licitação",
+    title: "Bem-vindo ao LIMVEX LICITAÇÃO",
     subtitle:
       "A plataforma inteligente para empresas que participam de licitações públicas.",
     bullets: [
@@ -230,8 +234,8 @@ export function OnboardingModal({ forceOpen, onForceClose }: OnboardingModalProp
         <DialogTitle className="sr-only">
           Onboarding — {currentStep.title}
         </DialogTitle>
-        <DialogDescription className="sr-only">
-          Guia de introdução à plataforma Limvex Licitação
+        <DialogDescription className="sr-only font-limvex">
+          Guia de introdução à plataforma LIMVEX LICITAÇÃO
         </DialogDescription>
 
         {/* Conteúdo principal */}
@@ -248,7 +252,12 @@ export function OnboardingModal({ forceOpen, onForceClose }: OnboardingModalProp
             <div className="text-5xl text-center mb-5">{currentStep.icon}</div>
 
             {/* Título */}
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 text-center mb-2">
+            <h2
+              className={cn(
+                "mb-2 text-center text-xl font-semibold text-gray-900 dark:text-gray-100",
+                titleUsesLimvexFont(currentStep.title) && "font-limvex",
+              )}
+            >
               {currentStep.title}
             </h2>
 
@@ -264,7 +273,7 @@ export function OnboardingModal({ forceOpen, onForceClose }: OnboardingModalProp
               <ul className="space-y-2.5 mt-4">
                 {currentStep.bullets.map((bullet) => (
                   <li key={bullet} className="flex items-start gap-3">
-                    <CheckCircle2 className="w-4 h-4 text-green-500 dark:text-green-400 shrink-0 mt-0.5" />
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-foreground" />
                     <span className="text-sm text-gray-600 dark:text-gray-400">
                       {bullet}
                     </span>
@@ -297,7 +306,7 @@ export function OnboardingModal({ forceOpen, onForceClose }: OnboardingModalProp
                     key={href}
                     onClick={() => handleActionCard(href)}
                     disabled={isLoading}
-                    className="flex flex-col items-center gap-2.5 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition-all duration-150 text-sm font-medium text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed text-center"
+                    className="flex flex-col items-center gap-2.5 rounded-xl border border-[#333333] p-4 text-center text-sm font-medium text-[#d4d4d8] transition-all duration-150 hover:border-[#444444] hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <span className="text-2xl">{icon}</span>
                     {label}

@@ -245,7 +245,7 @@ export default function ComprasnetPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Info box */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex gap-2 text-sm text-blue-700 dark:bg-blue-950/50 dark:border-blue-900 dark:text-blue-300">
+                <div className="flex gap-2 rounded-lg border border-border bg-muted p-3 text-sm text-muted-foreground">
                   <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <div>
                     <strong>Busca via API pública do PNCP.</strong> Informe o
@@ -327,7 +327,7 @@ export default function ComprasnetPage() {
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <Label>Data Início <span className="text-red-500">*</span></Label>
+                      <Label>Data Início <span className="text-destructive">*</span></Label>
                       <Input
                         type="date"
                         value={filtros.dataInicio}
@@ -340,7 +340,7 @@ export default function ComprasnetPage() {
                       />
                     </div>
                     <div>
-                      <Label>Data Fim <span className="text-red-500">*</span></Label>
+                      <Label>Data Fim <span className="text-destructive">*</span></Label>
                       <Input
                         type="date"
                         value={filtros.dataFim}
@@ -505,7 +505,7 @@ export default function ComprasnetPage() {
                                   href={lic.linkEdital}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-blue-500 hover:text-blue-700"
+                                  className="text-foreground hover:underline"
                                 >
                                   <ExternalLink className="w-4 h-4" />
                                 </a>

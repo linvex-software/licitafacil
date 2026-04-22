@@ -294,13 +294,13 @@ function MonitoramentoContent() {
       {alertas.length > 0 && (
         <div className="space-y-2">
           {alertas.map((a, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-              <Bell className="h-4 w-4 text-green-400 animate-bounce flex-shrink-0" />
-              <p className="text-sm text-green-400 font-medium flex-1">
+            <div key={i} className="flex items-center gap-3 rounded-lg border border-border bg-muted p-3">
+              <Bell className="h-4 w-4 flex-shrink-0 animate-bounce text-foreground" />
+              <p className="flex-1 text-sm font-medium text-foreground">
                 🔔 Pregão <span className="font-bold">{a.numeroPregao}</span> entrou em disputa agora!
               </p>
               <a href={a.urlSalaDisputa} target="_blank" rel="noopener noreferrer"
-                className="text-xs px-2 py-1 rounded bg-green-500/20 text-green-400 hover:bg-green-500/30">
+                className="rounded px-2 py-1 text-xs text-foreground hover:bg-accent">
                 Abrir
               </a>
             </div>
@@ -317,8 +317,27 @@ function MonitoramentoContent() {
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 text-xs">
-            <div className={`w-2 h-2 rounded-full ${conectado ? 'bg-green-400' : reconectando ? 'bg-yellow-400 animate-pulse' : 'bg-red-400'}`} />
-            <span className="text-muted-foreground">{conectado ? 'Conectado' : reconectando ? 'Reconectando...' : 'Desconectado'}</span>
+            <div
+              className={`h-2 w-2 shrink-0 rounded-full ${
+                conectado
+                  ? "bg-emerald-500"
+                  : reconectando
+                    ? "animate-pulse bg-amber-500"
+                    : "bg-red-500"
+              }`}
+              aria-hidden
+            />
+            <span
+              className={
+                conectado
+                  ? "font-medium text-foreground"
+                  : reconectando
+                    ? "text-muted-foreground"
+                    : "font-medium text-destructive"
+              }
+            >
+              {conectado ? "Conectado" : reconectando ? "Reconectando..." : "Desconectado"}
+            </span>
           </div>
           <button
             onClick={() => setMostrarAdicionar(v => !v)}
@@ -399,7 +418,7 @@ function MonitoramentoContent() {
               <X className="h-4 w-4" />
             </button>
           </div>
-          {erroAdicionar && <p className="text-xs text-red-400">{erroAdicionar}</p>}
+          {erroAdicionar && <p className="text-xs text-destructive">{erroAdicionar}</p>}
         </div>
       )}
 
@@ -410,17 +429,17 @@ function MonitoramentoContent() {
             {
               label: 'Com link direto',
               valor: pregoes.filter(p => p.urlSalaDisputa && !p.urlSalaDisputa.includes('pncp.gov.br')).length,
-              cor: 'text-green-400',
+              cor: 'text-foreground',
             },
             {
               label: 'Portais',
               valor: [...new Set(pregoes.map(p => p.portal))].length,
-              cor: 'text-blue-400',
+              cor: 'text-muted-foreground',
             },
             {
               label: 'Estados',
               valor: [...new Set(pregoes.map(p => p.uf).filter(Boolean))].length,
-              cor: 'text-purple-400',
+              cor: 'text-muted-foreground',
             },
           ].map(item => (
             <div key={item.label} className="bg-card border border-border rounded-lg p-3 text-center">
@@ -500,11 +519,11 @@ function MonitoramentoContent() {
           </div>
         </div>
       ) : pregoesFiltrados.length === 0 ? (
-        <div className="flex items-start gap-3 rounded-lg border border-amber-800 bg-amber-950 px-4 py-3 text-sm text-amber-300">
+        <div className="flex items-start gap-3 rounded-lg border border-border bg-muted px-4 py-3 text-sm text-muted-foreground">
           <span className="mt-0.5 text-base">⏰</span>
           <div>
-            <p className="font-medium">Nenhum pregão encontrado para esta data</p>
-            <p className="text-amber-400 mt-0.5">
+            <p className="font-medium text-foreground">Nenhum pregão encontrado para esta data</p>
+            <p className="mt-0.5">
               Os pregões eletrônicos acontecem em dias úteis entre 8h e 18h.
               Tente selecionar a data de hoje durante o horário comercial.
             </p>

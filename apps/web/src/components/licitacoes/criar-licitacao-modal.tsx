@@ -229,7 +229,7 @@ export function CriarLicitacaoModal({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
-          className="bg-primary hover:bg-primary-600 text-white shadow-lg shadow-primary-200/50 dark:shadow-primary-900/30"
+          className="shadow-none"
         >
           <Plus className="w-4 h-4 mr-2" />
           Nova Licitação
@@ -401,7 +401,7 @@ export function CriarLicitacaoModal({
             <Button
               type="submit"
               disabled={createBid.isPending}
-              className="flex-1 bg-primary hover:bg-primary-600 text-white"
+              className="flex-1 shadow-none"
             >
               {createBid.isPending ? "Criando..." : "Criar Licitação"}
             </Button>

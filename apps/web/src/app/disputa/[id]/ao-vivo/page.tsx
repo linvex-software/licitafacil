@@ -101,7 +101,7 @@ export default function DisputaAoVivoPage() {
           ) : (
             <div className="flex-1 pt-4 overflow-hidden">
               {statusExtensao === "desconectada" && (
-                <div className="mb-3 mx-1 rounded-md border border-amber-700 bg-amber-950 px-3 py-2 text-sm text-amber-300">
+                <div className="mx-1 mb-3 rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground">
                   Extensão desconectada.{" "}
                   <Link href="/extensao" className="underline font-medium">
                     Ir para página da extensão

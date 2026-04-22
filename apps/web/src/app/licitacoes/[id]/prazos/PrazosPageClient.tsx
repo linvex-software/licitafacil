@@ -178,10 +178,10 @@ export function PrazosPageClient({ bidId }: PrazosPageClientProps) {
 
   if (loading) {
     return (
-      <Card className="shadow-sm border-gray-200 dark:border-gray-700">
+      <Card className="border-border shadow-sm">
         <CardContent className="py-16">
-          <div className="flex flex-col items-center justify-center gap-3 text-gray-500 dark:text-gray-400">
-            <div className="w-8 h-8 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+          <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-foreground" />
             <span>Carregando prazos...</span>
           </div>
         </CardContent>
@@ -191,11 +191,11 @@ export function PrazosPageClient({ bidId }: PrazosPageClientProps) {
 
   if (error) {
     return (
-      <Card className="shadow-sm border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/50">
+      <Card className="border-destructive/40 bg-destructive/5 shadow-sm">
         <CardContent className="py-12">
-          <div className="text-center text-red-700 dark:text-red-400 font-medium">{error}</div>
-          <div className="text-center mt-4">
-            <Button variant="outline" onClick={loadPrazos} className="border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950">
+          <div className="text-center font-medium text-destructive">{error}</div>
+          <div className="mt-4 text-center">
+            <Button variant="outline" onClick={loadPrazos} className="border-destructive/30 hover:bg-destructive/10">
               Tentar novamente
             </Button>
           </div>
@@ -207,29 +207,29 @@ export function PrazosPageClient({ bidId }: PrazosPageClientProps) {
   return (
     <>
       <div className="flex justify-end mb-6">
-        <Button onClick={openCreate} className="bg-[#0078D1] hover:bg-[#0062ab] text-white shadow-sm">
+        <Button onClick={openCreate} className="shadow-none">
           <Plus className="w-4 h-4 mr-2" />
           Novo prazo
         </Button>
       </div>
 
-      <Card className="shadow-sm border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+      <Card className="border-border bg-card shadow-sm">
         <CardContent className="pt-6">
           {prazos.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
-              <div className="mb-3 rounded-full bg-gray-100 dark:bg-gray-800 p-3">
-                <Calendar className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+              <div className="mb-3 rounded-full bg-muted p-3">
+                <Calendar className="h-5 w-5 text-muted-foreground" />
               </div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+              <p className="text-sm font-medium text-foreground">
                 Nenhum prazo cadastrado
               </p>
-              <p className="mt-1 max-w-xs text-xs text-gray-400 dark:text-gray-500">
+              <p className="mt-1 max-w-xs text-xs text-muted-foreground">
                 O edital não informou prazos automaticamente. Adicione manualmente as datas importantes.
               </p>
               <Button
                 onClick={openCreate}
                 variant="outline"
-                className="mt-4 border-[#0078D1] text-[#0078D1] dark:border-[#60a5fa] dark:text-[#60a5fa] hover:bg-[#0078D1]/5 dark:hover:bg-[#60a5fa]/10"
+                className="mt-4"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Adicionar primeiro prazo
@@ -240,30 +240,30 @@ export function PrazosPageClient({ bidId }: PrazosPageClientProps) {
               {prazos.map((p) => (
                 <li
                   key={p.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+                  className="flex flex-col justify-between gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:border-border hover:bg-accent/40 sm:flex-row sm:items-center"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-heading font-medium text-gray-900 dark:text-gray-100">{p.titulo}</span>
+                      <span className="font-heading font-medium text-foreground">{p.titulo}</span>
                       <span
-                        className={`text-xs font-semibold px-2.5 py-1 rounded-full ${(p.diasRestantes ?? 0) < 0
-                            ? "bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-400"
+                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ${(p.diasRestantes ?? 0) < 0
+                            ? "bg-destructive/10 text-destructive"
                             : (p.diasRestantes ?? 0) === 0
-                              ? "bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-400"
-                              : "bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-400"
+                              ? "bg-muted text-foreground"
+                              : "bg-muted text-muted-foreground"
                           }`}
                       >
                         {formatDiasRestantes(p.diasRestantes)}
                       </span>
                     </div>
-                    <div className="flex items-center gap-4 mt-1.5 text-sm text-gray-500 dark:text-gray-400">
+                    <div className="mt-1.5 flex items-center gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
+                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                         {formatDataPrazo(p.dataPrazo)}
                       </span>
                     </div>
                     {p.descricao && (
-                      <p className="mt-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400">{p.descricao}</p>
+                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{p.descricao}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
@@ -272,7 +272,7 @@ export function PrazosPageClient({ bidId }: PrazosPageClientProps) {
                       size="icon"
                       onClick={() => openEdit(p)}
                       aria-label="Editar prazo"
-                      className="text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950"
+                      className="text-muted-foreground hover:bg-accent hover:text-foreground"
                     >
                       <Pencil className="w-4 h-4" />
                     </Button>
@@ -282,7 +282,7 @@ export function PrazosPageClient({ bidId }: PrazosPageClientProps) {
                       onClick={() => handleDelete(p.id)}
                       disabled={deletingId === p.id}
                       aria-label="Remover prazo"
-                      className="text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950"
+                      className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -312,44 +312,42 @@ export function PrazosPageClient({ bidId }: PrazosPageClientProps) {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="titulo" className="text-gray-700 dark:text-gray-300">Título</Label>
+              <Label htmlFor="titulo">Título</Label>
               <Input
                 id="titulo"
                 value={formTitulo}
                 onChange={(e) => setFormTitulo(e.target.value)}
                 placeholder="Ex: Entrega de propostas"
-                className="border-gray-200 dark:border-gray-700"
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="dataPrazo" className="text-gray-700 dark:text-gray-300">Data e hora</Label>
+              <Label htmlFor="dataPrazo">Data e hora</Label>
               <Input
                 id="dataPrazo"
                 type="datetime-local"
                 value={formDataPrazo}
                 onChange={(e) => setFormDataPrazo(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-[#0078D1]/50 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
               />
               {formError && (
-                <p className="text-xs text-red-600 dark:text-red-400">{formError}</p>
+                <p className="text-xs text-destructive">{formError}</p>
               )}
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="descricao" className="text-gray-700 dark:text-gray-300">Descrição (opcional)</Label>
+              <Label htmlFor="descricao">Descrição (opcional)</Label>
               <Textarea
                 id="descricao"
                 value={formDescricao}
                 onChange={(e) => setFormDescricao(e.target.value)}
                 placeholder="Observações"
-                className="min-h-[92px] border-gray-200 text-sm dark:border-gray-700"
+                className="min-h-[92px]"
               />
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={closeModal} disabled={submitting} className="border-gray-200 dark:border-gray-700">
+            <Button variant="outline" onClick={closeModal} disabled={submitting}>
               Cancelar
             </Button>
-            <Button onClick={handleSubmit} disabled={submitting} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button onClick={handleSubmit} disabled={submitting} className="shadow-none dark:hover:bg-[#e0e0e0]">
               {editingId ? "Salvar" : "Criar"}
             </Button>
           </DialogFooter>

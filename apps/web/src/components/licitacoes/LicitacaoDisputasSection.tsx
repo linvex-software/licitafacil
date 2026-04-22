@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { Swords } from 'lucide-react'
 import { listarDisputas, type Disputa } from '@/lib/api'
+import { getDisputaListLabel } from '@/lib/disputa-display'
 import { IniciarDisputaModal } from '@/components/monitoramento/IniciarDisputaModal'
 import type { PregaoMonitorado } from '@/components/monitoramento/CardPregao'
 
@@ -66,7 +67,7 @@ export function LicitacaoDisputasSection({
           <button
             type="button"
             onClick={() => setModalOpen(true)}
-            className="rounded-lg bg-[#0078D1] px-4 py-2 text-sm font-medium text-white hover:bg-[#0078D1]/90"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-[#e0e0e0]"
           >
             Iniciar disputa para esta licitação
           </button>
@@ -80,7 +81,7 @@ export function LicitacaoDisputasSection({
             >
               <div>
                 <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {disputa.numeroPregao || 'Disputa'}
+                  {getDisputaListLabel(disputa)}
                 </span>
                 <span className="ml-2 text-xs text-muted-foreground">
                   {new Date(disputa.createdAt).toLocaleDateString('pt-BR')}
@@ -88,7 +89,7 @@ export function LicitacaoDisputasSection({
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 {badgeAoVivo(disputa) && (
-                  <span className="animate-pulse rounded px-2 py-0.5 text-xs font-medium bg-red-500/20 text-red-400">
+                  <span className="animate-pulse rounded bg-destructive/15 px-2 py-0.5 text-xs font-medium text-destructive">
                     AO VIVO
                   </span>
                 )}
@@ -100,7 +101,7 @@ export function LicitacaoDisputasSection({
                 <Link href={`/disputa/${disputa.id}/ao-vivo`}>
                   <button
                     type="button"
-                    className="text-sm font-medium text-[#0078D1] hover:underline"
+                    className="text-sm font-medium text-white underline-offset-4 hover:underline"
                   >
                     {badgeAoVivo(disputa) ? 'Ver ao vivo' : 'Ver detalhes'}
                   </button>
@@ -111,7 +112,7 @@ export function LicitacaoDisputasSection({
           <button
             type="button"
             onClick={() => setModalOpen(true)}
-            className="w-full rounded-lg border border-dashed border-gray-300 py-2 text-sm text-muted-foreground hover:border-[#0078D1]/50 hover:text-[#0078D1] dark:border-gray-700"
+            className="w-full rounded-lg border border-dashed border-[#333333] py-2 text-sm text-[#a1a1aa] hover:border-[#444444] hover:text-white"
           >
             Iniciar outra disputa
           </button>

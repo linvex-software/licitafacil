@@ -47,7 +47,7 @@ export function UploadPdfDropzone({
       <div className="border-2 border-dashed border-slate-300 rounded-lg p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <FileText className="w-10 h-10 text-blue-500" />
+            <FileText className="h-10 w-10 text-muted-foreground" />
             <div>
               <p className="font-medium text-slate-900">{arquivo.name}</p>
               <p className="text-sm text-slate-500">
@@ -74,14 +74,14 @@ export function UploadPdfDropzone({
       className={`
         border-2 border-dashed rounded-lg p-12 text-center cursor-pointer
         transition-colors
-        ${isDragActive ? "border-blue-500 bg-blue-50" : "border-slate-300 hover:border-slate-400"}
+        ${isDragActive ? "border-foreground bg-accent" : "border-border hover:border-muted-foreground"}
         ${disabled ? "opacity-50 cursor-not-allowed" : ""}
       `}
     >
       <input {...getInputProps()} />
       <Upload className="w-12 h-12 mx-auto mb-4 text-slate-400" />
       {isDragActive ? (
-        <p className="text-blue-600 font-medium">Solte o arquivo aqui...</p>
+        <p className="font-medium text-foreground">Solte o arquivo aqui...</p>
       ) : (
         <>
           <p className="text-slate-600 mb-2">

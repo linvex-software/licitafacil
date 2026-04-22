@@ -28,14 +28,14 @@ export default function Error({
                 Ocorreu um erro ao buscar os dados da licitação. Por favor, tente novamente.
               </p>
               {error.message && (
-                <p className="text-sm text-red-600 dark:text-red-400 mb-6 bg-red-50 dark:bg-red-900/20 p-3 rounded">
+                <p className="mb-6 rounded border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
                   {error.message}
                 </p>
               )}
               <div className="flex gap-4 justify-center">
                 <button
                   onClick={reset}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                  className="rounded-lg bg-primary px-6 py-3 font-medium text-primary-foreground transition-opacity hover:opacity-90 dark:hover:bg-[#e0e0e0]"
                 >
                   Tentar novamente
                 </button>

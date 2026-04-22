@@ -27,7 +27,7 @@ export default function EmpresasPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-lg font-heading flex items-center gap-2">
-                            <Building2 className="w-5 h-5 text-emerald-500" />
+                            <Building2 className="h-5 w-5 text-muted-foreground" />
                             Empresa Principal
                         </CardTitle>
                     </CardHeader>
@@ -48,7 +48,7 @@ export default function EmpresasPage() {
                                 ) : (
                                     <TableRow>
                                         <TableCell className="font-medium">Empresa de Teste DEV</TableCell>
-                                        <TableCell><span className="text-emerald-600 font-medium">Ativa</span></TableCell>
+                                        <TableCell><span className="font-medium text-foreground">Ativa</span></TableCell>
                                         <TableCell className="text-gray-400 dark:text-gray-500 font-mono text-xs">00000000-0000-0000-0000-000000000001</TableCell>
                                     </TableRow>
                                 )}

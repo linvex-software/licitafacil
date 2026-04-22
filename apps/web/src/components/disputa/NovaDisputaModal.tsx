@@ -201,7 +201,7 @@ export function NovaDisputaModal({ onSuccess }: NovaDisputaModalProps) {
       if (!value) reset();
     }}>
       <DialogTrigger asChild>
-        <Button className="bg-primary hover:bg-primary-600 text-white">
+        <Button className="shadow-none">
           <Plus className="w-4 h-4 mr-2" />
           Nova Disputa
         </Button>
@@ -240,7 +240,7 @@ export function NovaDisputaModal({ onSuccess }: NovaDisputaModalProps) {
                 </SelectContent>
               </Select>
               {erroLicitacao && (
-                <p className="text-xs text-red-600 mt-1">{erroLicitacao}</p>
+                <p className="text-xs text-destructive mt-1">{erroLicitacao}</p>
               )}
             </div>
 
@@ -309,11 +309,11 @@ export function NovaDisputaModal({ onSuccess }: NovaDisputaModalProps) {
             )}
 
             {form.modo === "ROBO" ? (
-              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
+              <p className="rounded-md border border-border bg-muted p-2 text-xs text-muted-foreground">
                 Suas credenciais são armazenadas com criptografia AES-256 e nunca são exibidas após salvas.
               </p>
             ) : (
-              <p className="text-xs text-teal-700 bg-teal-50 border border-teal-200 rounded-md p-2">
+              <p className="rounded-md border border-border bg-muted p-2 text-xs text-muted-foreground">
                 No modo extensão, a disputa é criada sem credencial e os lances são operados pela extensão Chrome.
               </p>
             )}
@@ -368,7 +368,7 @@ export function NovaDisputaModal({ onSuccess }: NovaDisputaModalProps) {
                       size="icon"
                       onClick={() => setItens((prev) => prev.filter((_, i) => i !== idx))}
                     >
-                      <Trash2 className="w-4 h-4 text-red-500" />
+                      <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   )}
                 </div>

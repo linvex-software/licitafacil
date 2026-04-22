@@ -125,7 +125,7 @@ export function DocumentVersions({
               key={version.id}
               className={`p-4 rounded-lg border ${
                 version.isCurrent
-                  ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                  ? "border-border bg-muted"
                   : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
               }`}
             >
@@ -160,8 +160,7 @@ export function DocumentVersions({
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <button
                     onClick={() => handleDownload(version)}
-                    className="px-3 py-1.5 text-sm bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30
-                      text-blue-700 dark:text-blue-300 rounded-lg font-medium transition-colors"
+                    className="rounded-lg bg-muted px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-accent"
                   >
                     📥 Download
                   </button>
@@ -169,9 +168,8 @@ export function DocumentVersions({
                     <button
                       onClick={() => handleRestore(version.versionNumber)}
                       disabled={isRestoring === version.versionNumber.toString()}
-                      className="px-3 py-1.5 text-sm bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30
-                        text-green-700 dark:text-green-300 rounded-lg font-medium transition-colors
-                        disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="rounded-lg bg-muted px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-accent
+                        disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {isRestoring === version.versionNumber.toString()
                         ? "Restaurando..."

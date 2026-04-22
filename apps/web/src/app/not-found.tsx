@@ -1,13 +1,11 @@
 import Link from 'next/link'
+import { Logo } from '@/components/logo'
 
 export default function NotFound() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
-      <div className="mb-8">
-        <span className="text-4xl font-bold tracking-tight">
-          <span className="text-primary">LVX</span>
-          <span className="text-foreground">LICITAÇÃO</span>
-        </span>
+      <div className="mb-8 flex justify-center">
+        <Logo size="lg" />
       </div>
 
       <div className="max-w-md space-y-4">
@@ -27,7 +25,8 @@ export default function NotFound() {
       </div>
 
       <p className="mt-12 text-xs text-muted-foreground">
-        Limvex Licitação — Gestão inteligente de processos licitatórios
+        <span className="font-limvex uppercase text-foreground">LIMVEX LICITAÇÃO</span>
+        {' '}— Gestão inteligente de processos licitatórios
       </p>
     </div>
   )

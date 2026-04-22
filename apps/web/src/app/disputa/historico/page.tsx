@@ -101,10 +101,10 @@ export default function DisputaHistoricoPage() {
       <div className="mx-auto">
         <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-heading font-bold text-slate-900">
+            <h1 className="font-heading text-2xl font-bold text-foreground md:text-3xl">
               Histórico de Disputas
             </h1>
-            <p className="text-slate-600 mt-1">
+            <p className="mt-1 text-muted-foreground">
               Consulte disputas encerradas, economia gerada e resultados por licitação.
             </p>
           </div>
@@ -112,46 +112,46 @@ export default function DisputaHistoricoPage() {
 
         {metricas && (
           <div className="grid gap-4 md:grid-cols-4 mb-6">
-            <Card className="border-slate-200">
+            <Card className="border-border">
               <CardHeader>
-                <CardTitle className="text-sm font-heading">Total de disputas</CardTitle>
+                <CardTitle className="font-heading text-sm">Total de disputas</CardTitle>
               </CardHeader>
-              <CardContent className="text-2xl font-semibold text-slate-900">
+              <CardContent className="text-2xl font-semibold text-foreground">
                 {metricas.totalDisputas}
               </CardContent>
             </Card>
-            <Card className="border-slate-200">
+            <Card className="border-border">
               <CardHeader>
-                <CardTitle className="text-sm font-heading">Taxa de vitória</CardTitle>
+                <CardTitle className="font-heading text-sm">Taxa de vitória</CardTitle>
               </CardHeader>
-              <CardContent className="text-2xl font-semibold text-slate-900">
+              <CardContent className="text-2xl font-semibold text-foreground">
                 {metricas.taxaVitoria.toFixed(2)}%
               </CardContent>
             </Card>
-            <Card className="border-slate-200">
+            <Card className="border-border">
               <CardHeader>
-                <CardTitle className="text-sm font-heading">Ticket médio ganho</CardTitle>
+                <CardTitle className="font-heading text-sm">Ticket médio ganho</CardTitle>
               </CardHeader>
-              <CardContent className="text-2xl font-semibold text-slate-900">
+              <CardContent className="text-2xl font-semibold text-foreground">
                 {metricas.ticketMedioGanho != null ? `R$ ${metricas.ticketMedioGanho.toFixed(2)}` : "-"}
               </CardContent>
             </Card>
-            <Card className="border-slate-200">
+            <Card className="border-border">
               <CardHeader>
-                <CardTitle className="text-sm font-heading">Margem média perdida</CardTitle>
+                <CardTitle className="font-heading text-sm">Margem média perdida</CardTitle>
               </CardHeader>
-              <CardContent className="text-2xl font-semibold text-slate-900">
+              <CardContent className="text-2xl font-semibold text-foreground">
                 {metricas.margemMediaPerdida != null ? `R$ ${metricas.margemMediaPerdida.toFixed(2)}` : "-"}
               </CardContent>
             </Card>
           </div>
         )}
 
-        <Card className="mb-6 border-slate-200">
+        <Card className="mb-6 border-border">
           <CardContent className="py-4 space-y-4">
             <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
               <div className="flex-1 flex items-center gap-2">
-                <Search className="w-4 h-4 text-slate-400" />
+                <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar por licitação ou órgão..."
                   value={licitacao}
@@ -198,13 +198,13 @@ export default function DisputaHistoricoPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200">
+        <Card className="border-border">
           <CardHeader>
-            <CardTitle className="text-lg font-heading">Disputas encerradas</CardTitle>
+            <CardTitle className="font-heading text-lg">Disputas encerradas</CardTitle>
           </CardHeader>
           <CardContent>
             {items.length === 0 ? (
-              <p className="text-sm text-slate-500 py-4">Nenhuma disputa encerrada encontrada.</p>
+              <p className="py-4 text-sm text-muted-foreground">Nenhuma disputa encerrada encontrada.</p>
             ) : (
               <div className="space-y-3">
                 <Table>
@@ -223,7 +223,7 @@ export default function DisputaHistoricoPage() {
                     {items.map((item) => (
                       <TableRow
                         key={item.id}
-                        className="cursor-pointer hover:bg-slate-50"
+                        className="cursor-pointer hover:bg-accent/50"
                         onClick={() => router.push(`/disputa/historico/${item.id}`)}
                       >
                         <TableCell className="font-medium">
@@ -251,7 +251,7 @@ export default function DisputaHistoricoPage() {
                 </Table>
 
                 {totalPages > 1 && (
-                  <div className="flex justify-between items-center pt-2 text-sm text-slate-600">
+                  <div className="flex items-center justify-between pt-2 text-sm text-muted-foreground">
                     <span>
                       Página {page} de {totalPages}
                     </span>

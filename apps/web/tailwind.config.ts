@@ -11,25 +11,16 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Inter", "var(--font-sans)", "ui-sans-serif", "system-ui"],
-        heading: ["Inter", "var(--font-heading)", "ui-sans-serif", "system-ui"],
+        sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
+        heading: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
+        limvex: ["var(--font-oswald)", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       colors: {
         gray: { ...colors.zinc },
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#0078D1",
-          50: "#e6f2fb",
-          100: "#cce5f7",
-          200: "#99cbef",
-          300: "#66b1e7",
-          400: "#3397df",
-          500: "#0078D1",
-          600: "#0062ab",
-          700: "#004d86",
-          800: "#003860",
-          900: "#00223b",
+          DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {

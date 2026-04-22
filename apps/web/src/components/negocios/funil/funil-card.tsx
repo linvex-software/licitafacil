@@ -76,7 +76,7 @@ export function FunilCard({ bid, onMove, onOpenDetails }: FunilCardProps) {
         >
             <Card className={cn(
                 "p-3 hover:shadow-md transition-shadow dark:bg-zinc-900 border",
-                isAtRisk ? "border-red-300 dark:border-red-900/50" : "border-gray-200 dark:border-zinc-800"
+                isAtRisk ? "border-destructive/40" : "border-gray-200 dark:border-zinc-800"
             )}>
                 <div className="flex justify-between items-start gap-2 mb-2">
                     <Badge variant="outline" className="text-[10px] font-mono px-1.5 py-0 bg-gray-50 dark:bg-zinc-800">
@@ -84,7 +84,7 @@ export function FunilCard({ bid, onMove, onOpenDetails }: FunilCardProps) {
                     </Badge>
                     <div className="flex items-center gap-1">
                         {isAtRisk && (
-                            <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                            <AlertCircle className="h-4 w-4 flex-shrink-0 text-destructive" />
                         )}
 
                         {onMove && (

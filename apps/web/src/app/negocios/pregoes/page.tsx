@@ -203,7 +203,7 @@ export default function CentralPregoesPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-2 text-gray-900 dark:text-gray-100">
-                <Gavel className="w-6 h-6 text-blue-600" />
+                <Gavel className="h-6 w-6 text-muted-foreground" />
                 Central de Pregões
               </h1>
               <p className="text-gray-500 dark:text-gray-400 mt-1">
@@ -340,7 +340,7 @@ export default function CentralPregoesPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {loadingList ? (
               <div className="col-span-full flex items-center justify-center py-14">
-                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
             ) : items.length === 0 ? (
               <div className="col-span-full rounded-xl border border-gray-100 bg-white p-8 text-center text-sm text-muted-foreground dark:border-gray-800 dark:bg-gray-900">

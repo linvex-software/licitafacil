@@ -163,21 +163,21 @@ export default function PainelAdminClientes() {
 
   const badgeStatusVariant = (status: string) => {
     const variants: Record<string, string> = {
-      ATIVO: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 border-green-200 dark:border-green-800",
-      SUSPENSO: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800",
-      CANCELADO: "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 border-red-200 dark:border-red-800",
-      TRIAL: "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 border-blue-200 dark:border-blue-800",
+      ATIVO: "border-border bg-muted text-foreground",
+      SUSPENSO: "border-border bg-muted text-muted-foreground",
+      CANCELADO: "border-destructive/40 bg-destructive/10 text-destructive",
+      TRIAL: "border-border bg-muted text-foreground",
     };
-    return variants[status] || "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300";
+    return variants[status] || "border-border bg-muted text-muted-foreground";
   };
 
   const badgePlanoVariant = (plano: string) => {
     const variants: Record<string, string> = {
-      STARTER: "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700",
-      PROFESSIONAL: "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800",
-      ENTERPRISE: "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800",
+      STARTER: "border-border bg-muted text-muted-foreground",
+      PROFESSIONAL: "border-border bg-muted text-foreground",
+      ENTERPRISE: "border-border bg-muted text-foreground",
     };
-    return variants[plano] || "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300";
+    return variants[plano] || "border-border bg-muted text-muted-foreground";
   };
 
   const renderMaxUsuarios = (maxUsuarios: number) => {
@@ -223,8 +223,9 @@ export default function PainelAdminClientes() {
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                 Gerenciar Clientes
               </h1>
-              <p className="text-muted-foreground mt-1">
-                Painel administrativo B2B — Limvex Licitação
+              <p className="mt-1 text-muted-foreground">
+                Painel administrativo B2B —{" "}
+                <span className="font-limvex font-medium uppercase text-foreground">LIMVEX LICITAÇÃO</span>
               </p>
             </div>
             <Button onClick={() => setModalAberto(true)} size="lg">

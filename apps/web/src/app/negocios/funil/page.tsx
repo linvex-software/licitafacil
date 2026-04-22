@@ -71,7 +71,7 @@ export default function FunilPage() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-2xl font-bold flex items-center gap-2 text-gray-900 dark:text-gray-100">
-                            <TrendingUp className="w-6 h-6 text-blue-600" />
+                            <TrendingUp className="h-6 w-6 text-muted-foreground" />
                             Funil de Licitações
                         </h1>
                         <p className="text-gray-500 dark:text-gray-400 mt-1">
@@ -118,7 +118,7 @@ export default function FunilPage() {
                 <div className="flex-1 p-1 overflow-x-auto custom-scrollbar">
                     {loading ? (
                         <div className="flex items-center justify-center h-full">
-                            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                         </div>
                     ) : (
                         <FunilBoard initialBids={bids} onOpenDetails={setModalBidId} />

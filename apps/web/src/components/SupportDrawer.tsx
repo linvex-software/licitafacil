@@ -4,13 +4,14 @@ import { useState } from "react";
 import {
   X, Search, LayoutGrid, Sparkles, FileText, Users, Globe, ChevronDown, ChevronUp,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 const CATEGORIES = [
-  { icon: LayoutGrid, label: "Licitações", desc: "Gerencie processos e estado operacional", color: "#0078D1" },
-  { icon: Sparkles, label: "Inteligência Artificial", desc: "Análise de editais e predição de sucesso", color: "#8b5cf6" },
-  { icon: Globe, label: "Busca PNCP", desc: "Encontre oportunidades diretamente no PNCP", color: "#06b6d4" },
-  { icon: FileText, label: "Documentos", desc: "Uploads, checklists e controle de prazos", color: "#f59e0b" },
-  { icon: Users, label: "Usuários & Acesso", desc: "Gestão de membros e permissões", color: "#22c55e" },
+  { icon: LayoutGrid, label: "Licitações", desc: "Gerencie processos e estado operacional" },
+  { icon: Sparkles, label: "Inteligência Artificial", desc: "Análise de editais e predição de sucesso" },
+  { icon: Globe, label: "Busca PNCP", desc: "Encontre oportunidades diretamente no PNCP" },
+  { icon: FileText, label: "Documentos", desc: "Uploads, checklists e controle de prazos" },
+  { icon: Users, label: "Usuários & Acesso", desc: "Gestão de membros e permissões" },
 ];
 
 const FAQS = [
@@ -40,23 +41,24 @@ export function SupportDrawer({ open, onClose }: SupportDrawerProps) {
   return (
     <>
       <div
-        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+        className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      <div className="fixed top-0 right-0 z-50 flex h-full w-full max-w-md flex-col overflow-hidden border-l border-gray-100 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-950">
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5 dark:border-gray-800">
+      <div className="fixed top-0 right-0 z-50 flex h-full w-full max-w-md flex-col overflow-hidden border-l border-border bg-background text-foreground shadow-2xl">
+        <div className="flex items-center justify-between border-b border-border px-6 py-5">
           <div>
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-base font-semibold text-foreground">
               Central de Ajuda
             </h2>
-            <p className="mt-0.5 text-xs text-gray-400">
+            <p className="mt-0.5 text-xs text-muted-foreground">
               Como podemos ajudar?
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <X className="h-4 w-4" />
           </button>
@@ -64,35 +66,32 @@ export function SupportDrawer({ open, onClose }: SupportDrawerProps) {
 
         <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
               placeholder="Buscar por tópico ou dúvida..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-4 text-sm text-gray-800 placeholder-gray-400 transition-colors focus:border-[#0078D1]/50 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:placeholder-gray-500"
+              className="border-input bg-background pl-9 text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
           {!search && (
             <div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Categorias
               </p>
               <div className="grid grid-cols-2 gap-2">
                 {CATEGORIES.map((cat) => (
                   <div
                     key={cat.label}
-                    className="cursor-pointer rounded-xl border border-gray-100 bg-white p-3 transition-colors hover:border-gray-200 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-gray-700"
+                    className="cursor-pointer rounded-xl border border-border bg-card p-3 text-card-foreground transition-colors hover:bg-accent/60"
                   >
-                    <cat.icon
-                      className="mb-2 h-4 w-4"
-                      style={{ color: cat.color }}
-                    />
-                    <p className="text-xs font-semibold leading-tight text-gray-700 dark:text-gray-300">
+                    <cat.icon className="mb-2 h-4 w-4 text-foreground" />
+                    <p className="text-xs font-semibold leading-tight">
                       {cat.label}
                     </p>
-                    <p className="mt-1 text-[11px] leading-tight text-gray-400 dark:text-gray-500">
+                    <p className="mt-1 text-[11px] leading-tight text-muted-foreground">
                       {cat.desc}
                     </p>
                   </div>
@@ -102,35 +101,36 @@ export function SupportDrawer({ open, onClose }: SupportDrawerProps) {
           )}
 
           <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Perguntas frequentes
             </p>
             <div className="space-y-2">
               {filteredFaqs.map((faq, i) => (
                 <div
                   key={faq.q}
-                  className="overflow-hidden rounded-xl border border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900"
+                  className="overflow-hidden rounded-xl border border-border bg-card text-card-foreground"
                 >
                   <button
+                    type="button"
                     className="flex w-full items-center justify-between px-4 py-3 text-left"
                     onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   >
-                    <span className="pr-4 text-sm font-medium leading-snug text-gray-700 dark:text-gray-300">
+                    <span className="pr-4 text-sm font-medium leading-snug text-foreground">
                       {faq.q}
                     </span>
                     {openFaq === i
-                      ? <ChevronUp className="h-4 w-4 shrink-0 text-gray-400" />
-                      : <ChevronDown className="h-4 w-4 shrink-0 text-gray-400" />}
+                      ? <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      : <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />}
                   </button>
                   {openFaq === i && (
-                    <div className="border-t border-gray-50 px-4 pt-2 pb-3 text-sm leading-relaxed text-gray-500 dark:border-gray-800 dark:text-gray-400">
+                    <div className="border-t border-border px-4 pt-2 pb-3 text-sm leading-relaxed text-muted-foreground">
                       {faq.a}
                     </div>
                   )}
                 </div>
               ))}
               {filteredFaqs.length === 0 && (
-                <p className="py-6 text-center text-sm text-gray-400">
+                <p className="py-6 text-center text-sm text-muted-foreground">
                   Nenhum resultado encontrado.
                 </p>
               )}
@@ -138,11 +138,14 @@ export function SupportDrawer({ open, onClose }: SupportDrawerProps) {
           </div>
         </div>
 
-        <div className="border-t border-gray-100 px-6 py-4 dark:border-gray-800">
-          <p className="text-center text-xs text-gray-400">
+        <div className="border-t border-border px-6 py-4">
+          <p className="text-center text-xs text-muted-foreground">
             Não encontrou o que precisava?{" "}
-            <a href="mailto:suporte@limvex.com" className="font-medium text-[#0078D1] hover:underline">
-              Fale conosco
+            <a
+              href="mailto:comercial@limvex.com"
+              className="font-limvex font-medium text-foreground underline-offset-4 hover:underline"
+            >
+              comercial@limvex.com
             </a>
           </p>
         </div>

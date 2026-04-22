@@ -8,47 +8,23 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ElementType } from "react";
 import { getConfigAlertaPregao, saveConfigAlertaPregao } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-
-/* ─── Theme helper ─────────────────────────────────────────── */
-type ThemeOption = "light" | "dark" | "system";
-
-function getStoredTheme(): ThemeOption {
-    if (typeof window === "undefined") return "system";
-    return (localStorage.getItem("theme") as ThemeOption) || "system";
-}
-
-function applyTheme(theme: ThemeOption) {
-    const root = document.documentElement;
-    if (theme === "dark") {
-        root.classList.add("dark");
-    } else if (theme === "light") {
-        root.classList.remove("dark");
-    } else {
-        // system
-        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        root.classList.toggle("dark", prefersDark);
-    }
-    localStorage.setItem("theme", theme);
-}
+import { useTheme, type Theme as ThemeOption } from "@/hooks/use-theme";
+import { Button } from "@/components/ui/button";
 
 /* ─── Sub-components ───────────────────────────────────────── */
 
 function SectionCard({
     href,
     icon: Icon,
-    iconColor,
-    iconBg,
     title,
     description,
     badge,
 }: {
     href: string;
-    icon: React.ElementType;
-    iconColor: string;
-    iconBg: string;
+    icon: ElementType;
     title: string;
     description: string;
     badge?: string;
@@ -56,23 +32,23 @@ function SectionCard({
     return (
         <Link
             href={href}
-            className="group flex items-center gap-4 p-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all duration-150"
+            className="group flex items-center gap-4 rounded-xl border border-border bg-card p-5 text-card-foreground transition-all duration-150 hover:border-muted-foreground/40 hover:bg-accent/60"
         >
-            <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shrink-0", iconBg)}>
-                <Icon className={cn("w-5 h-5", iconColor)} />
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted">
+                <Icon className="h-5 w-5 text-foreground" />
             </div>
-            <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                    <span className="font-semibold text-slate-900 dark:text-slate-100 text-[15px]">{title}</span>
+            <div className="min-w-0 flex-1">
+                <div className="mb-0.5 flex items-center gap-2">
+                    <span className="text-[15px] font-semibold">{title}</span>
                     {badge && (
-                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                        <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                             {badge}
                         </span>
                     )}
                 </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{description}</p>
+                <p className="truncate text-sm text-muted-foreground">{description}</p>
             </div>
-            <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
+            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-foreground" />
         </Link>
     );
 }
@@ -82,12 +58,11 @@ function SectionCard({
 export default function ConfiguracoesPage() {
     const { user } = useAuth();
     const { toast } = useToast();
-    const [theme, setTheme] = useState<ThemeOption>("system");
+    const { theme, setTheme } = useTheme();
     const [minutosAlerta, setMinutosAlerta] = useState(15);
     const [salvandoAlerta, setSalvandoAlerta] = useState(false);
 
     useEffect(() => {
-        setTheme(getStoredTheme());
         getConfigAlertaPregao().then(r => setMinutosAlerta(r.minutosAlertaPregao)).catch(() => {});
     }, []);
 
@@ -105,7 +80,6 @@ export default function ConfiguracoesPage() {
 
     function handleThemeChange(t: ThemeOption) {
         setTheme(t);
-        applyTheme(t);
     }
 
     const ROLE_LABELS: Record<string, string> = {
@@ -126,25 +100,25 @@ export default function ConfiguracoesPage() {
 
                 {/* Header */}
                 <div>
-                    <h1 className="text-2xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
-                        <Settings className="w-6 h-6 text-blue-600" />
+                    <h1 className="flex items-center gap-2 text-2xl font-bold text-foreground">
+                        <Settings className="h-6 w-6 text-muted-foreground" />
                         Configurações
                     </h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="mt-1 text-muted-foreground">
                         Gerencie suas preferências de conta, notificações e aparência.
                     </p>
                 </div>
 
                 {/* User summary */}
-                <div className="flex items-center gap-4 p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
-                    <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white text-base font-bold select-none shrink-0">
+                <div className="flex items-center gap-4 rounded-xl border border-border bg-muted/30 p-4">
+                    <div className="flex h-12 w-12 shrink-0 select-none items-center justify-center rounded-full bg-muted text-base font-bold text-foreground ring-1 ring-border">
                         {user?.name?.substring(0, 2).toUpperCase() || "??"}
                     </div>
                     <div className="min-w-0">
-                        <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{user?.name || "—"}</p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{user?.email || "—"}</p>
-                        <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-medium text-blue-600 dark:text-blue-400">
-                            <ShieldCheck className="w-3 h-3" />
+                        <p className="truncate font-semibold text-foreground">{user?.name || "—"}</p>
+                        <p className="truncate text-sm text-muted-foreground">{user?.email || "—"}</p>
+                        <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+                            <ShieldCheck className="h-3 w-3" />
                             {ROLE_LABELS[user?.role || ""] || user?.role}
                         </span>
                     </div>
@@ -152,38 +126,30 @@ export default function ConfiguracoesPage() {
 
                 {/* Section: Conta */}
                 <div className="space-y-2">
-                    <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-1">
+                    <p className="section-label px-1">
                         Conta
                     </p>
                     <SectionCard
                         href="/perfil"
                         icon={User}
-                        iconColor="text-blue-600 dark:text-blue-400"
-                        iconBg="bg-blue-50 dark:bg-blue-950/50"
                         title="Perfil"
                         description="Editar nome, alterar senha e preferências de acessibilidade"
                     />
                     <SectionCard
                         href="/configuracoes/notificacoes"
                         icon={Bell}
-                        iconColor="text-amber-600 dark:text-amber-400"
-                        iconBg="bg-amber-50 dark:bg-amber-950/50"
                         title="Notificações por Email"
                         description="Controle quais alertas você recebe e com qual frequência"
                     />
                     <SectionCard
                         href="/extensao"
                         icon={Puzzle}
-                        iconColor="text-violet-600 dark:text-violet-400"
-                        iconBg="bg-violet-50 dark:bg-violet-950/50"
                         title="Extensão Chrome"
                         description="Instale e use a extensão para integrar com portais de licitação"
                     />
                     <SectionCard
                         href="/redefinir-senha"
                         icon={Lock}
-                        iconColor="text-red-600 dark:text-red-400"
-                        iconBg="bg-red-50 dark:bg-red-950/50"
                         title="Redefinir Senha"
                         description="Solicite um link de redefinição no seu email cadastrado"
                     />
@@ -191,13 +157,13 @@ export default function ConfiguracoesPage() {
 
                 {/* Section: Aparência */}
                 <div className="space-y-3">
-                    <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-1">
+                    <p className="section-label px-1">
                         Aparência
                     </p>
-                    <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 space-y-3">
+                    <div className="space-y-3 rounded-xl border border-border bg-card p-5 text-card-foreground">
                         <div>
-                            <p className="font-semibold text-slate-900 dark:text-slate-100 text-[15px] mb-0.5">Tema</p>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Escolha entre tema claro, escuro ou igual ao sistema operacional.</p>
+                            <p className="mb-0.5 text-[15px] font-semibold">Tema</p>
+                            <p className="text-sm text-muted-foreground">Escolha entre tema claro, escuro ou igual ao sistema operacional.</p>
                         </div>
                         <div
                             className="grid grid-cols-3 gap-2"
@@ -211,15 +177,15 @@ export default function ConfiguracoesPage() {
                                     aria-pressed={theme === value}
                                     aria-label={`Tema ${label}`}
                                     className={cn(
-                                        "flex flex-col items-center gap-2 py-3 px-2 rounded-xl border text-sm font-medium transition-all duration-150",
+                                        "flex flex-col items-center gap-2 rounded-xl border px-2 py-3 text-sm font-medium transition-all duration-150",
                                         theme === value
-                                            ? "border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 shadow-sm"
-                                            : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600"
+                                            ? "border-foreground bg-accent text-foreground shadow-none ring-1 ring-foreground/15"
+                                            : "border-border text-muted-foreground hover:border-muted-foreground/50 hover:bg-accent/50"
                                     )}
                                 >
-                                    <Icon className="w-5 h-5" />
+                                    <Icon className="h-5 w-5" />
                                     <span className="text-xs">{label}</span>
-                                    {theme === value && <CheckCircle2 className="w-3 h-3 text-blue-500" />}
+                                    {theme === value && <CheckCircle2 className="h-3 w-3 text-foreground" />}
                                 </button>
                             ))}
                         </div>
@@ -228,49 +194,51 @@ export default function ConfiguracoesPage() {
 
                 {/* Section: Alertas de Pregão */}
                 <div className="space-y-3">
-                    <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-1">
+                    <p className="section-label px-1">
                         Monitoramento
                     </p>
-                    <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 space-y-4">
+                    <div className="space-y-4 rounded-xl border border-border bg-card p-5 text-card-foreground">
                         <div>
-                            <p className="font-semibold text-slate-900 dark:text-slate-100 text-[15px] mb-0.5">Alertas de Pregão</p>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                            <p className="mb-0.5 text-[15px] font-semibold">Alertas de Pregão</p>
+                            <p className="text-sm text-muted-foreground">
                                 Receba um email antes do horário de início dos pregões monitorados.
                             </p>
                         </div>
                         <div className="space-y-3">
-                            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            <p className="text-sm font-medium text-foreground">
                                 Alertar quantos minutos antes?
                             </p>
-                            <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex flex-wrap items-center gap-2">
                                 {[5, 10, 15, 30, 60].map(min => (
                                     <button
                                         key={min}
+                                        type="button"
                                         onClick={() => setMinutosAlerta(min)}
                                         className={cn(
-                                            "px-4 py-2 rounded-lg text-sm font-medium border transition-all duration-150",
+                                            "rounded-lg border px-4 py-2 text-sm font-medium transition-all duration-150",
                                             minutosAlerta === min
-                                                ? "bg-blue-600 text-white border-blue-600"
-                                                : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-600"
+                                                ? "border-transparent bg-primary text-primary-foreground dark:hover:bg-[#e0e0e0]"
+                                                : "border-border bg-background text-foreground hover:border-muted-foreground/40 hover:bg-accent"
                                         )}
                                     >
                                         {min >= 60 ? "1h" : `${min}min`}
                                     </button>
                                 ))}
                             </div>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                            <p className="text-xs text-muted-foreground">
                                 Você receberá um email{" "}
                                 {minutosAlerta >= 60 ? "1 hora" : `${minutosAlerta} minutos`}{" "}
                                 antes do início de cada pregão que você monitorar.
                             </p>
                         </div>
-                        <button
+                        <Button
+                            type="button"
                             onClick={salvarAlerta}
                             disabled={salvandoAlerta}
-                            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                            className="shadow-none"
                         >
                             {salvandoAlerta ? "Salvando..." : "Salvar configuração"}
-                        </button>
+                        </Button>
                     </div>
                 </div>
 

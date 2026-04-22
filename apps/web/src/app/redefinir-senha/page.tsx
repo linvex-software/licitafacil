@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { api } from "@/lib/api";
-import { Gavel, Eye, EyeOff, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 const schema = z
     .object({
@@ -62,15 +63,12 @@ function RedefinirSenhaContent() {
 
                 {/* Logo */}
                 <div className="flex justify-center">
-                    <div className="flex items-center gap-2">
-                        <Gavel className="w-8 h-8 text-emerald-600" />
-                        <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">LicitaFácil</span>
-                    </div>
+                    <Logo size="md" />
                 </div>
 
                 {sucesso ? (
-                    <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 p-6 text-center space-y-4">
-                        <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto" />
+                    <div className="space-y-4 rounded-xl border border-border bg-muted p-6 text-center">
+                        <CheckCircle2 className="mx-auto h-12 w-12 text-foreground" />
                         <H2>Senha redefinida!</H2>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                             Sua senha foi alterada com sucesso. Você já pode fazer login.
@@ -92,14 +90,14 @@ function RedefinirSenhaContent() {
                         </div>
 
                         {!token && (
-                            <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-sm text-red-600 dark:text-red-400">
+                            <div className="flex items-center gap-2 p-3 rounded-lg border border-destructive/25 bg-destructive/10 text-sm text-destructive">
                                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                                 Link inválido. Solicite uma nova redefinição de senha.
                             </div>
                         )}
 
                         {erro && (
-                            <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-sm text-red-600 dark:text-red-400">
+                            <div className="flex items-center gap-2 p-3 rounded-lg border border-destructive/25 bg-destructive/10 text-sm text-destructive">
                                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                                 {erro}
                             </div>
@@ -174,7 +172,7 @@ function RedefinirSenhaContent() {
                         </Form>
 
                         <p className="text-center text-sm">
-                            <a href="/login" className="text-emerald-600 hover:underline font-medium">
+                            <a href="/login" className="font-medium text-foreground underline-offset-4 hover:underline">
                                 Voltar ao login
                             </a>
                         </p>
@@ -193,7 +191,7 @@ export default function RedefinirSenhaPage() {
     return (
         <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
         }>
             <RedefinirSenhaContent />

@@ -13,34 +13,34 @@ interface MetricsCardProps {
 
 const variants = {
     default: {
-        iconBg: "bg-gray-100 dark:bg-gray-800",
-        iconClr: "text-gray-500 dark:text-gray-400",
-        valClr: "text-gray-900 dark:text-gray-100",
-        bar: "bg-gray-200 dark:bg-gray-700",
+        iconBg: "bg-muted",
+        iconClr: "text-muted-foreground",
+        valClr: "text-foreground",
+        bar: "bg-border",
     },
     info: {
-        iconBg: "bg-blue-50 dark:bg-blue-950",
-        iconClr: "text-blue-600 dark:text-blue-400",
-        valClr: "text-blue-700 dark:text-blue-400",
-        bar: "bg-blue-500",
+        iconBg: "bg-muted",
+        iconClr: "text-muted-foreground",
+        valClr: "text-foreground",
+        bar: "bg-muted-foreground",
     },
     success: {
-        iconBg: "bg-emerald-50 dark:bg-emerald-950",
-        iconClr: "text-emerald-600 dark:text-emerald-400",
-        valClr: "text-emerald-700 dark:text-emerald-400",
-        bar: "bg-emerald-500",
+        iconBg: "bg-muted",
+        iconClr: "text-foreground",
+        valClr: "text-foreground",
+        bar: "bg-foreground/50",
     },
     warning: {
-        iconBg: "bg-amber-50 dark:bg-amber-950",
-        iconClr: "text-amber-600 dark:text-amber-400",
-        valClr: "text-amber-700 dark:text-amber-400",
-        bar: "bg-amber-500",
+        iconBg: "bg-muted",
+        iconClr: "text-muted-foreground",
+        valClr: "text-foreground",
+        bar: "bg-foreground/30",
     },
     danger: {
-        iconBg: "bg-red-50 dark:bg-red-950",
-        iconClr: "text-red-600 dark:text-red-400",
-        valClr: "text-red-700 dark:text-red-400",
-        bar: "bg-red-500",
+        iconBg: "bg-destructive/10",
+        iconClr: "text-destructive",
+        valClr: "text-destructive",
+        bar: "bg-destructive",
     },
 };
 
@@ -60,11 +60,11 @@ export function MetricsCard({
                         <p className={cn("text-[28px] font-bold leading-none stat-number", v.valClr)}>
                             {value}
                         </p>
-                        <p className="text-[12px] text-gray-400 dark:text-gray-500">{description}</p>
+                        <p className="text-[12px] text-muted-foreground">{description}</p>
                         {trend && (
                             <p className={cn(
                                 "text-[11px] font-semibold",
-                                trend.value >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+                                trend.value >= 0 ? "text-foreground" : "text-destructive"
                             )}>
                                 {trend.value >= 0 ? "↑" : "↓"} {Math.abs(trend.value)}% {trend.label}
                             </p>

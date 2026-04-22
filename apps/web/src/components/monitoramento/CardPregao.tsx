@@ -28,9 +28,9 @@ interface CardPregaoProps {
 }
 
 const CORES_PORTAL: Record<string, string> = {
-  COMPRASNET: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  BNC: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-  PNCP: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+  COMPRASNET: 'bg-muted text-foreground border-border',
+  BNC: 'bg-muted text-foreground border-border',
+  PNCP: 'bg-muted text-foreground border-border',
 }
 
 const LABEL_PORTAL: Record<string, string> = {
@@ -82,8 +82,8 @@ export function CardPregao({ pregao, onCriarLicitacao, criandoLicitacao, onRegis
     pregao.urlSalaDisputa.startsWith('http')
 
   const urlBadge = temUrlPortal
-    ? <span className="text-xs text-green-400 flex items-center gap-1">🟢 Abre no portal do processo</span>
-    : <span className="text-xs text-yellow-500 flex items-center gap-1">🟡 Abre no PNCP</span>
+    ? <span className="flex items-center gap-1 text-xs text-foreground">Abre no portal do processo</span>
+    : <span className="flex items-center gap-1 text-xs text-muted-foreground">Abre no PNCP</span>
 
   const urlAbrir = pregao.urlSalaDisputa || pregao.urlFallbackPncp || '#'
 
@@ -112,8 +112,8 @@ export function CardPregao({ pregao, onCriarLicitacao, criandoLicitacao, onRegis
   }
 
   return (
-    <div ref={cardRef} className={`bg-card border rounded-lg p-4 flex flex-col gap-3 transition-all
-      ${pregao.status === 'EM_DISPUTA' ? 'border-green-500/40 ring-1 ring-green-500/20' : 'border-border'}
+    <div ref={cardRef} className={`flex flex-col gap-3 rounded-lg border bg-card p-4 transition-all
+      ${pregao.status === 'EM_DISPUTA' ? 'border-foreground/25 ring-1 ring-foreground/10' : 'border-border'}
       ${pregao.status === 'ENCERRADO' ? 'opacity-60' : ''}
     `}>
       <div className="flex items-start justify-between gap-2">
@@ -139,7 +139,7 @@ export function CardPregao({ pregao, onCriarLicitacao, criandoLicitacao, onRegis
       </div>
 
       {pregao.melhorLance && (
-        <div className="flex items-center gap-1 text-xs text-green-400">
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <TrendingDown className="h-3 w-3" />
           Melhor lance: R$ {pregao.melhorLance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
         </div>
@@ -153,7 +153,7 @@ export function CardPregao({ pregao, onCriarLicitacao, criandoLicitacao, onRegis
               type="button"
               onClick={() => void handleDisputaClick()}
               disabled={acompanharLoading}
-              className="flex items-center gap-2 rounded-lg bg-[#0078D1]/10 px-3 py-1.5 text-sm font-medium text-[#0078D1] transition-colors hover:bg-[#0078D1]/20 disabled:opacity-60"
+              className="flex items-center gap-2 rounded-lg border border-border bg-muted px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-60"
             >
               <Swords className="h-4 w-4" />
               {acompanharLoading

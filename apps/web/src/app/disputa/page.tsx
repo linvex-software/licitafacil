@@ -182,7 +182,7 @@ export default function DisputaPage() {
                         {["AO_VIVO", "EM_ANDAMENTO", "PAUSADA"].includes(disputa.status) && (
                           <Link href={`/disputa/${disputa.id}/ao-vivo`}>
                             <Button size="sm" variant="outline" className="gap-1.5">
-                              <Radio className="h-3.5 w-3.5 text-green-400" />
+                              <Radio className="h-3.5 w-3.5 text-foreground" />
                               Ao vivo
                             </Button>
                           </Link>

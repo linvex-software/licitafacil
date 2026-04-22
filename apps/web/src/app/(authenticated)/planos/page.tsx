@@ -23,7 +23,7 @@ function planComparison(
 function openUpgradeWhatsApp(planDisplayName: string) {
   const phone = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP_PHONE ?? "5582819990000";
   window.open(
-    `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(`Olá, tenho interesse no plano ${planDisplayName} do Limvex Licitação`)}`,
+    `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(`Olá, tenho interesse no plano ${planDisplayName} do LIMVEX LICITAÇÃO`)}`,
     "_blank",
     "noopener,noreferrer",
   );
@@ -56,17 +56,17 @@ export default function PlanosPage() {
                   className={cn(
                     "relative flex flex-col rounded-xl border bg-zinc-900 p-6",
                     isHighlight
-                      ? "scale-[1.02] border-2 border-[#0078D1] shadow-lg shadow-black/20"
+                      ? "scale-[1.02] border-2 border-white shadow-lg shadow-black/40"
                       : "border-zinc-800",
                   )}
                 >
                   {plan.badge ? (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#0078D1] px-3 py-0.5 text-xs font-medium text-white">
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-0.5 text-xs font-medium text-primary-foreground">
                       {plan.badge}
                     </span>
                   ) : null}
                   {cmp === "current" ? (
-                    <span className="absolute -top-3 right-4 rounded-full bg-emerald-600/90 px-2.5 py-0.5 text-xs font-medium text-white">
+                    <span className="absolute -top-3 right-4 rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-medium text-foreground">
                       Seu plano
                     </span>
                   ) : null}
@@ -87,7 +87,7 @@ export default function PlanosPage() {
                   <ul className="mt-6 flex-1 space-y-3">
                     {plan.features.map((f) => (
                       <li key={f} className="flex gap-2 text-sm text-zinc-300">
-                        <Check className="h-4 w-4 shrink-0 text-[#0078D1]" aria-hidden />
+                        <Check className="h-4 w-4 shrink-0 text-white" aria-hidden />
                         {f}
                       </li>
                     ))}
@@ -111,7 +111,7 @@ export default function PlanosPage() {
                     {cmp === "above" ? (
                       <div className="space-y-2">
                         <Link href={`/checkout?plan=${plan.name.toLowerCase()}&cycle=annual`}>
-                          <Button className="w-full bg-[#0078D1] text-white hover:bg-[#0078D1]/90">
+                          <Button className="w-full shadow-none">
                             Assinar {plan.name}
                           </Button>
                         </Link>

@@ -87,9 +87,9 @@ function formatDiasRestantes(diasRestantes: number | null) {
 
 function badgeCriticoClass(diasRestantes: number | null) {
   if (diasRestantes === null) return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
-  if (diasRestantes <= 3) return "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300";
-  if (diasRestantes <= 7) return "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300";
-  return "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300";
+  if (diasRestantes <= 3) return "border border-destructive/25 bg-destructive/10 text-destructive";
+  if (diasRestantes <= 7) return "bg-muted text-muted-foreground";
+  return "bg-muted text-foreground";
 }
 
 function PrazosTab({ bidId, onNovoPrazo }: { bidId: string; onNovoPrazo: () => void }) {
@@ -129,7 +129,7 @@ function PrazosTab({ bidId, onNovoPrazo }: { bidId: string; onNovoPrazo: () => v
   }
 
   if (erro) {
-    return <p className="text-sm text-red-600 dark:text-red-400">{erro}</p>;
+    return <p className="text-sm text-destructive">{erro}</p>;
   }
 
   if (prazos.length === 0) {
@@ -146,7 +146,7 @@ function PrazosTab({ bidId, onNovoPrazo }: { bidId: string; onNovoPrazo: () => v
         </p>
         <button
           onClick={onNovoPrazo}
-          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0078D1] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#0062ab]"
+          className="mt-4 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground transition-colors hover:bg-[#e0e0e0]"
         >
           <Plus className="h-3.5 w-3.5" />
           Adicionar prazo manualmente
@@ -263,7 +263,7 @@ export function LicitacaoModal({ bidId, onFechar, onAbrirPaginaCompleta }: Licit
             {carregandoBid ? (
               <p className="text-sm text-muted-foreground">Carregando licitação...</p>
             ) : erroBid ? (
-              <p className="text-sm text-red-600 dark:text-red-400">{erroBid}</p>
+              <p className="text-sm text-destructive">{erroBid}</p>
             ) : bid ? (
               <>
                 <div className="flex items-center gap-2 flex-wrap mb-2">
@@ -307,7 +307,7 @@ export function LicitacaoModal({ bidId, onFechar, onAbrirPaginaCompleta }: Licit
                 flex-shrink-0 px-3 md:px-4 py-2 text-xs md:text-sm font-medium
                 border-b-2 transition-colors whitespace-nowrap
                 ${tabAtiva === tab.id
-                  ? "text-[#0078D1] border-b-2 border-[#0078D1]"
+                  ? "border-b-2 border-white text-white"
                   : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                 }
               `}

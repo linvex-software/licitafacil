@@ -150,7 +150,7 @@ function FieldLabel({ htmlFor, children, required }: { htmlFor: string; children
   return (
     <label htmlFor={htmlFor} className="flex select-none items-center gap-2 text-sm font-medium leading-none text-[#999999]">
       {children}
-      {required ? <span className="text-red-400">*</span> : null}
+      {required ? <span className="text-destructive">*</span> : null}
     </label>
   );
 }
@@ -268,10 +268,12 @@ export function CheckoutClient({ initialPlan, initialCycle }: CheckoutClientProp
         <div className="mx-auto max-w-3xl px-4 pb-16 pt-10">
           <div className={`${cardShell}`}>
             <div className={`${cardInner} space-y-6 text-center`}>
-              <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-400" />
+              <CheckCircle2 className="mx-auto h-12 w-12 text-foreground" />
               <h1 className="text-2xl font-bold">Pagamento confirmado!</h1>
               <p className="text-[#999999]">
-                Sua conta no Limvex Licitação está sendo criada. Você receberá um e-mail com seus dados de acesso em instantes.
+                Sua conta no{" "}
+                <span className="font-limvex font-semibold uppercase tracking-tight text-white">LIMVEX LICITAÇÃO</span>{" "}
+                está sendo criada. Você receberá um e-mail com seus dados de acesso em instantes.
               </p>
               <Link href="/login" className="inline-flex h-12 items-center justify-center rounded-md border-0 bg-white px-6 text-base font-semibold text-black transition-colors hover:bg-[#e0e0e0]">
                 Ir para o login
@@ -288,12 +290,11 @@ export function CheckoutClient({ initialPlan, initialCycle }: CheckoutClientProp
       <div className="mx-auto max-w-3xl px-4 pb-16 pt-10">
         <header className="mb-10 text-center">
           <a href="https://limvex.com" target="_blank" rel="noopener noreferrer" className="inline-flex justify-center transition-opacity hover:opacity-90">
-            <img src="/brand/logoBrancaBgPreto.png" alt="LIMVEX" className="h-20 w-auto object-contain" />
+            <img src="/brand/logoBrancaBgPreto.png" alt="LIMVEX LICITAÇÃO" className="h-24 w-auto object-contain sm:h-28" />
           </a>
           <p className="mt-6 text-xs font-semibold uppercase tracking-[0.25em] text-[#999999]">Checkout</p>
-          <h1 className="mt-3 flex flex-col items-center gap-1 text-center text-3xl font-bold uppercase tracking-tight sm:text-4xl">
-            <span className="text-white">LIMVEX</span>
-            <span className="text-[#767676]">LICITAÇÃO</span>
+          <h1 className="mt-3 text-center font-limvex text-3xl font-bold uppercase tracking-tight text-white sm:text-4xl">
+            LIMVEX LICITAÇÃO
           </h1>
           <p className="mt-3 text-sm font-semibold uppercase tracking-wide text-[#999999]">Plano {planData.displayName}</p>
           <a href={PLANOS_URL} className="mt-2 inline-flex items-center gap-1 text-sm text-[#767676] transition-opacity hover:opacity-90">
@@ -472,7 +473,7 @@ export function CheckoutClient({ initialPlan, initialCycle }: CheckoutClientProp
                   <div className="rounded-xl border border-[#222222] bg-[#111111] p-4 text-sm">
                     <div className="flex justify-between border-b border-[#222222] py-2 text-[#999999]">
                       <span>Produto</span>
-                      <span className="text-right font-medium text-white">LIMVEX Licitação</span>
+                      <span className="text-right font-medium font-limvex uppercase text-white">LIMVEX LICITAÇÃO</span>
                     </div>
                     <div className="flex justify-between border-b border-[#222222] py-2">
                       <span className="text-[#999999]">Plano</span>
@@ -542,10 +543,11 @@ export function CheckoutClient({ initialPlan, initialCycle }: CheckoutClientProp
                   <a href="https://limvex.com/termos-compra" className="text-white underline underline-offset-2" target="_blank" rel="noopener noreferrer">
                     Termos de Compra
                   </a>{" "}
-                  da LIMVEX.
+                  da{" "}
+                  <span className="font-limvex font-semibold uppercase tracking-tight">LIMVEX</span>.
                 </span>
               </label>
-              {error && <p className="text-sm text-red-400">{error}</p>}
+              {error && <p className="text-sm text-destructive">{error}</p>}
             </div>
 
             <button

@@ -220,7 +220,7 @@ export function IniciarDisputaModal({
           </Button>
           <Button
             type="button"
-            className="bg-[#0078D1] text-white hover:bg-[#0066b3]"
+            className="bg-primary text-primary-foreground hover:bg-[#e0e0e0]"
             disabled={loading}
             onClick={() => void handleConfirm()}
           >

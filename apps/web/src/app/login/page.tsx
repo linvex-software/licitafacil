@@ -117,7 +117,7 @@ export default function LoginPage() {
                 ref={emailField.ref}
                 onChange={emailField.onChange}
                 onBlur={emailField.onBlur}
-                className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2A4A] dark:focus:ring-blue-500 transition"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground transition focus:outline-none focus:ring-2 focus:ring-ring"
               />
               {form.formState.errors.email && (
                 <p className="text-destructive text-xs">
@@ -130,7 +130,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={handleForgotOpen}
-                className="text-xs text-[#1B2A4A] dark:text-blue-400 hover:underline"
+                className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
               >
                 Esqueceu sua senha?
               </button>
@@ -149,7 +149,7 @@ export default function LoginPage() {
                   ref={passwordField.ref}
                   onChange={passwordField.onChange}
                   onBlur={passwordField.onBlur}
-                  className="w-full px-3 py-2.5 pr-10 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2A4A] dark:focus:ring-blue-500 transition"
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2.5 pr-10 text-sm text-foreground transition focus:outline-none focus:ring-2 focus:ring-ring"
                 />
                 <button
                   type="button"
@@ -167,13 +167,13 @@ export default function LoginPage() {
               )}
             </div>
 
-            <button
+            <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-2.5 rounded-lg font-semibold text-sm text-white bg-[#040319] hover:bg-[#1B2A4A] dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors mt-2 disabled:opacity-80"
+              className="mt-2 h-11 w-full shadow-none dark:hover:bg-[#e0e0e0]"
             >
               {isSubmitting ? "Entrando..." : "Entrar"}
-            </button>
+            </Button>
           </form>
         </div>
       </div>
@@ -187,9 +187,9 @@ export default function LoginPage() {
 
           {forgotSent ? (
             <div className="py-4 text-center space-y-3">
-              <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto" />
-              <p className="font-semibold text-gray-900 dark:text-gray-100">Email enviado!</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <CheckCircle2 className="mx-auto h-12 w-12 text-foreground" />
+              <p className="font-semibold text-foreground">Email enviado!</p>
+              <p className="text-sm text-muted-foreground">
                 Se o email estiver cadastrado, você receberá as instruções para redefinir sua senha em breve.
                 Verifique também a caixa de spam.
               </p>
@@ -199,12 +199,12 @@ export default function LoginPage() {
             </div>
           ) : (
             <div className="space-y-4 pt-2">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 Informe o email da sua conta e enviaremos um link para redefinir sua senha.
               </p>
 
               {forgotError && (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-sm text-red-600 dark:text-red-400">
+                <div className="flex items-center gap-2 rounded-lg border border-destructive/25 bg-destructive/10 p-3 text-sm text-destructive">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
                   {forgotError}
                 </div>

@@ -97,7 +97,7 @@ export function AnalisarEditalModal({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-purple-500" />
+            <Sparkles className="h-5 w-5 text-muted-foreground" />
             Análise Automática de Edital com IA
           </DialogTitle>
         </DialogHeader>
@@ -111,7 +111,7 @@ export function AnalisarEditalModal({
 
             {isPending && (
               <div className="text-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-purple-500" />
+                <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-muted-foreground" />
                 <p className="text-lg font-medium mb-2">
                   Processando edital...
                 </p>
@@ -151,7 +151,7 @@ export function AnalisarEditalModal({
         ) : (
           <div className="space-y-6">
             {resultado.is_edital === false && (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+              <div className="rounded-lg border border-border bg-muted p-4 text-muted-foreground">
                 <p className="text-sm font-medium">
                   ⚠️ Atenção: este documento não parece ser um edital de licitação.
                   {" "}
@@ -263,7 +263,7 @@ export function AnalisarEditalModal({
                       >
                         <CheckSquare
                           className={`w-5 h-5 ${doc.obrigatorio
-                            ? "text-red-500"
+                            ? "text-destructive"
                             : "text-slate-400"
                             }`}
                         />

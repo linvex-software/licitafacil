@@ -120,7 +120,7 @@ export default function NotificacoesPage() {
             {/* Documentos vencendo */}
             <div className="flex items-center justify-between">
               <div className="flex items-start gap-3">
-                <FileText className="h-5 w-5 text-amber-500 mt-0.5" />
+                <FileText className="mt-0.5 h-5 w-5 text-muted-foreground" />
                 <div className="space-y-0.5">
                   <Label className="text-sm font-medium">
                     Documentos vencendo
@@ -142,7 +142,7 @@ export default function NotificacoesPage() {
             {/* Prazos críticos */}
             <div className="flex items-center justify-between">
               <div className="flex items-start gap-3">
-                <Clock className="h-5 w-5 text-red-500 mt-0.5" />
+                <Clock className="mt-0.5 h-5 w-5 text-destructive" />
                 <div className="space-y-0.5">
                   <Label className="text-sm font-medium">
                     Prazos críticos
@@ -164,7 +164,7 @@ export default function NotificacoesPage() {
             {/* Licitações em risco */}
             <div className="flex items-center justify-between">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
+                <AlertTriangle className="mt-0.5 h-5 w-5 text-destructive" />
                 <div className="space-y-0.5">
                   <Label className="text-sm font-medium">
                     Licitações em risco
